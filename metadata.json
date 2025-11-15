@@ -1,0 +1,5 @@
+{
+  "name": "LevelUp: AI Awakening",
+  "description": "A personal RPG-style life coach powered by the Gemini API. It converts real-world actions into XP and Credits, drives dynamic quests, and supports a gamified self-improvement journey.",
+  "requestFramePermissions": []
+}
