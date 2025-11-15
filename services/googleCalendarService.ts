@@ -1,7 +1,8 @@
+import * as googleAuth from '../auth/googleAuth';
 
 export interface CalendarEvent {
     summary: string;
-    description: string;
+    description?: string;
     start: {
         dateTime: string;
     };
@@ -10,46 +11,40 @@ export interface CalendarEvent {
     };
 }
 
-// Simulate fetching data from Google Calendar API
+// Fetch data from the real Google Calendar API
 export const getUpcomingEvents = async (): Promise<CalendarEvent[]> => {
-    console.log("Simulating fetch from Google Calendar API...");
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 750));
-
-    const now = new Date();
-    const futureDate = (days: number, hours: number = 9) => {
-        const date = new Date(now);
-        date.setDate(date.getDate() + days);
-        date.setHours(hours, 0, 0, 0);
-        return date.toISOString();
-    }
-
-    return [
-        {
-            summary: "Microprocessors Exam",
-            description: "Final exam. Syllabus: 8085 architecture, memory interfacing, I/O ports, interrupts.",
-            start: { dateTime: futureDate(2) }, // Exam in 2 days for testing urgency
-            end: { dateTime: futureDate(2, 12) },
-        },
-        {
-            summary: "AI/ML Final Exam",
-            description: "Syllabus includes: Convolutional Neural Networks (CNNs), Recurrent Neural Networks (RNNs), and Transformer models.",
-            start: { dateTime: futureDate(12) },
-            end: { dateTime: futureDate(12, 12) },
-        },
-        {
-            summary: "Study Block: Microprocessor Interrupts",
-            description: "Focus on understanding the 8085 interrupt structure.",
-            start: { dateTime: futureDate(1, 10) },
-            end: { dateTime: futureDate(1, 12) },
-        },
-        {
-            summary: "Project Work: IoT Weather Station",
-            description: "Work on the sensor integration part using MQTT.",
-            start: { dateTime: futureDate(5, 14) },
-            end: { dateTime: futureDate(5, 17) },
+    try {
+        const gapi = await googleAuth.getGapiClient();
+        if (!gapi || !gapi.client.calendar) {
+            throw new Error("Google API client not loaded.");
         }
-    ];
+
+        const response = await gapi.client.calendar.events.list({
+            'calendarId': 'primary',
+            'timeMin': (new Date()).toISOString(),
+            'showDeleted': false,
+            'singleEvents': true,
+            'maxResults': 10,
+            'orderBy': 'startTime'
+        });
+
+        return response.result.items.map((event: any) => ({
+            summary: event.summary,
+            description: event.description,
+            start: { dateTime: event.start.dateTime || event.start.date },
+            end: { dateTime: event.end.dateTime || event.end.date },
+        }));
+
+    } catch (error) {
+        console.error("Error fetching Google Calendar events:", error);
+        // Handle token expiration or other errors
+        if ((error as any)?.result?.error?.code === 401) {
+            // Attempt to refresh token or prompt for re-login
+            console.log("Token expired, trying to sign out to force re-login.");
+            googleAuth.signOut();
+        }
+        throw new Error("Could not fetch calendar events.");
+    }
 };
 
 export const formatEventsForPrompt = (events: CalendarEvent[]): string => {
@@ -64,7 +59,8 @@ export const formatEventsForPrompt = (events: CalendarEvent[]): string => {
         const startDate = new Date(event.start.dateTime);
         const daysUntil = Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
         const eventDate = `${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString()}`;
-        return `- Title: "${event.summary}"\n  Date: ${eventDate}\n  Days Until: ${daysUntil}\n  Details: ${event.description}`;
+        const description = event.description ? `\n  Details: ${event.description}` : '';
+        return `- Title: "${event.summary}"\n  Date: ${eventDate}\n  Days Until: ${daysUntil}${description}`;
     }).join('\n');
 
     return `CRITICAL INTEL FROM GOOGLE CALENDAR (Highest Priority):\n${formattedEvents}`;

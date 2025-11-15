@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
@@ -37,12 +35,13 @@ import RecommendationsModal from './components/RecommendationsModal';
 import LoginModal from './components/LoginModal';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
+import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
+import * as googleAuth from './auth/googleAuth';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
-const LAST_LOGGED_IN_USER_KEY = 'levelUpAwakeningLastUser';
 
 const migrateLoadedState = (loadedState: any): any => {
     if (!loadedState) return undefined;
@@ -64,9 +63,9 @@ const migrateLoadedState = (loadedState: any): any => {
     return { ...loadedState, user: migratedUser };
 };
 
-const loadUser = (username: string) => {
+const loadUser = (userId: string) => {
   try {
-    const serializedState = localStorage.getItem(`${SAVE_DATA_PREFIX}${username}`);
+    const serializedState = localStorage.getItem(`${SAVE_DATA_PREFIX}${userId}`);
     if (serializedState === null) return null;
     return migrateLoadedState(JSON.parse(serializedState));
   } catch (err) {
@@ -182,7 +181,7 @@ const recalculateSkillTree = (
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
 
@@ -257,38 +256,35 @@ const App: React.FC = () => {
     setChatHistory(data.chatHistory || []);
   }, []);
 
-  const handleLogin = useCallback((username: string) => {
-    const savedData = loadUser(username);
+  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile) => {
+    const savedData = loadUser(profile.id);
     if (savedData) {
-      setStateFromData(savedData);
+        setStateFromData(savedData);
     } else {
-      const newUser = { ...INITIAL_USER, name: username };
-      _setUser(newUser);
-      // Reset all other states to initial for a new user
-      setStateFromData({ user: newUser });
+        const newUser = { ...INITIAL_USER, name: profile.name };
+        _setUser(newUser);
+        setStateFromData({ user: newUser });
     }
-    setCurrentUser(username);
+    setUserProfile(profile);
     setIsAuthenticated(true);
-    localStorage.setItem(LAST_LOGGED_IN_USER_KEY, username);
+    // Auto-connect Google Calendar on login
+    setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: true } : i));
+  }, [setStateFromData]);
+
+
+  const handleLogout = useCallback(() => {
+    googleAuth.signOut();
+    setIsAuthenticated(false);
+    setUserProfile(null);
+    setStateFromData({}); // Reset state to initial to avoid showing previous user's data
   }, [setStateFromData]);
   
-  const handleLogout = useCallback(() => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    localStorage.removeItem(LAST_LOGGED_IN_USER_KEY);
-    // Reset state to initial to avoid showing previous user's data
-    setStateFromData({});
-  }, [setStateFromData]);
+  useEffect(() => {
+    googleAuth.init(handleLoginSuccess, handleLogout);
+  }, [handleLoginSuccess, handleLogout]);
 
   useEffect(() => {
-    const lastUser = localStorage.getItem(LAST_LOGGED_IN_USER_KEY);
-    if (lastUser) {
-      handleLogin(lastUser);
-    }
-  }, [handleLogin]);
-
-  useEffect(() => {
-    if (!currentUser) return;
+    if (!userProfile?.id) return;
 
     setSyncStatus('syncing');
     if (saveTimeoutRef.current) {
@@ -303,7 +299,7 @@ const App: React.FC = () => {
           lastLootboxClaim, chatHistory,
         };
         const serializedState = JSON.stringify(stateToSave);
-        localStorage.setItem(`${SAVE_DATA_PREFIX}${currentUser}`, serializedState);
+        localStorage.setItem(`${SAVE_DATA_PREFIX}${userProfile.id}`, serializedState);
         setSyncStatus('synced');
         
         setTimeout(() => setSyncStatus('idle'), 2000);
@@ -313,10 +309,16 @@ const App: React.FC = () => {
       }
     }, 1500); // Debounce save
   }, [
-    currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    userProfile, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory
   ]);
+  
+  useEffect(() => {
+    if (userProfile) {
+        _setUser(u => ({ ...u, name: userProfile.name }));
+    }
+  }, [userProfile]);
 
   const setUser = useCallback((newUserOrFn: React.SetStateAction<User>) => {
       _setUser(currentUser => {
@@ -345,12 +347,12 @@ const App: React.FC = () => {
   
   const handleResetData = useCallback(() => {
     if (window.confirm("Are you sure you want to delete all your progress? This action cannot be undone.")) {
-      if (currentUser) {
-        localStorage.removeItem(`${SAVE_DATA_PREFIX}${currentUser}`);
+      if (userProfile?.id) {
+        localStorage.removeItem(`${SAVE_DATA_PREFIX}${userProfile.id}`);
       }
       window.location.reload();
     }
-  }, [currentUser]);
+  }, [userProfile]);
 
   const getCurrentDate = useCallback(() => {
     const date = new Date();
@@ -547,11 +549,21 @@ const App: React.FC = () => {
           shouldGenerateWeeklyBoss = true; // First time ever
       }
 
-      const eventsData = integrations.find(i => i.id === 'google_calendar' && i.connected) 
-        ? formatEventsForPrompt(await getUpcomingEvents()) 
-        : null;
+      const contextualData: { [key: string]: string } = {};
+      if (integrations.find(i => i.id === 'google_calendar' && i.connected)) {
+          try {
+            const events = await getUpcomingEvents();
+            contextualData['Google Calendar'] = formatEventsForPrompt(events);
+          } catch (e) {
+             const errorMessage = e instanceof Error ? e.message : "Unknown error.";
+             setSystemMessages(prev => [{id: `gcal-err-${Date.now()}`, text: `Google Calendar Sync Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+          }
+      }
+      if (integrations.find(i => i.id === 'github' && i.connected)) {
+          contextualData['GitHub'] = formatGithubActivityForPrompt(await getRecentActivity());
+      }
       
-      const newQuestsData = await generateDailyQuests(user, eventsData, chatHistory, shouldGenerateWeeklyBoss);
+      const newQuestsData = await generateDailyQuests(user, contextualData, chatHistory, shouldGenerateWeeklyBoss);
 
       const nowWithOffset = getCurrentDate();
 
@@ -1233,11 +1245,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `levelup-awakening-backup-${currentUser}-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `levelup-awakening-backup-${userProfile?.id}-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: 'User data backup downloaded.', timestamp: 'Just now', type: 'system' }, ...prev]);
-  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, currentUser]);
+  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, userProfile]);
 
   const handleUploadBackup = useCallback((file: File) => {
     if (!window.confirm("Are you sure you want to restore from this backup? All current progress for this user will be overwritten.")) {
@@ -1432,12 +1444,12 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   ];
   
   if (!isAuthenticated) {
-    return <LoginModal onLogin={handleLogin} />;
+    return <LoginModal onLogin={googleAuth.signIn} />;
   }
 
   return (
     <div className="flex flex-col h-full">
-      <Header user={user} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
+      <Header user={user} userProfile={userProfile} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
       <main className="flex-grow p-4 sm:p-6 overflow-y-auto">
         {renderView()}
       </main>
@@ -1452,7 +1464,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         </nav>
       </footer>
 
-      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} onLogout={handleLogout} username={currentUser || ''} />}
+      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} onLogout={handleLogout} username={userProfile?.name || ''} />}
       {isAddQuestModalOpen && <AddQuestModal isOpen={isAddQuestModalOpen} onClose={() => setIsAddQuestModalOpen(false)} onAddQuest={handleAddPersonalQuest} />}
       {isSkillModalOpen && <AddEditSkillModal isOpen={isSkillModalOpen} onClose={() => { setIsSkillModalOpen(false); setEditingSkill(null); }} onSave={handleSaveSkill} skillToEdit={editingSkill} />}
       {isTopicModalOpen && <AddEditTopicModal isOpen={isTopicModalOpen} onClose={() => { setIsTopicModalOpen(false); setEditingTopic(null); setDefaultSkillForTopic(undefined); }} onSave={handleSaveTopic} topicToEdit={editingTopic} skills={Object.values(user.skill_tree)} defaultSkillId={defaultSkillForTopic} />}

@@ -24,7 +24,7 @@ function getSanitizedUserForPrompt(user: User) {
     return { name, rank, level: level_overall, stats, state, skills, knowledge_topics: topics };
 }
 
-export const generateDailyQuests = async (user: User, goalsAndEventsData: string | null, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean): Promise<any[]> => {
+export const generateDailyQuests = async (user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean): Promise<any[]> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const userProfile = getSanitizedUserForPrompt(user);
@@ -43,6 +43,10 @@ export const generateDailyQuests = async (user: User, goalsAndEventsData: string
         - Make the title and description epic and challenging. This is the main event of their week.
         `
         : '';
+    
+    const contextualDataString = Object.entries(contextualData)
+        .map(([source, data]) => `--- START ${source.toUpperCase()} DATA ---\n${data}\n--- END ${source.toUpperCase()} DATA ---`)
+        .join('\n\n');
 
     const prompt = `
         You are LevelUp's Quest System, an AI that generates personalized daily quests for a user in a real-life RPG app.
@@ -50,7 +54,7 @@ export const generateDailyQuests = async (user: User, goalsAndEventsData: string
         USER PROFILE AND STATE:
         ${JSON.stringify(userProfile, null, 2)}
         
-        ${goalsAndEventsData || ''}
+        ${contextualDataString}
 
         ${formattedHistory}
         

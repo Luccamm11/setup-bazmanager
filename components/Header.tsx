@@ -2,9 +2,11 @@ import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
 import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, CloudOff } from 'lucide-react';
+import * as googleAuth from '../auth/googleAuth';
 
 interface HeaderProps {
   user: User;
+  userProfile: googleAuth.UserProfile | null;
   onSettingsClick: () => void;
   syncStatus: SyncStatus;
 }
@@ -34,7 +36,7 @@ const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     );
 };
 
-const Header: React.FC<HeaderProps> = ({ user, onSettingsClick, syncStatus }) => {
+const Header: React.FC<HeaderProps> = ({ user, userProfile, onSettingsClick, syncStatus }) => {
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
   return (
     <header className="bg-background p-3 sm:p-4 sticky top-0 z-40">
@@ -70,10 +72,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSettingsClick, syncStatus }) =>
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-14 h-14 rounded-full bg-primary border border-border-color flex items-center justify-center text-white text-2xl font-bold">
-                {user.level_overall}
-              </div>
-              <span className="absolute -bottom-2 -right-2 text-xs bg-accent-secondary text-background font-black px-2 py-0.5 rounded-full uppercase">LVL</span>
+              <img 
+                src={userProfile?.picture} 
+                alt="User profile"
+                className="w-14 h-14 rounded-full bg-primary border border-border-color"
+              />
+              <span className="absolute -bottom-2 -right-2 text-xs bg-accent-secondary text-background font-black px-2 py-0.5 rounded-full uppercase">LVL {user.level_overall}</span>
             </div>
             <div>
               <div className="flex items-center gap-x-3">

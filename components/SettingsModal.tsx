@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, LogOut, Upload } from 'lucide-react';
 import { Integration, Arc, UserState } from '../types';
