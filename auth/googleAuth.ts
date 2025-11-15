@@ -47,7 +47,7 @@ const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // IMPORTANT: Replace with your actua
 
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.profile';
 const GAPI_SCRIPT_ID = 'gapi-script';
-const GSI_SCRIPT_ID = 'gsi-script';
+const GSI_SCRIPT_ID = 'gsi-client-script';
 
 export interface UserProfile {
     id: string;
@@ -60,12 +60,52 @@ let tokenClient: google.accounts.oauth2.TokenClient | null = null;
 let onLoginSuccessCallback: ((profile: UserProfile) => void) | null = null;
 let onLogoutCallback: (() => void) | null = null;
 
-export const init = (
+let gsiScriptPromise: Promise<void> | null = null;
+
+function loadGsiScript(): Promise<void> {
+    if (gsiScriptPromise) {
+        return gsiScriptPromise;
+    }
+
+    gsiScriptPromise = new Promise((resolve, reject) => {
+        if (document.getElementById(GSI_SCRIPT_ID) || (window.google && window.google.accounts)) {
+            return resolve();
+        }
+
+        const script = document.createElement('script');
+        script.id = GSI_SCRIPT_ID;
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+        script.onerror = () => {
+            console.error("Failed to load Google Identity Services script.");
+            reject(new Error("Failed to load GSI script."));
+        };
+        document.body.appendChild(script);
+    });
+
+    return gsiScriptPromise;
+}
+
+export const init = async (
     onLogin: (profile: UserProfile) => void,
     onLogout: () => void
 ) => {
     onLoginSuccessCallback = onLogin;
     onLogoutCallback = onLogout;
+
+    try {
+        await loadGsiScript();
+    } catch (error) {
+        console.error("Cannot initialize Google Auth due to script loading failure:", error);
+        return;
+    }
+    
+    if (!window.google || !window.google.accounts) {
+        console.error("GSI script loaded but window.google.accounts is not available. Authentication cannot be initialized.");
+        return;
+    }
 
     const savedToken = localStorage.getItem('google_access_token');
     if (savedToken) {
@@ -73,18 +113,17 @@ export const init = (
     }
 
     // Initialize the token client
-    if (window.google && window.google.accounts) {
-        tokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: handleTokenResponse,
-            error_callback: (error) => {
-                console.error("Google Auth Error:", error);
+    tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: handleTokenResponse,
+        error_callback: (error: any) => {
+            console.error("Google Auth Error:", error);
+            if (error && error.type === 'popup_closed') {
+                alert("Login popup was closed unexpectedly. \n\nThis might be due to:\n1. A popup blocker.\n2. Third-party cookies being disabled for Google.\n3. A misconfiguration in your Google Cloud Console (check your 'Authorized JavaScript origins').");
             }
-        });
-    } else {
-        console.error("Google Identity Services script not loaded.");
-    }
+        }
+    });
 };
 
 const handleTokenResponse = async (response: google.accounts.oauth2.TokenResponse) => {
@@ -135,7 +174,8 @@ export const signIn = () => {
     if (tokenClient) {
         tokenClient.requestAccessToken();
     } else {
-        console.error("Token client is not initialized.");
+        console.error("Token client is not initialized. This may be due to a script loading failure or a race condition. The app tried to initiate login before the Google script was ready.");
+        alert("Google Sign-In is not ready. Please wait a moment and try again. If this persists, check the console for errors.");
     }
 };
 
