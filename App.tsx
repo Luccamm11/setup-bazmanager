@@ -262,7 +262,7 @@ const App: React.FC = () => {
     setChatHistory(data.chatHistory || []);
   }, []);
 
-  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile) => {
+  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile, connectIntegrations: boolean = true) => {
     setAuthError(null);
     const savedData = loadUser(profile.id);
     if (savedData) {
@@ -274,8 +274,10 @@ const App: React.FC = () => {
     }
     setUserProfile(profile);
     setIsAuthenticated(true);
-    // Auto-connect Google Calendar on login
-    setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: true } : i));
+    if (connectIntegrations) {
+        // Auto-connect Google Calendar on login
+        setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: true } : i));
+    }
   }, [setStateFromData]);
 
 
@@ -287,14 +289,29 @@ const App: React.FC = () => {
   }, [setStateFromData]);
   
   useEffect(() => {
-    try {
-        googleAuth.init(handleLoginSuccess, handleLogout);
-    } catch (error) {
+    const isAiStudio = !!(window as any).aistudio;
+
+    if (isAiStudio) {
+      // In AI Studio, bypass Google Sign-In entirely.
+      const mockProfile: googleAuth.UserProfile = {
+        id: 'aistudio_user',
+        name: 'AI Studio User',
+        email: 'aistudio@example.com',
+        picture: 'https://www.gstatic.com/images/branding/product/2x/google_for_developers_logomark_color_192dp.png',
+      };
+      // Call login success but disable auto-connecting integrations that require a real user token.
+      handleLoginSuccess(mockProfile, false);
+    } else {
+      // Standard browser authentication flow.
+      try {
+        googleAuth.init((profile) => handleLoginSuccess(profile, true), handleLogout);
+      } catch (error) {
         if (error instanceof Error) {
             setAuthError(error.message);
         } else {
             setAuthError("An unknown authentication error occurred.");
         }
+      }
     }
   }, [handleLoginSuccess, handleLogout]);
 
@@ -306,6 +323,19 @@ const App: React.FC = () => {
         }
     };
     checkApiKey();
+  }, []);
+  
+  useEffect(() => {
+    const handleApiKeyError = () => {
+        setIsApiKeyReady(false);
+        setSystemMessages(prev => [{id: `key-err-${Date.now()}`, text: `API Key invalid or not found. Please select a valid key.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+    };
+
+    window.addEventListener('apiKeyError', handleApiKeyError);
+
+    return () => {
+        window.removeEventListener('apiKeyError', handleApiKeyError);
+    };
   }, []);
 
 
