@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
@@ -190,6 +184,7 @@ const recalculateSkillTree = (
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
+  const [originalProfilePicture, setOriginalProfilePicture] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -286,12 +281,15 @@ const App: React.FC = () => {
         setStateFromData({ user: newUser });
     }
 
+    setOriginalProfilePicture(profile.picture);
+
     const customPic = localStorage.getItem(`${PROFILE_PIC_PREFIX}${profile.id}`);
+    const finalProfile = { ...profile };
     if (customPic) {
-      profile.picture = customPic;
+      finalProfile.picture = customPic;
     }
 
-    setUserProfile(profile);
+    setUserProfile(finalProfile);
     setIsAuthenticated(true);
     if (connectIntegrations) {
         // Auto-connect Google Calendar on login
@@ -308,12 +306,13 @@ const App: React.FC = () => {
         } else {
             // Reset to original Google picture
             localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
-            // Re-fetch or re-set from an original source if available
-            // For now, we just reload to re-trigger the auth flow and get the original pic
-             window.location.reload();
+            if (originalProfilePicture) {
+                setUserProfile(prev => prev ? { ...prev, picture: originalProfilePicture } : null);
+                setSystemMessages(prev => [{ id: `pfp-reset-${Date.now()}`, text: 'Profile picture reset to Google default.', timestamp: 'Just now', type: 'system' }, ...prev]);
+            }
         }
     }
-  }, [userProfile]);
+  }, [userProfile, originalProfilePicture]);
 
 
   const handleLogout = useCallback(() => {
@@ -358,7 +357,7 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    if (!userProfile?.id) return;
+    if (!userProfile?.id || userProfile.id.startsWith('local_user')) return;
 
     setSyncStatus('syncing');
     if (saveTimeoutRef.current) {
@@ -1358,6 +1357,45 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
     reader.readAsText(file);
   }, [setStateFromData]);
+  
+  const handleRestoreFromFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const content = event.target?.result;
+            if (typeof content !== 'string') {
+                throw new Error("File content is not readable.");
+            }
+            
+            const parsedData = JSON.parse(content);
+            const migratedData = migrateLoadedState(parsedData);
+            
+            setStateFromData(migratedData);
+
+            const loadedUser = migratedData.user as User;
+            const localProfile: googleAuth.UserProfile = {
+                id: `local_user_${Date.now()}`,
+                name: loadedUser.name || 'Local User',
+                email: 'local@levelup.app',
+                picture: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(loadedUser.name || 'LU')}`,
+            };
+
+            setUserProfile(localProfile);
+            setOriginalProfilePicture(localProfile.picture);
+            setIsAuthenticated(true);
+            
+            setSystemMessages(prev => [{ id: `restore-login-${Date.now()}`, text: 'Data successfully loaded from file.', timestamp: 'Just now', type: 'system' }, ...prev]);
+
+        } catch (err) {
+             const errorMessage = err instanceof Error ? err.message : "Unknown error.";
+             setAuthError(`Failed to load backup: ${errorMessage}`);
+        }
+    };
+    reader.onerror = () => {
+        setAuthError('Failed to read the backup file.');
+    };
+    reader.readAsText(file);
+  };
 
   const handleGenerateRecommendations = useCallback(async () => {
     setIsRecommendationsModalOpen(true);
@@ -1627,7 +1665,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   ];
   
   if (!isAuthenticated) {
-    return <LoginModal onLogin={googleAuth.signIn} error={authError} />;
+    return <LoginModal onLogin={googleAuth.signIn} onRestoreFromFile={handleRestoreFromFile} error={authError} />;
   }
 
   if (isApiKeyModalOpen) {

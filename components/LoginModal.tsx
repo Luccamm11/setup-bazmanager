@@ -1,9 +1,9 @@
-
-import React from 'react';
-import { User } from 'lucide-react';
+import React, { useRef } from 'react';
+import { User, Upload } from 'lucide-react';
 
 interface LoginModalProps {
   onLogin: () => void;
+  onRestoreFromFile: (file: File) => void;
   error?: string | null;
 }
 
@@ -18,35 +18,65 @@ const GoogleIcon = () => (
 );
 
 
-const LoginModal: React.FC<LoginModalProps> = ({ onLogin, error }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onRestoreFromFile, error }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+          onRestoreFromFile(file);
+      }
+  };
+
+  const handleUploadClick = () => {
+      fileInputRef.current?.click();
+  };
+
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center z-[100] p-4">
       <div className="bg-primary rounded-lg p-8 w-full max-w-sm border border-border-color text-center shadow-2xl">
         <h1 className="text-2xl font-bold text-text-primary">LevelUp: AI Awakening</h1>
-        <p className="text-text-secondary mt-2 mb-8">Sign in to begin or resume your journey.</p>
+        <p className="text-text-secondary mt-2 mb-8">Sign in or load from a file to begin.</p>
         
-        {error ? (
+        {error && (
           <div className="bg-accent-red/20 border border-accent-red text-accent-red px-4 py-3 rounded-lg relative text-left my-4">
-            <strong className="font-bold">Configuration Error!</strong>
+            <strong className="font-bold">Error!</strong>
             <span className="block mt-2 text-sm">
               {error}
             </span>
-            <p className="text-xs mt-2 text-text-secondary">
-              You can get your Client ID from the{' '}
-              <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent-primary">
-                Google Cloud Console
-              </a>.
-            </p>
           </div>
-        ) : (
-          <button
-            onClick={onLogin}
-            className="w-full bg-white text-gray-700 font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-3 transition-colors hover:bg-gray-200"
-          >
-            <GoogleIcon />
-            <span>Sign in with Google</span>
-          </button>
         )}
+
+        <div className="flex flex-col space-y-4">
+            <button
+              onClick={onLogin}
+              className="w-full bg-white text-gray-700 font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-3 transition-colors hover:bg-gray-200"
+            >
+              <GoogleIcon />
+              <span>Sign in with Google</span>
+            </button>
+
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-border-color"></div>
+                <span className="flex-shrink mx-4 text-text-muted text-sm">OR</span>
+                <div className="flex-grow border-t border-border-color"></div>
+            </div>
+
+            <button
+                onClick={handleUploadClick}
+                className="w-full bg-border-color text-text-primary font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-3 transition-colors hover:bg-border-color/80"
+            >
+                <Upload size={20} />
+                <span>Load from File</span>
+            </button>
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".json,application/json"
+                onChange={handleFileChange}
+            />
+        </div>
       </div>
     </div>
   );
