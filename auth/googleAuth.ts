@@ -22,7 +22,7 @@ export interface UserProfile {
 const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleusercontent.com';
 // The API_KEY is now managed in App.tsx state and passed to services.
 // FIX: Added userinfo scopes to allow fetching the user's profile after authentication.
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.appdata';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
 // --- Module State ---
 let tokenClient: any = null;
@@ -87,7 +87,6 @@ export const init = (
                 await window.gapi.client.init({
                     discoveryDocs: [
                         'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
-                        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
                     ],
                 });
                 gapiInited = true;
@@ -179,11 +178,4 @@ export const getGapiClient = (): Promise<any> => {
         };
         checkGapi();
     });
-};
-
-/**
- * Returns the current access token.
- */
-export const getAccessToken = (): string | null => {
-    return accessToken;
 };

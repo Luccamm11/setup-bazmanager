@@ -38,7 +38,6 @@ import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, gene
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import * as googleAuth from './auth/googleAuth';
-import * as driveService from './services/googleDriveService';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges';
@@ -188,7 +187,6 @@ const App: React.FC = () => {
   const [originalProfilePicture, setOriginalProfilePicture] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
-  const cloudSaveTimeoutRef = useRef<number | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('googleAiApiKey') || '');
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
@@ -276,36 +274,15 @@ const App: React.FC = () => {
     setAuthError(null);
     let loadedSuccessfully = false;
 
-    // 1. Try loading from Google Drive first for cross-device sync
-    if (!profile.id.startsWith('local_user') && !profile.id.startsWith('aistudio_user')) {
-        setSystemMessages(prev => [{ id: `cloud-load-start-${Date.now()}`, text: 'Checking for cloud save...', timestamp: 'Just now', type: 'system' }, ...prev]);
-        try {
-            const cloudData = await driveService.loadDataFromDrive();
-            if (cloudData) {
-                const migratedData = migrateLoadedState(cloudData);
-                setStateFromData(migratedData);
-                // Also save to local storage to keep it as a backup
-                localStorage.setItem(`${SAVE_DATA_PREFIX}${profile.id}`, JSON.stringify(migratedData));
-                loadedSuccessfully = true;
-                setSystemMessages(prev => [{ id: `cloud-load-ok-${Date.now()}`, text: 'Progress loaded from cloud.', timestamp: 'Just now', type: 'system' }, ...prev]);
-            }
-        } catch (e) {
-            console.error("Cloud load failed:", e);
-            setSystemMessages(prev => [{ id: `cloud-load-err-${Date.now()}`, text: 'Could not load from cloud, checking local storage.', timestamp: 'Just now', type: 'warning' }, ...prev]);
-        }
-    }
-
-    // 2. If cloud load fails or is skipped, try local storage
-    if (!loadedSuccessfully) {
-        const localData = loadUser(profile.id);
-        if (localData) {
-            setStateFromData(localData);
-            loadedSuccessfully = true;
-            setSystemMessages(prev => [{ id: `local-load-ok-${Date.now()}`, text: 'Progress loaded from local backup.', timestamp: 'Just now', type: 'system' }, ...prev]);
-        }
+    // 1. Try loading from local storage
+    const localData = loadUser(profile.id);
+    if (localData) {
+        setStateFromData(localData);
+        loadedSuccessfully = true;
+        setSystemMessages(prev => [{ id: `local-load-ok-${Date.now()}`, text: 'Progress loaded from local backup.', timestamp: 'Just now', type: 'system' }, ...prev]);
     }
     
-    // 3. If both fail, use initial state
+    // 2. If it fails, use initial state
     if (!loadedSuccessfully) {
         const newUser = { ...INITIAL_USER, name: profile.name };
         setStateFromData({ user: newUser }); // Use setStateFromData to reset everything else too
@@ -347,7 +324,6 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(() => {
     googleAuth.signOut();
-    driveService.clearCache(); // Clear Drive file ID cache
     setIsAuthenticated(false);
     setUserProfile(null);
     setStateFromData({}); // Reset state to initial to avoid showing previous user's data
@@ -388,7 +364,7 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    if (!userProfile?.id || userProfile.id.startsWith('local_user')) return;
+    if (!userProfile?.id || userProfile.id.startsWith('local_user') || userProfile.id.startsWith('aistudio_user')) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -410,21 +386,6 @@ const App: React.FC = () => {
             setSyncStatus('error');
         }
     }, 1000);
-
-    // Debounce cloud save (longer)
-    if (cloudSaveTimeoutRef.current) clearTimeout(cloudSaveTimeoutRef.current);
-    cloudSaveTimeoutRef.current = window.setTimeout(async () => {
-        if (userProfile.id.startsWith('aistudio_user')) return; // Don't save for AI studio user
-        setSyncStatus('syncing_cloud');
-        const success = await driveService.saveDataToDrive(stateToSave);
-        if (success) {
-            setSyncStatus('synced_cloud');
-            setTimeout(() => setSyncStatus('idle'), 2000);
-        } else {
-            setSyncStatus('error');
-            setSystemMessages(prev => [{id: `cloud-save-err-${Date.now()}`, text: 'Failed to sync progress to the cloud.', timestamp: 'Just now', type: 'warning'}, ...prev]);
-        }
-    }, 2500);
 
   }, [
     userProfile, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
