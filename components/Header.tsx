@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
-import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, CloudOff } from 'lucide-react';
+import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, CloudOff, Cloud, CloudCheck } from 'lucide-react';
 import * as googleAuth from '../auth/googleAuth';
 
 interface HeaderProps {
@@ -20,10 +20,13 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; color: strin
 
 const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     const config = {
-        idle: { icon: null, text: 'Changes saved', color: 'text-text-secondary' },
+        // FIX: Added a color property to the idle state to satisfy TypeScript's type checker, even though this branch returns null.
+        idle: { icon: null, text: '', color: '' },
         syncing: { icon: <Loader2 size={16} className="animate-spin" />, text: 'Saving...', color: 'text-accent-primary' },
-        synced: { icon: <CheckCircle size={16} />, text: 'Progress Saved', color: 'text-accent-green' },
-        error: { icon: <AlertTriangle size={16} />, text: 'Save Error', color: 'text-accent-red' },
+        synced: { icon: <CheckCircle size={16} />, text: 'Saved Locally', color: 'text-accent-green' },
+        syncing_cloud: { icon: <Cloud size={16} className="animate-pulse" />, text: 'Syncing to cloud...', color: 'text-accent-primary' },
+        synced_cloud: { icon: <CloudCheck size={16} />, text: 'Synced to Cloud', color: 'text-accent-green' },
+        error: { icon: <CloudOff size={16} />, text: 'Sync Error', color: 'text-accent-red' },
     };
     const current = config[status];
     if (status === 'idle') return null;

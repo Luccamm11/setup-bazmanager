@@ -92,9 +92,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
                   <div>
                     <p className="font-semibold text-text-primary">Logged in as: <span className="text-accent-primary">{userProfile?.name}</span></p>
                     <p className="text-sm text-text-secondary">{userProfile?.email}</p>
-                    <button onClick={() => onProfilePictureChange(null)} className="text-xs text-accent-red hover:underline mt-1 flex items-center gap-1">
-                        <RefreshCcw size={12}/> Reset Picture
-                    </button>
+                    <div className="flex items-center space-x-4 mt-2">
+                        <button onClick={handleProfilePicClick} className="text-xs text-accent-primary hover:underline flex items-center gap-1">
+                            <Upload size={12}/>
+                            <span>Upload Picture</span>
+                        </button>
+                        <button onClick={() => onProfilePictureChange(null)} className="text-xs text-accent-red hover:underline flex items-center gap-1">
+                            <RefreshCcw size={12}/> Reset Picture
+                        </button>
+                    </div>
                   </div>
               </div>
               <button 

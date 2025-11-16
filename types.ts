@@ -239,4 +239,4 @@ export interface AiRecommendations {
     topics: AiTopicRecommendation[];
 }
 
-export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'syncing_cloud' | 'synced_cloud';

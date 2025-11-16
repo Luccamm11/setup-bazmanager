@@ -24,7 +24,7 @@ export interface UserProfile {
 const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleusercontent.com';
 // The API_KEY is now managed in App.tsx state and passed to services.
 // FIX: Added userinfo scopes to allow fetching the user's profile after authentication.
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.appdata';
 
 // --- Module State ---
 let tokenClient: any = null;
@@ -82,50 +82,58 @@ export const init = (
     onLoginSuccessCallback = onLogin;
     onLogoutCallback = onLogout;
 
-    // FIX: Removed an obsolete check for a placeholder CLIENT_ID.
-    // The CLIENT_ID constant has been assigned a value, making the check always false and causing a TypeScript error.
-    
-    // Load both scripts in parallel
     Promise.all([loadScript('https://apis.google.com/js/api.js', 'gapi-script'), loadScript('https://accounts.google.com/gsi/client', 'gis-script')])
         .then(() => {
-            // Initialize GAPI client
+            // Initialize GAPI client first to prevent race conditions.
             window.gapi.load('client', async () => {
                 await window.gapi.client.init({
-                    // API Key is no longer needed here for GCal, as it uses OAuth2 access token.
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                    discoveryDocs: [
+                        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+                        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+                    ],
                 });
                 gapiInited = true;
-            });
 
-            // Initialize GIS client
-            tokenClient = window.google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: async (tokenResponse: any) => {
-                    if (tokenResponse.error) {
-                        console.error('Google Auth Error:', tokenResponse.error, tokenResponse.error_description);
-                        return;
-                    }
-                    accessToken = tokenResponse.access_token;
-                    window.gapi.client.setToken({ access_token: accessToken });
+                // Once GAPI is ready, initialize GIS and attempt silent sign-in.
+                if (!gisInited) {
+                    tokenClient = window.google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: async (tokenResponse: any) => {
+                            if (tokenResponse.error) {
+                                // These errors are expected if silent sign-in fails; they are not user-facing problems.
+                                const expectedErrors = ['popup_closed', 'user_cancel', 'idpiframe_initialization_failed', 'access_denied'];
+                                if (!expectedErrors.includes(tokenResponse.error)) {
+                                    console.error('Google Auth Error:', tokenResponse.error, tokenResponse.error_description);
+                                }
+                                return;
+                            }
+                            accessToken = tokenResponse.access_token;
+                            window.gapi.client.setToken({ access_token: accessToken });
 
-                    try {
-                        const profile = await getUserProfile(accessToken);
-                        if (onLoginSuccessCallback) {
-                            onLoginSuccessCallback(profile);
-                        }
-                    } catch (error) {
-                        console.error('Failed to get user profile:', error);
-                    }
-                },
+                            try {
+                                const profile = await getUserProfile(accessToken);
+                                if (onLoginSuccessCallback) {
+                                    onLoginSuccessCallback(profile);
+                                }
+                            } catch (error) {
+                                console.error('Failed to get user profile:', error);
+                            }
+                        },
+                    });
+                    gisInited = true;
+
+                    // Attempt to get a token silently on page load to restore the session.
+                    tokenClient.requestAccessToken({ prompt: 'none' });
+                }
             });
-            gisInited = true;
         })
         .catch(error => {
             console.error(error);
             throw new Error("Failed to load Google authentication scripts. Please check your network connection.");
         });
 };
+
 
 /**
  * Triggers the Google Sign-In popup flow.
@@ -135,6 +143,8 @@ export const signIn = () => {
         alert("Google Auth is not ready yet. Please wait a moment and try again.");
         return;
     }
+    // If there's an existing token, prompt for consent to ensure all scopes are granted.
+    // Otherwise, start the normal sign-in flow.
     if (accessToken) {
         tokenClient.requestAccessToken({ prompt: 'consent' });
     } else {
