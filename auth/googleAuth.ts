@@ -18,60 +18,117 @@ export interface UserProfile {
 }
 
 // --- Configuration ---
-// IMPORTANT: Replace with your actual Client ID and API Key from the Google Cloud Console.
 const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleusercontent.com';
-// The API_KEY is now managed in App.tsx state and passed to services.
-// FIX: Added userinfo scopes to allow fetching the user's profile after authentication.
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 
 // --- Module State ---
-let tokenClient: any = null;
-let accessToken: string | null = null;
-let gapiInited = false;
-let gisInited = false;
-
 let onLoginSuccessCallback: ((profile: UserProfile) => void) | null = null;
 let onLogoutCallback: (() => void) | null = null;
+let accessToken: string | null = null;
+let gapiInited = false;
+let gapiScriptLoaded = false;
 
 // --- Helper Functions ---
-const loadScript = (src: string, id: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        if (document.getElementById(id)) {
-            resolve();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.id = id;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-        document.body.appendChild(script);
-    });
+
+/**
+ * Decodes the JWT credential returned by Google Sign-In to extract user profile information.
+ */
+const decodeJwtResponse = (token: string): UserProfile => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        const payload = JSON.parse(jsonPayload);
+        return {
+            id: payload.sub,
+            name: payload.name,
+            email: payload.email,
+            picture: payload.picture,
+        };
+    } catch (e) {
+        console.error("Error decoding JWT", e);
+        throw new Error("Invalid JWT token received.");
+    }
 };
 
-const getUserProfile = async (token: string): Promise<UserProfile> => {
-    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!response.ok) {
-        throw new Error(`Failed to fetch user profile. Status: ${response.status}`);
-    }
-    const profile = await response.json();
-    return {
-        id: profile.sub,
-        name: profile.name,
-        email: profile.email,
-        picture: profile.picture,
-    };
-};
 
 // --- Core Authentication Flow ---
 
 /**
- * Initializes the Google authentication service.
- * Loads necessary scripts and sets up the token client.
+ * This callback is triggered by Google after a user successfully signs in
+ * via One Tap or the Sign-In button.
+ */
+const handleCredentialResponse = async (response: any) => {
+    if (!response.credential) {
+        console.error("Credential response is missing credential.", response);
+        return;
+    }
+
+    const profile = decodeJwtResponse(response.credential);
+
+    // After identifying the user, get an access token for Google API calls (e.g., Calendar).
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (tokenResponse: any) => {
+            if (tokenResponse.error) {
+                console.error('Token Error:', tokenResponse.error, tokenResponse.error_description);
+                return;
+            }
+            accessToken = tokenResponse.access_token;
+            
+            // Wait for GAPI to be ready before setting the token
+            const checkGapi = () => {
+                if (gapiInited) {
+                    window.gapi.client.setToken({ access_token: accessToken });
+                    if (onLoginSuccessCallback) {
+                        onLoginSuccessCallback(profile);
+                    }
+                } else {
+                    setTimeout(checkGapi, 100);
+                }
+            };
+            checkGapi();
+        },
+    });
+    
+    // Request an access token. Since the user just signed in, this should not require a new popup.
+    tokenClient.requestAccessToken({ prompt: '' });
+};
+
+/**
+ * Polls until the Google Identity Services (GIS) script is loaded and ready.
+ */
+const initializeGis = () => {
+    if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+            client_id: CLIENT_ID,
+            callback: handleCredentialResponse,
+            auto_select: true, // Enables automatic sign-in for returning users
+        });
+
+        // Render the official "Sign in with Google" button into the specified element.
+        const signInButtonElement = document.getElementById('google-signin-button');
+        if (signInButtonElement) {
+            window.google.accounts.id.renderButton(
+                signInButtonElement,
+                { theme: 'outline', size: 'large', type: 'standard', text: 'signin_with', width: '280' }
+            );
+        }
+        
+        // Display the One Tap prompt for returning users.
+        window.google.accounts.id.prompt();
+    } else {
+        setTimeout(initializeGis, 100);
+    }
+};
+
+/**
+ * Initializes the entire Google authentication service.
+ * Sets up GIS for sign-in and loads GAPI for Calendar API access.
  */
 export const init = (
     onLogin: (profile: UserProfile) => void,
@@ -80,9 +137,17 @@ export const init = (
     onLoginSuccessCallback = onLogin;
     onLogoutCallback = onLogout;
 
-    Promise.all([loadScript('https://apis.google.com/js/api.js', 'gapi-script'), loadScript('https://accounts.google.com/gsi/client', 'gis-script')])
-        .then(() => {
-            // Initialize GAPI client first to prevent race conditions.
+    // Start polling for the GIS script (loaded from index.html)
+    initializeGis();
+
+    // Dynamically load the GAPI script for Calendar API access.
+    if (!gapiScriptLoaded) {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.id = 'gapi-script';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
             window.gapi.load('client', async () => {
                 await window.gapi.client.init({
                     discoveryDocs: [
@@ -90,69 +155,22 @@ export const init = (
                     ],
                 });
                 gapiInited = true;
-
-                // Once GAPI is ready, initialize GIS and attempt silent sign-in.
-                if (!gisInited) {
-                    tokenClient = window.google.accounts.oauth2.initTokenClient({
-                        client_id: CLIENT_ID,
-                        scope: SCOPES,
-                        callback: async (tokenResponse: any) => {
-                            if (tokenResponse.error) {
-                                // These errors are expected if silent sign-in fails; they are not user-facing problems.
-                                const expectedErrors = ['popup_closed', 'user_cancel', 'idpiframe_initialization_failed', 'access_denied'];
-                                if (!expectedErrors.includes(tokenResponse.error)) {
-                                    console.error('Google Auth Error:', tokenResponse.error, tokenResponse.error_description);
-                                }
-                                return;
-                            }
-                            accessToken = tokenResponse.access_token;
-                            window.gapi.client.setToken({ access_token: accessToken });
-
-                            try {
-                                const profile = await getUserProfile(accessToken);
-                                if (onLoginSuccessCallback) {
-                                    onLoginSuccessCallback(profile);
-                                }
-                            } catch (error) {
-                                console.error('Failed to get user profile:', error);
-                            }
-                        },
-                    });
-                    gisInited = true;
-
-                    // Attempt to get a token silently on page load to restore the session.
-                    tokenClient.requestAccessToken({ prompt: 'none' });
-                }
             });
-        })
-        .catch(error => {
-            console.error(error);
-            throw new Error("Failed to load Google authentication scripts. Please check your network connection.");
-        });
-};
-
-
-/**
- * Triggers the Google Sign-In popup flow.
- */
-export const signIn = () => {
-    if (!gisInited) {
-        alert("Google Auth is not ready yet. Please wait a moment and try again.");
-        return;
-    }
-    // If there's an existing token, prompt for consent to ensure all scopes are granted.
-    // Otherwise, start the normal sign-in flow.
-    if (accessToken) {
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-        tokenClient.requestAccessToken({ prompt: '' });
+        };
+        document.body.appendChild(script);
+        gapiScriptLoaded = true;
     }
 };
 
 /**
- * Signs the user out by revoking the current access token.
+ * Signs the user out by disabling One Tap for the session and revoking the access token.
  */
 export const signOut = () => {
+    if (window.google?.accounts?.id) {
+        // Prevents the One Tap prompt from appearing immediately after manual sign-out.
+        window.google.accounts.id.disableAutoSelect();
+    }
+
     if (accessToken) {
         window.google.accounts.oauth2.revoke(accessToken, () => {
             accessToken = null;
@@ -160,6 +178,9 @@ export const signOut = () => {
                 onLogoutCallback();
             }
         });
+    } else if (onLogoutCallback) {
+        // If there was no token, still ensure the app's state is logged out.
+        onLogoutCallback();
     }
 };
 

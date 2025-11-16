@@ -1671,7 +1671,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   ];
   
   if (!isAuthenticated) {
-    return <LoginModal onLogin={googleAuth.signIn} onRestoreFromFile={handleRestoreFromFile} error={authError} />;
+    return <LoginModal onRestoreFromFile={handleRestoreFromFile} error={authError} />;
   }
 
   if (isApiKeyModalOpen) {
