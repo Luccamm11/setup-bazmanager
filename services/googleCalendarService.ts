@@ -1,3 +1,4 @@
+
 import * as googleAuth from '../auth/googleAuth';
 
 export interface CalendarEvent {
@@ -11,12 +12,14 @@ export interface CalendarEvent {
     };
 }
 
-// Fetch data from the real Google Calendar API
+/**
+ * Fetches upcoming events from the user's primary Google Calendar.
+ */
 export const getUpcomingEvents = async (): Promise<CalendarEvent[]> => {
     try {
         const gapi = await googleAuth.getGapiClient();
         if (!gapi || !gapi.client.calendar) {
-            throw new Error("Google API client not loaded.");
+            throw new Error("Google API client not initialized.");
         }
 
         const response = await gapi.client.calendar.events.list({
@@ -28,25 +31,20 @@ export const getUpcomingEvents = async (): Promise<CalendarEvent[]> => {
             'orderBy': 'startTime'
         });
 
-        return response.result.items.map((event: any) => ({
-            summary: event.summary,
-            description: event.description,
-            start: { dateTime: event.start.dateTime || event.start.date },
-            end: { dateTime: event.end.dateTime || event.end.date },
-        }));
-
+        return response.result.items as CalendarEvent[];
     } catch (error) {
         console.error("Error fetching Google Calendar events:", error);
-        // Handle token expiration or other errors
-        if ((error as any)?.result?.error?.code === 401) {
-            // Attempt to refresh token or prompt for re-login
-            console.log("Token expired, trying to sign out to force re-login.");
-            googleAuth.signOut();
+        const errorDetails = error as any;
+        if (errorDetails.result?.error?.message) {
+            throw new Error(`Google Calendar API Error: ${errorDetails.result.error.message}`);
         }
-        throw new Error("Could not fetch calendar events.");
+        throw new Error("Could not fetch calendar events. Ensure the Google Calendar API is enabled in your Cloud project.");
     }
 };
 
+/**
+ * Formats calendar events into a string for the Gemini prompt.
+ */
 export const formatEventsForPrompt = (events: CalendarEvent[]): string => {
     if (!events || events.length === 0) {
         return "No upcoming events found.";

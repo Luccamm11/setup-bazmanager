@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
@@ -184,6 +185,7 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const [user, _setUser] = useState<User>(INITIAL_USER);
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
@@ -257,6 +259,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile) => {
+    setAuthError(null);
     const savedData = loadUser(profile.id);
     if (savedData) {
         setStateFromData(savedData);
@@ -280,7 +283,15 @@ const App: React.FC = () => {
   }, [setStateFromData]);
   
   useEffect(() => {
-    googleAuth.init(handleLoginSuccess, handleLogout);
+    try {
+        googleAuth.init(handleLoginSuccess, handleLogout);
+    } catch (error) {
+        if (error instanceof Error) {
+            setAuthError(error.message);
+        } else {
+            setAuthError("An unknown authentication error occurred.");
+        }
+    }
   }, [handleLoginSuccess, handleLogout]);
 
   useEffect(() => {
@@ -1137,7 +1148,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         if(editingMajorGoal) {
             return prev.map(g => g.id === editingMajorGoal.id ? { ...g, ...goalData } : g);
         } else {
-// FIX: Added explicit type annotation `MajorGoal` to `newGoal` to resolve incorrect type inference by TypeScript.
             const newGoal: MajorGoal = { ...goalData, id: `major-goal-${Date.now()}` };
             if(!newGoal.penalty) {
                 newGoal.penalty = { type: 'xp', amount: Math.floor(newGoal.xp_reward * 0.25) };
@@ -1170,7 +1180,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       setGeneratedTopics([]);
 
       try {
-          // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
           const existingTopics = (Object.values(user.knowledgeBase) as KnowledgeTopic[]).filter((t) => t.skillId === skill.id);
           const topics = await generateTopicsFromSyllabus(goal.syllabus, skill, existingTopics);
           setGeneratedTopics(topics);
@@ -1370,7 +1379,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const skillToDelete = user.skill_tree[skillId];
     if (!skillToDelete) return;
 
-    // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
     const topicsToDeleteIds = (Object.values(user.knowledgeBase) as KnowledgeTopic[]).filter((topic) => topic.skillId === skillId).map((topic) => topic.id);
     const topicsToDeleteIdsSet = new Set(topicsToDeleteIds);
 
@@ -1444,7 +1452,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   ];
   
   if (!isAuthenticated) {
-    return <LoginModal onLogin={googleAuth.signIn} />;
+    return <LoginModal onLogin={googleAuth.signIn} error={authError} />;
   }
 
   return (
