@@ -1,10 +1,11 @@
 
+
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
 import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus } from './types';
 // FIX: Imported INITIAL_MAJOR_GOALS constant to resolve definition errors.
-import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP } from './constants';
+import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill } from './constants';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SkillTree from './components/SkillTree';
@@ -240,6 +241,7 @@ const App: React.FC = () => {
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
 
   const [simulateApiError, setSimulateApiError] = useState(false);
+  const [timeOffsetInHours, setTimeOffsetInHours] = useState(0);
   
   const setStateFromData = useCallback((data: any) => {
     _setUser(data.user || INITIAL_USER);
@@ -367,11 +369,12 @@ const App: React.FC = () => {
 
   const getCurrentDate = useCallback(() => {
     const date = new Date();
-    // Force IST (UTC+5:30)
-    const istOffset = 5.5 * 60 * 60 * 1000;
+    // Force IST (UTC+5:30) and add dev offset
+    const timeOffsetMilliseconds = timeOffsetInHours * 60 * 60 * 1000;
+    const istOffset = (5.5 * 60 * 60 * 1000) + timeOffsetMilliseconds;
     const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
     return new Date(utc + istOffset);
-  }, []);
+  }, [timeOffsetInHours]);
 
   const getFutureDateWithOffset = (currentDate: Date, hours: number): Date => {
       const newDate = new Date(currentDate);
@@ -1416,6 +1419,115 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setSystemMessages(prev => [{ id: `delete-skill-${Date.now()}`, text: message, timestamp: 'Just now', type: 'info' }, ...prev]);
   }, [user.skill_tree, user.knowledgeBase, quests, setUser]);
 
+  // --- START: HANDLERS FOR TESTING PANEL ---
+  const handleAddXp = (amount: number) => {
+    handleGrantReward(amount, 0, Realm.Meta, 'dev-xp');
+  };
+
+  const handleAddCredits = (amount: number) => {
+    handleGrantReward(0, amount, Realm.Meta, 'dev-credits');
+  };
+
+  const handleAddGems = (amount: number) => {
+    setUser(prev => ({ ...prev, wallet: { ...prev.wallet, gems: prev.wallet.gems + amount }}));
+  };
+
+  const handleSetStat = (realm: Realm, value: number) => {
+    setUser(prev => ({ ...prev, stats: { ...prev.stats, [realm]: value }}));
+  };
+
+  const handleSetStreak = (streak: number) => {
+    setUser(prev => ({ ...prev, streaks: { ...prev.streaks, daily_streak: streak } }));
+  };
+
+  const handleResetLootbox = () => {
+    setLastLootboxClaim(null);
+  };
+  
+  const handleSimpleReset = useCallback(() => {
+    setStateFromData({ user: INITIAL_USER });
+  }, [setStateFromData]);
+
+
+  const handleAddItemToInventory = (itemId: string) => {
+    setUser(prev => {
+        const newInventory = [...prev.inventory];
+        const existingItem = newInventory.find(i => i.itemId === itemId);
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            newInventory.push({ itemId: itemId, quantity: 1 });
+        }
+        return { ...prev, inventory: newInventory };
+    });
+  };
+
+  const handleAddSkillXp = (skillId: string, amount: number) => {
+    setUser(prev => {
+        const newSkillTree = { ...prev.skill_tree };
+        const skill = newSkillTree[skillId];
+        if (!skill) return prev;
+        
+        let currentTotalXp = getTotalXpForSkill(skill);
+        let newTotalXp = currentTotalXp + amount;
+        
+        let newLevel = 1;
+        let xpForNext = getXpThresholdForSkillLevel(1, skill.xpScale);
+
+        while (newTotalXp >= xpForNext) {
+            newTotalXp -= xpForNext;
+            newLevel++;
+            xpForNext = getXpThresholdForSkillLevel(newLevel, skill.xpScale);
+        }
+
+        newSkillTree[skillId] = {
+            ...skill,
+            level: newLevel,
+            xp: Math.floor(newTotalXp),
+            xpToNextLevel: xpForNext,
+        };
+        return { ...prev, skill_tree: newSkillTree };
+    });
+  };
+
+  const handleAddDevQuest = (type: 'timed' | 'mystery') => {
+    const deadline = getFutureDateWithOffset(getCurrentDate(), 1);
+    const newQuest: Quest = {
+        id: `dev-quest-${Date.now()}`,
+        title: type === 'mystery' ? 'A Mysterious Objective' : 'A Time-Sensitive Task',
+        description: `This is a developer-generated quest.`,
+        realm: Realm.Meta,
+        knowledgeTopics: [],
+        xp_reward: 50,
+        credit_reward: 25,
+        difficulty: Difficulty.Medium,
+        duration_est_min: 60,
+        status: QuestStatus.Pending,
+        isMystery: type === 'mystery',
+        deadline: deadline.toISOString(),
+        penalty: { type: 'xp', amount: 15 },
+    };
+    setQuests(prev => [newQuest, ...prev]);
+  };
+
+  const handleRunDiagnostics = (): string[] => {
+    const issues: string[] = [];
+    quests.forEach(q => { q.knowledgeTopics.forEach(topicId => { if (!user.knowledgeBase[topicId]) issues.push(`Quest "${q.title}" links to missing topic ID: ${topicId}`); }); });
+    (Object.values(user.knowledgeBase) as KnowledgeTopic[]).forEach(topic => { if (!user.skill_tree[topic.skillId]) issues.push(`Topic "${topic.name}" links to missing skill ID: ${topic.skillId}`); });
+    user.inventory.forEach(invItem => { if (!storeItems.find(storeItem => storeItem.id === invItem.itemId)) issues.push(`Inventory has missing item ID: ${invItem.itemId}`); });
+    user.unlockedBadges.forEach(badgeId => { if (!allBadges.find(b => b.id === badgeId)) issues.push(`User has missing badge ID: ${badgeId}`); });
+    majorGoals.forEach(g => { if(g.skillId && !user.skill_tree[g.skillId]) issues.push(`Major Goal "${g.title}" links to missing skill ID: ${g.skillId}`); });
+    return issues;
+  };
+
+  const handleInduceAnomaly = () => {
+    const randomItem = storeItems[Math.floor(Math.random() * storeItems.length)];
+    if (!randomItem) return;
+    setUser(prev => ({ ...prev, inventory: [...prev.inventory, { itemId: randomItem.id, quantity: -1 }] }));
+    setSystemMessages(prev => [{ id: `anomaly-${Date.now()}`, text: 'Anomaly induced: Negative item quantity.', timestamp: 'Just now', type: 'warning'}, ...prev]);
+  };
+  // --- END: HANDLERS FOR TESTING PANEL ---
+
   const activeMajorGoals = majorGoals.filter(goal => {
       if (goal.skillId) {
           const skill = user.skill_tree[goal.skillId];
@@ -1487,6 +1599,34 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
       {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} />}
       <RewardToast notifications={rewardNotifications} onRemove={(id) => setRewardNotifications(prev => prev.filter(n => n.id !== id))} />
+      <TestingPanel
+        user={user}
+        storeItems={storeItems}
+        simulateApiError={simulateApiError}
+        onAddXp={handleAddXp}
+        onAddCredits={handleAddCredits}
+        onResetUser={handleSimpleReset}
+        onAddItem={handleAddItemToInventory}
+        onResetLootbox={handleResetLootbox}
+        onToggleApiError={() => setSimulateApiError(p => !p)}
+        onAddSkillXp={handleAddSkillXp}
+        onClearQuests={() => setQuests([])}
+        onClearInventory={() => setUser(p => ({...p, inventory: []}))}
+        onSetStat={handleSetStat}
+        onSetStreak={handleSetStreak}
+        onAddGems={handleAddGems}
+        onAddQuest={handleAddDevQuest}
+        onDevGenerateText={devGenerateText}
+        userGoal={user.state.longTermGoals}
+        majorGoals={majorGoals}
+        timeOffsetInHours={timeOffsetInHours}
+        onUpdateGoal={(goal) => handleUpdateUserState({ longTermGoals: goal })}
+        onUpdateMajorGoals={setMajorGoals}
+        onSetTimeOffsetHours={setTimeOffsetInHours}
+        onInduceAnomaly={handleInduceAnomaly}
+        onRunDiagnostics={handleRunDiagnostics}
+        currentDate={getCurrentDate()}
+      />
     </div>
   );
 };

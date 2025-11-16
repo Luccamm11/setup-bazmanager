@@ -23,7 +23,8 @@ export interface UserProfile {
 // IMPORTANT: Replace with your actual Client ID and API Key from the Google Cloud Console.
 const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleusercontent.com';
 const API_KEY = process.env.API_KEY || '';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+// FIX: Added userinfo scopes to allow fetching the user's profile after authentication.
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
 // --- Module State ---
 let tokenClient: any = null;
@@ -57,7 +58,7 @@ const getUserProfile = async (token: string): Promise<UserProfile> => {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
-        throw new Error('Failed to fetch user profile.');
+        throw new Error(`Failed to fetch user profile. Status: ${response.status}`);
     }
     const profile = await response.json();
     return {
@@ -102,7 +103,7 @@ export const init = (
                 scope: SCOPES,
                 callback: async (tokenResponse: any) => {
                     if (tokenResponse.error) {
-                        console.error('Google Auth Error:', tokenResponse.error);
+                        console.error('Google Auth Error:', tokenResponse.error, tokenResponse.error_description);
                         return;
                     }
                     accessToken = tokenResponse.access_token;
