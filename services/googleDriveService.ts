@@ -33,6 +33,7 @@ const createSaveFile = async (): Promise<string | null> => {
     const fileMetadata = {
         name: SAVE_FILE_NAME,
         parents: ['appDataFolder'],
+        mimeType: 'application/json',
     };
     try {
         const response = await gapi.client.drive.files.create({
@@ -92,33 +93,16 @@ export const saveDataToDrive = async (data: any): Promise<boolean> => {
         return false;
     }
 
-    const boundary = '-------314159265358979323846';
-    const delimiter = `\r\n--${boundary}\r\n`;
-    const close_delim = `\r\n--${boundary}--`;
-
-    const metadata = {
-        mimeType: 'application/json',
-    };
-
-    const multipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(metadata) +
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(data) +
-        close_delim;
-    
     const gapi = await googleAuth.getGapiClient();
     try {
         await gapi.client.request({
             path: `/upload/drive/v3/files/${fileId}`,
             method: 'PATCH',
-            params: { uploadType: 'multipart' },
+            params: { uploadType: 'media' },
             headers: {
-                'Content-Type': `multipart/related; boundary="${boundary}"`,
+                'Content-Type': 'application/json',
             },
-            body: multipartRequestBody,
+            body: JSON.stringify(data),
         });
         return true;
     } catch (error) {
