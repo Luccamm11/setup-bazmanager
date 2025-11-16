@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
@@ -35,7 +36,6 @@ import AddEditBadgeModal from './components/AddEditBadgeModal';
 import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
 import LoginModal from './components/LoginModal';
-import SelectApiKeyModal from './components/SelectApiKeyModal';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -184,7 +184,6 @@ const recalculateSkillTree = (
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApiKeyReady, setIsApiKeyReady] = useState(false);
   const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
@@ -314,29 +313,6 @@ const App: React.FC = () => {
       }
     }
   }, [handleLoginSuccess, handleLogout]);
-
-  useEffect(() => {
-    const checkApiKey = async () => {
-        // The aistudio object is expected to be present in the execution environment.
-        if ((window as any).aistudio) {
-            setIsApiKeyReady(await (window as any).aistudio.hasSelectedApiKey());
-        }
-    };
-    checkApiKey();
-  }, []);
-  
-  useEffect(() => {
-    const handleApiKeyError = () => {
-        setIsApiKeyReady(false);
-        setSystemMessages(prev => [{id: `key-err-${Date.now()}`, text: `API Key invalid or not found. Please select a valid key.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
-    };
-
-    window.addEventListener('apiKeyError', handleApiKeyError);
-
-    return () => {
-        window.removeEventListener('apiKeyError', handleApiKeyError);
-    };
-  }, []);
 
 
   useEffect(() => {
@@ -1609,17 +1585,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   if (!isAuthenticated) {
     return <LoginModal onLogin={googleAuth.signIn} error={authError} />;
   }
-
-  if (!isApiKeyReady) {
-    return <SelectApiKeyModal onSelect={async () => {
-      if ((window as any).aistudio) {
-        await (window as any).aistudio.openSelectKey();
-        // Per guidelines, assume success after call to handle race conditions
-        setIsApiKeyReady(true);
-      }
-    }} />;
-  }
-
 
   return (
     <div className="flex flex-col h-full">

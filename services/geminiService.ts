@@ -6,11 +6,6 @@ import { ICON_MAP } from "../constants";
 const handleApiError = (error: unknown): never => {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if (errorMessage.includes("API Key must be set") || errorMessage.includes("Requested entity was not found")) {
-        // Dispatch a custom event for the app to catch and re-render the API key modal
-        window.dispatchEvent(new CustomEvent('apiKeyError'));
-    }
-
     console.error("Gemini API Error:", error);
 
     // Re-throw a generic or specific error for the UI to handle if needed
