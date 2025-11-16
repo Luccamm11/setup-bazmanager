@@ -37,9 +37,9 @@ function getSanitizedUserForPrompt(user: User) {
     return { name, rank, level: level_overall, stats, state, skills, knowledge_topics: topics };
 }
 
-export const generateDailyQuests = async (user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean): Promise<any[]> => {
+export const generateDailyQuests = async (apiKey: string, user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean): Promise<any[]> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         
         const userProfile = getSanitizedUserForPrompt(user);
 
@@ -81,15 +81,17 @@ export const generateDailyQuests = async (user: User, contextualData: { [key: st
             Note: The user profile ONLY contains active skills and their topics. The "difficulty" on a topic represents the user's current assessment of it. 'Easy' or 'Medium' means they are still learning it.
 
             1.  **HIERARCHY OF PRIORITIES (MOST to LEAST important):**
-                - **A) WEEKLY MEGA BOSS:** If instructed, this is top priority.
-                - **B) RECENT CHAT:** The user's recent conversation reveals their immediate focus. This context is MORE IMPORTANT than their stored goals.
-                - **C) MAJOR GOALS (Exams/Projects):** Next highest priority. Generate quests that are direct, actionable steps towards these goals by targeting specific knowledge topics from the relevant skills.
-                - **D) SHORT-TERM GOALS (From User State):** Create quests aligned with their current 1-3 month objectives.
-                - **E) LOW-DIFFICULTY TOPICS & HIGH PRIORITY SKILLS:** After addressing higher priorities, create quests specifically for topics the user has marked as 'Easy' or 'Medium' difficulty, as this indicates they are currently learning them. Prioritize topics belonging to high-priority skills (4-5).
-                - **F) LONG-TERM GOALS & CORE MISSION:** If no other priorities exist, create quests that build foundational skills for their long-term vision.
+                - **A) GOOGLE CALENDAR (CRITICAL INTEL):** This is the highest priority. You MUST generate quests that are direct preparation for or follow-ups to these events.
+                - **B) WEEKLY MEGA BOSS:** If instructed, this is next highest priority.
+                - **C) RECENT CHAT:** The user's recent conversation reveals their immediate focus. This context is MORE IMPORTANT than their stored goals.
+                - **D) MAJOR GOALS (Exams/Projects):** Next highest priority. Generate quests that are direct, actionable steps towards these goals by targeting specific knowledge topics from the relevant skills.
+                - **E) SHORT-TERM GOALS (From User State):** Create quests aligned with their current 1-3 month objectives.
+                - **F) LOW-DIFFICULTY TOPICS & HIGH PRIORITY SKILLS:** After addressing higher priorities, create quests specifically for topics the user has marked as 'Easy' or 'Medium' difficulty, as this indicates they are currently learning them. Prioritize topics belonging to high-priority skills (4-5).
+                - **G) LONG-TERM GOALS & CORE MISSION:** If no other priorities exist, create quests that build foundational skills for their long-term vision.
 
             2.  **STRATEGIC QUEST DESIGN:**
                 - **Link to Topics:** Each quest MUST be linked to one or more \`topic_id\`s from the user's profile in the \`knowledgeTopics\` array. This is how the user's skills level up.
+                - **Source Tagging:** For each quest, set the \`source\` property. Use \`'google_calendar'\` for calendar events. Use \`'github'\` for GitHub activity. For all other generated quests based on goals or user state, use \`'ai_system'\`. This is mandatory.
                 - **Chained Mini-Projects:** For larger topics, create a 2 or 3-part quest chain by populating the \`chain\` object. Only generate the first part.
                 - **Boss Fights:** If a major exam is less than 3 days away, generate ONE "Boss Quest" flagged with "isBossQuest: true". This is different from the Weekly Mega Boss.
                 - **Deadlines & Penalties:** Every quest MUST have a \`deadlineHours\` property (integer, hours from now). Unless it is a Mystery Quest, it MUST also have a \`penalty\` object with \`type: 'xp'\` and an \`amount\` (integer, roughly 25% of the xp_reward).
@@ -120,6 +122,7 @@ export const generateDailyQuests = async (user: User, contextualData: { [key: st
                             isMystery: { type: Type.BOOLEAN },
                             isBossQuest: { type: Type.BOOLEAN },
                             isWeeklyBoss: { type: Type.BOOLEAN },
+                            source: { type: Type.STRING, enum: ['google_calendar', 'github', 'ai_system'] },
                             chain: { 
                                 type: Type.OBJECT,
                                 properties: {
@@ -152,6 +155,7 @@ export const generateDailyQuests = async (user: User, contextualData: { [key: st
             ...questData,
             id: `gemini-quest-${Date.now()}-${index}`,
             status: QuestStatus.Pending,
+            source: questData.source || 'ai_system',
         }));
     } catch (error) {
         handleApiError(error);
@@ -231,9 +235,9 @@ const tools: FunctionDeclaration[] = [
 ];
 
 // FIX: Completed the function implementation to make the API call and return a response object, resolving errors in App.tsx.
-export const getAiChatResponseAndActions = async (user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[]): Promise<{ text: string, functionCalls: any[] | undefined }> => {
+export const getAiChatResponseAndActions = async (apiKey: string, user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[]): Promise<{ text: string, functionCalls: any[] | undefined }> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
 
         const formattedHistory = history.map(msg => ({
@@ -281,9 +285,9 @@ export const getAiChatResponseAndActions = async (user: User, history: ChatMessa
 };
 
 // FIX: Implemented missing function to generate short text snippets for AI-assisted UI.
-export const generateShortText = async (prompt: string): Promise<string> => {
+export const generateShortText = async (apiKey: string, prompt: string): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Generate a very short, concise text based on this prompt. The response should be plain text, not JSON. PROMPT: "${prompt}"`,
@@ -298,9 +302,9 @@ export const generateShortText = async (prompt: string): Promise<string> => {
 export const devGenerateText = generateShortText;
 
 // FIX: Implemented missing function to generate knowledge topics for a skill.
-export const generateKnowledgeTopics = async (skill: Skill): Promise<string[]> => {
+export const generateKnowledgeTopics = async (apiKey: string, skill: Skill): Promise<string[]> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `
             Generate a list of 5-10 specific, beginner-friendly knowledge topics for the skill "${skill.name}".
             The topics should be actionable and represent concrete things to learn or practice.
@@ -331,9 +335,9 @@ export const generateKnowledgeTopics = async (skill: Skill): Promise<string[]> =
 };
 
 // FIX: Implemented missing function to break down a syllabus into knowledge topics.
-export const generateTopicsFromSyllabus = async (syllabus: string, skill: Skill, existingTopics: KnowledgeTopic[]): Promise<string[]> => {
+export const generateTopicsFromSyllabus = async (apiKey: string, syllabus: string, skill: Skill, existingTopics: KnowledgeTopic[]): Promise<string[]> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const existingTopicNames = existingTopics.map(t => t.name.toLowerCase());
         const prompt = `
             Analyze the following syllabus for the skill "${skill.name}":
@@ -371,9 +375,9 @@ export const generateTopicsFromSyllabus = async (syllabus: string, skill: Skill,
 };
 
 // FIX: Implemented missing function to generate major goals from a user prompt.
-export const generateMajorGoals = async (prompt: string, user: User, xpForNextSixLevels: number): Promise<Omit<MajorGoal, 'id'>[]> => {
+export const generateMajorGoals = async (apiKey: string, prompt: string, user: User, xpForNextSixLevels: number): Promise<Omit<MajorGoal, 'id'>[]> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
 
         const systemPrompt = `
@@ -425,9 +429,9 @@ export const generateMajorGoals = async (prompt: string, user: User, xpForNextSi
 };
 
 // FIX: Implemented missing function to generate story arcs.
-export const generateArc = async (prompt: string): Promise<Omit<Arc, 'id' | 'isGenerated'>> => {
+export const generateArc = async (apiKey: string, prompt: string): Promise<Omit<Arc, 'id' | 'isGenerated'>> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const systemPrompt = `
             Generate a story Arc for a real-life RPG app based on this user prompt: "${prompt}".
             An Arc is a high-level theme or event that affects the user's game, like a special event.
@@ -458,9 +462,9 @@ export const generateArc = async (prompt: string): Promise<Omit<Arc, 'id' | 'isG
 };
 
 // FIX: Implemented missing function to generate badges.
-export const generateBadge = async (description: string): Promise<Omit<Badge, 'id' | 'isGenerated'>> => {
+export const generateBadge = async (apiKey: string, description: string): Promise<Omit<Badge, 'id' | 'isGenerated'>> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const availableIcons = Object.keys(ICON_MAP).join(', ');
         const prompt = `
             Generate a badge for a real-life RPG app based on the following achievement description: "${description}".
@@ -490,9 +494,9 @@ export const generateBadge = async (description: string): Promise<Omit<Badge, 'i
 };
 
 // FIX: Implemented missing function to generate store items.
-export const generateStoreItem = async (prompt: string, user: User): Promise<Omit<StoreItem, 'id'>> => {
+export const generateStoreItem = async (apiKey: string, prompt: string, user: User): Promise<Omit<StoreItem, 'id'>> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const systemPrompt = `
             Design a new item for the store in a real-life RPG app based on this user prompt: "${prompt}".
             The user is level ${user.level_overall}.
@@ -536,9 +540,9 @@ export const generateStoreItem = async (prompt: string, user: User): Promise<Omi
 };
 
 // FIX: Implemented missing function to generate skill and topic recommendations.
-export const generateRecommendations = async (user: User, majorGoals: MajorGoal[]): Promise<AiRecommendations> => {
+export const generateRecommendations = async (apiKey: string, user: User, majorGoals: MajorGoal[]): Promise<AiRecommendations> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
         const prompt = `
             Analyze the user's profile and major goals to provide personalized recommendations for growth.

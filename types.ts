@@ -60,7 +60,7 @@ export interface Quest {
   };
   isBossQuest?: boolean;
   isWeeklyBoss?: boolean;
-  isPersonal?: boolean;
+  source?: 'google_calendar' | 'github' | 'user' | 'ai_chatbot' | 'ai_system';
 }
 
 export interface Skill {

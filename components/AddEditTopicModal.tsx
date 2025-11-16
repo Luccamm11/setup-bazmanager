@@ -10,9 +10,10 @@ interface AddEditTopicModalProps {
   topicToEdit: KnowledgeTopic | null;
   skills: Skill[];
   defaultSkillId?: string;
+  apiKey: string;
 }
 
-const AddEditTopicModal: React.FC<AddEditTopicModalProps> = ({ isOpen, onClose, onSave, topicToEdit, skills, defaultSkillId }) => {
+const AddEditTopicModal: React.FC<AddEditTopicModalProps> = ({ isOpen, onClose, onSave, topicToEdit, skills, defaultSkillId, apiKey }) => {
   const [name, setName] = useState('');
   const [skillId, setSkillId] = useState<string>('');
   const [difficulty, setDifficulty] = useState<TopicDifficulty>(TopicDifficulty.Easy);
@@ -66,6 +67,7 @@ const AddEditTopicModal: React.FC<AddEditTopicModalProps> = ({ isOpen, onClose, 
                     className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" 
                 />
                  <AiTextGenerator
+                    apiKey={apiKey}
                     context={`a knowledge topic name related to the skill "${skills.find(s => s.id === skillId)?.name || ''}"`}
                     onGenerated={setName}
                     className="absolute right-2 top-1/2 -translate-y-1/2"

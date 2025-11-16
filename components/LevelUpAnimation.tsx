@@ -285,7 +285,9 @@ const digitalRain = (ctx: CanvasRenderingContext2D, width: number, height: numbe
 
 const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const animationFrameId = useRef<number>();
+    // FIX: Changed useRef type to be nullable and initialized with null.
+    // Calling useRef<T>() with no argument implicitly initializes it with `undefined`, which is a type error if T is not assignable from `undefined`.
+    const animationFrameId = useRef<number | null>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;

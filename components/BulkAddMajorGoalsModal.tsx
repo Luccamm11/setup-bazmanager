@@ -12,6 +12,7 @@ interface BulkAddMajorGoalsModalProps {
   onSave: (goals: Omit<MajorGoal, 'id'>[]) => void;
   user: User;
   xpForNextSixLevels: number;
+  apiKey: string;
 }
 
 // FIX: Renamed interface.
@@ -20,7 +21,7 @@ interface GeneratedGoal extends Omit<MajorGoal, 'id'> {
 }
 
 // FIX: Renamed component.
-const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen, onClose, onSave, user, xpForNextSixLevels }) => {
+const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen, onClose, onSave, user, xpForNextSixLevels, apiKey }) => {
   const [manualInput, setManualInput] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [generatedGoals, setGeneratedGoals] = useState<GeneratedGoal[]>([]);
@@ -76,7 +77,7 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
     setError(null);
     setGeneratedGoals([]);
     try {
-        const goals = await generateMajorGoals(aiPrompt, user, xpForNextSixLevels);
+        const goals = await generateMajorGoals(apiKey, aiPrompt, user, xpForNextSixLevels);
         setGeneratedGoals(goals.map(g => ({ ...g, checked: true })));
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";

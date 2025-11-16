@@ -8,9 +8,10 @@ interface AddEditArcModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (arcData: Omit<Arc, 'id'>, isFromAi: boolean) => void;
+  apiKey: string;
 }
 
-const AddEditArcModal: React.FC<AddEditArcModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddEditArcModal: React.FC<AddEditArcModalProps> = ({ isOpen, onClose, onSave, apiKey }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'Exam' | 'Fitness' | 'Cyber Dungeon'>('Cyber Dungeon');
@@ -41,7 +42,7 @@ const AddEditArcModal: React.FC<AddEditArcModalProps> = ({ isOpen, onClose, onSa
     setIsGenerating(true);
     setError(null);
     try {
-      const generatedData = await generateArc(aiPrompt);
+      const generatedData = await generateArc(apiKey, aiPrompt);
       setTitle(generatedData.title);
       setDescription(generatedData.description);
       setType(generatedData.type);
@@ -103,14 +104,14 @@ const AddEditArcModal: React.FC<AddEditArcModalProps> = ({ isOpen, onClose, onSa
               <label className="block text-sm font-medium text-text-secondary mb-1">Title</label>
               <div className="relative">
                 <input type="text" value={title} onChange={e => setTitle(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary sm:text-sm pr-10" />
-                <AiTextGenerator context="a title for a story arc" onGenerated={setTitle} className="absolute right-2 top-1/2 -translate-y-1/2" />
+                <AiTextGenerator context="a title for a story arc" onGenerated={setTitle} className="absolute right-2 top-1/2 -translate-y-1/2" apiKey={apiKey} />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Description</label>
                <div className="relative">
                 <input type="text" value={description} onChange={e => setDescription(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary sm:text-sm pr-10" />
-                 <AiTextGenerator context="a short description for a story arc" onGenerated={setDescription} className="absolute right-2 top-1/2 -translate-y-1/2" />
+                 <AiTextGenerator context="a short description for a story arc" onGenerated={setDescription} className="absolute right-2 top-1/2 -translate-y-1/2" apiKey={apiKey} />
               </div>
             </div>
              <div>
@@ -125,7 +126,7 @@ const AddEditArcModal: React.FC<AddEditArcModalProps> = ({ isOpen, onClose, onSa
               <label className="block text-sm font-medium text-text-secondary mb-1">Effects (one per line)</label>
               <div className="relative">
                 <textarea value={effects} onChange={e => setEffects(e.target.value)} rows={3} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary sm:text-sm pr-10" />
-                 <AiTextGenerator context="a list of 2-3 thematic in-game effects for a story arc, separated by newlines" onGenerated={setEffects} className="absolute right-2 top-2" />
+                 <AiTextGenerator context="a list of 2-3 thematic in-game effects for a story arc, separated by newlines" onGenerated={setEffects} className="absolute right-2 top-2" apiKey={apiKey} />
               </div>
             </div>
           </form>

@@ -1,7 +1,8 @@
-import React from 'react';
-import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, LogOut, Upload } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, LogOut, Upload, RefreshCcw } from 'lucide-react';
 import { Integration, Arc, UserState } from '../types';
 import MyState from './MyState';
+import * as googleAuth from '../auth/googleAuth';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,11 +20,31 @@ interface SettingsModalProps {
   onUploadBackup: (file: File) => void;
   onResetData: () => void;
   onLogout: () => void;
-  username: string;
+  userProfile: googleAuth.UserProfile | null;
+  onProfilePictureChange: (dataUrl: string | null) => void;
+  apiKey: string;
+  onSaveApiKey: (key: string) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrations, onIntegrationToggle, allArcs, activeArcId, onSetActiveArc, onDeleteArc, onOpenArcModal, userState, onUpdateUserState, onDownloadBackup, onUploadBackup, onResetData, onLogout, username }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrations, onIntegrationToggle, allArcs, activeArcId, onSetActiveArc, onDeleteArc, onOpenArcModal, userState, onUpdateUserState, onDownloadBackup, onUploadBackup, onResetData, onLogout, userProfile, onProfilePictureChange, apiKey, onSaveApiKey }) => {
+  const [localApiKey, setLocalApiKey] = useState(apiKey);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   if (!isOpen) return null;
+  
+  const handleProfilePicClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onProfilePictureChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -49,9 +70,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
         <div>
           <h2 className="text-xl font-semibold mb-4 text-text-primary flex items-center"><UserIcon className="w-5 h-5 mr-3" />Account</h2>
           <div className="bg-background p-4 rounded-lg border border-border-color flex items-center justify-between">
-              <div>
-                  <p className="font-semibold text-text-primary">Logged in as: <span className="text-accent-primary">{username}</span></p>
-                  <p className="text-sm text-text-secondary">Your progress is being saved to this profile.</p>
+              <div className="flex items-center space-x-4">
+                  <div className="relative group">
+                    <img 
+                        src={userProfile?.picture} 
+                        alt="User profile" 
+                        className="w-16 h-16 rounded-full object-cover cursor-pointer"
+                        onClick={handleProfilePicClick}
+                    />
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-xs font-bold">Change</p>
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/png, image/jpeg, image/gif"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary">Logged in as: <span className="text-accent-primary">{userProfile?.name}</span></p>
+                    <p className="text-sm text-text-secondary">{userProfile?.email}</p>
+                    <button onClick={() => onProfilePictureChange(null)} className="text-xs text-accent-red hover:underline mt-1 flex items-center gap-1">
+                        <RefreshCcw size={12}/> Reset Picture
+                    </button>
+                  </div>
               </div>
               <button 
                   onClick={onLogout}
@@ -61,6 +105,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
                   <span>Logout</span>
               </button>
           </div>
+        </div>
+
+        {/* API Key Section */}
+        <div className="mt-8 pt-6 border-t border-border-color">
+           <h3 className="text-xl font-semibold text-text-primary mb-4 flex items-center"><Key className="w-5 h-5 mr-3" />API Key</h3>
+           <div className="bg-background p-4 rounded-lg border border-border-color">
+                 <p className="text-sm text-text-secondary mb-2">Provide your Google AI API key to power all AI features.</p>
+                 <div className="flex items-center space-x-2">
+                     <input
+                         type="password"
+                         value={localApiKey}
+                         onChange={(e) => setLocalApiKey(e.target.value)}
+                         placeholder="Your Google AI API key"
+                         className="flex-grow bg-primary border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                     />
+                     <button
+                         onClick={() => onSaveApiKey(localApiKey)}
+                         className="bg-accent-primary hover:bg-opacity-80 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                     >
+                         Save Key
+                     </button>
+                 </div>
+                 <p className="text-xs text-text-muted mt-2">
+                    Your key is stored only in your browser. Get one from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent-primary">Google AI Studio</a>.
+                 </p>
+           </div>
         </div>
 
         {/* Arc Management Section */}

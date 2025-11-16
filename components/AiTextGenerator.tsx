@@ -6,9 +6,10 @@ interface AiTextGeneratorProps {
   context: string;
   onGenerated: (text: string) => void;
   className?: string;
+  apiKey: string;
 }
 
-const AiTextGenerator: React.FC<AiTextGeneratorProps> = ({ context, onGenerated, className }) => {
+const AiTextGenerator: React.FC<AiTextGeneratorProps> = ({ context, onGenerated, className, apiKey }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +22,7 @@ const AiTextGenerator: React.FC<AiTextGeneratorProps> = ({ context, onGenerated,
     setError(null);
     try {
       const fullPrompt = `Generate ${context} based on the following idea: "${prompt}"`;
-      const result = await generateShortText(fullPrompt);
+      const result = await generateShortText(apiKey, fullPrompt);
       onGenerated(result);
       setIsOpen(false);
       setPrompt('');

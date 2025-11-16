@@ -9,9 +9,10 @@ interface AddStoreItemModalProps {
   onSave: (itemData: Omit<StoreItem, 'id'>) => void;
   itemToEdit: StoreItem | null;
   user: User;
+  apiKey: string;
 }
 
-const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit, user }) => {
+const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit, user, apiKey }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState(100);
@@ -63,7 +64,7 @@ const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, 
     setIsGenerating(true);
     setError(null);
     try {
-      const generatedData = await generateStoreItem(aiPrompt, user);
+      const generatedData = await generateStoreItem(apiKey, aiPrompt, user);
       setItemState(generatedData);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An error occurred during generation.');

@@ -22,7 +22,7 @@ export interface UserProfile {
 // --- Configuration ---
 // IMPORTANT: Replace with your actual Client ID and API Key from the Google Cloud Console.
 const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleusercontent.com';
-const API_KEY = process.env.API_KEY || '';
+// The API_KEY is now managed in App.tsx state and passed to services.
 // FIX: Added userinfo scopes to allow fetching the user's profile after authentication.
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
@@ -91,7 +91,7 @@ export const init = (
             // Initialize GAPI client
             window.gapi.load('client', async () => {
                 await window.gapi.client.init({
-                    apiKey: API_KEY,
+                    // API Key is no longer needed here for GCal, as it uses OAuth2 access token.
                     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                 });
                 gapiInited = true;

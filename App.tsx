@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
@@ -36,6 +39,7 @@ import AddEditBadgeModal from './components/AddEditBadgeModal';
 import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
 import LoginModal from './components/LoginModal';
+import EnterApiKeyModal from './components/EnterApiKeyModal';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -45,6 +49,7 @@ import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, Layout
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
+const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
 
 const migrateLoadedState = (loadedState: any): any => {
     if (!loadedState) return undefined;
@@ -188,6 +193,8 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('googleAiApiKey') || '');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   const [user, _setUser] = useState<User>(INITIAL_USER);
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
@@ -261,6 +268,13 @@ const App: React.FC = () => {
     setChatHistory(data.chatHistory || []);
   }, []);
 
+  const handleSaveApiKey = useCallback((newKey: string) => {
+    localStorage.setItem('googleAiApiKey', newKey);
+    setApiKey(newKey);
+    setIsApiKeyModalOpen(false);
+    setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: 'API Key has been saved.', timestamp: 'Just now', type: 'system' }, ...prev]);
+  }, []);
+
   const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile, connectIntegrations: boolean = true) => {
     setAuthError(null);
     const savedData = loadUser(profile.id);
@@ -271,6 +285,12 @@ const App: React.FC = () => {
         _setUser(newUser);
         setStateFromData({ user: newUser });
     }
+
+    const customPic = localStorage.getItem(`${PROFILE_PIC_PREFIX}${profile.id}`);
+    if (customPic) {
+      profile.picture = customPic;
+    }
+
     setUserProfile(profile);
     setIsAuthenticated(true);
     if (connectIntegrations) {
@@ -278,6 +298,22 @@ const App: React.FC = () => {
         setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: true } : i));
     }
   }, [setStateFromData]);
+
+  const handleProfilePictureChange = useCallback((dataUrl: string | null) => {
+    if (userProfile) {
+        if (dataUrl) {
+             localStorage.setItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`, dataUrl);
+             setUserProfile(prev => prev ? { ...prev, picture: dataUrl } : null);
+             setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: 'Profile picture updated.', timestamp: 'Just now', type: 'system' }, ...prev]);
+        } else {
+            // Reset to original Google picture
+            localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
+            // Re-fetch or re-set from an original source if available
+            // For now, we just reload to re-trigger the auth flow and get the original pic
+             window.location.reload();
+        }
+    }
+  }, [userProfile]);
 
 
   const handleLogout = useCallback(() => {
@@ -313,6 +349,12 @@ const App: React.FC = () => {
       }
     }
   }, [handleLoginSuccess, handleLogout]);
+
+  useEffect(() => {
+    if (isAuthenticated && !apiKey) {
+      setIsApiKeyModalOpen(true);
+    }
+  }, [isAuthenticated, apiKey]);
 
 
   useEffect(() => {
@@ -381,7 +423,9 @@ const App: React.FC = () => {
     if (window.confirm("Are you sure you want to delete all your progress? This action cannot be undone.")) {
       if (userProfile?.id) {
         localStorage.removeItem(`${SAVE_DATA_PREFIX}${userProfile.id}`);
+        localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
       }
+      localStorage.removeItem('googleAiApiKey');
       window.location.reload();
     }
   }, [userProfile]);
@@ -596,7 +640,7 @@ const App: React.FC = () => {
           contextualData['GitHub'] = formatGithubActivityForPrompt(await getRecentActivity());
       }
       
-      const newQuestsData = await generateDailyQuests(user, contextualData, chatHistory, shouldGenerateWeeklyBoss);
+      const newQuestsData = await generateDailyQuests(apiKey, user, contextualData, chatHistory, shouldGenerateWeeklyBoss);
 
       const nowWithOffset = getCurrentDate();
 
@@ -628,7 +672,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingQuests(false);
     }
-  }, [user, integrations, chatHistory, simulateApiError, getCurrentDate, getFutureDateWithOffset, setUser]);
+  }, [apiKey, user, integrations, chatHistory, simulateApiError, getCurrentDate, getFutureDateWithOffset, setUser]);
   
  const handleGrantReward = useCallback((
     baseXp: number,
@@ -991,7 +1035,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setIsChatbotLoading(true);
 
     try {
-        const { text, functionCalls } = await getAiChatResponseAndActions(user, newHistory, message, quests, majorGoals, storeItems);
+        const { text, functionCalls } = await getAiChatResponseAndActions(apiKey, user, newHistory, message, quests, majorGoals, storeItems);
         
         if (functionCalls) {
             for (const call of functionCalls) {
@@ -999,7 +1043,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                 switch(call.name) {
                     case 'addQuest':
                         const questArgs = args as Partial<Quest>;
-                        const newQuestData: Omit<Quest, 'id' | 'status'> = {
+                        const newQuestData: Omit<Quest, 'id' | 'status' | 'source'> = {
                           title: questArgs.title || 'AI Generated Quest',
                           description: questArgs.description || '',
                           realm: questArgs.realm || Realm.Mind,
@@ -1008,7 +1052,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                           credit_reward: questArgs.credit_reward || 10,
                           difficulty: questArgs.difficulty || Difficulty.Easy,
                           duration_est_min: questArgs.duration_est_min || 30,
-                          isPersonal: true,
                         };
                         handleAddPersonalQuest(newQuestData);
                         break;
@@ -1074,7 +1117,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     } finally {
         setIsChatbotLoading(false);
     }
-  }, [chatHistory, user, quests, majorGoals, storeItems]);
+  }, [apiKey, chatHistory, user, quests, majorGoals, storeItems]);
 
   const handleIntegrationToggle = useCallback((id: string) => {
     setIntegrations(prev => prev.map(i => i.id === id ? { ...i, connected: !i.connected } : i));
@@ -1091,13 +1134,13 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     }
   }, [allArcs, setUser]);
 
-  const handleAddPersonalQuest = useCallback((questData: Omit<Quest, 'id' | 'status' | 'isPersonal'>) => {
+  const handleAddPersonalQuest = useCallback((questData: Omit<Quest, 'id' | 'status' | 'source'>) => {
     const deadline = getFutureDateWithOffset(getCurrentDate(), 24);
     const newQuest: Quest = {
       ...questData,
       id: `personal-${Date.now()}`,
       status: QuestStatus.Pending,
-      isPersonal: true,
+      source: 'user',
       deadline: deadline.toISOString(),
       penalty: { type: 'xp', amount: Math.max(1, Math.floor(questData.xp_reward * 0.25)) },
     };
@@ -1203,14 +1246,14 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
       try {
           const existingTopics = (Object.values(user.knowledgeBase) as KnowledgeTopic[]).filter((t) => t.skillId === skill.id);
-          const topics = await generateTopicsFromSyllabus(goal.syllabus, skill, existingTopics);
+          const topics = await generateTopicsFromSyllabus(apiKey, goal.syllabus, skill, existingTopics);
           setGeneratedTopics(topics);
       } catch (e) {
           console.error("Syllabus Breakdown Error:", e);
       } finally {
           setIsGeneratingTopics(false);
       }
-  }, [user.skill_tree, user.knowledgeBase]);
+  }, [apiKey, user.skill_tree, user.knowledgeBase]);
 
   const handleSaveArc = useCallback((arcData: Omit<Arc, 'id'>, isFromAi: boolean) => {
       const newArc: Arc = {
@@ -1321,14 +1364,14 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setIsGeneratingRecommendations(true);
     setAiRecommendations(null);
     try {
-      const recs = await generateRecommendations(user, majorGoals);
+      const recs = await generateRecommendations(apiKey, user, majorGoals);
       setAiRecommendations(recs);
     } catch(e) {
       console.error(e);
     } finally {
       setIsGeneratingRecommendations(false);
     }
-  }, [user, majorGoals]);
+  }, [apiKey, user, majorGoals]);
 
   const handleSaveRecommendations = useCallback((
     selectedSkills: { name: string; realm: Realm }[],
@@ -1371,7 +1414,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     
     const questsToRemoveIds = new Set<string>();
     const finalQuests = updatedQuests.filter(q => {
-        if (q.knowledgeTopics.length === 0 && !q.isPersonal) {
+        if (q.knowledgeTopics.length === 0 && q.source !== 'user') {
             questsToRemoveIds.add(q.id);
             return false;
         }
@@ -1411,7 +1454,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
     const questsToRemoveIds = new Set<string>();
     const finalQuests = updatedQuests.filter(q => {
-        if (q.knowledgeTopics.length === 0 && !q.isPersonal) {
+        if (q.knowledgeTopics.length === 0 && q.source !== 'user') {
             questsToRemoveIds.add(q.id);
             return false;
         }
@@ -1525,6 +1568,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         isMystery: type === 'mystery',
         deadline: deadline.toISOString(),
         penalty: { type: 'xp', amount: 15 },
+        source: 'ai_system',
     };
     setQuests(prev => [newQuest, ...prev]);
   };
@@ -1586,6 +1630,10 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     return <LoginModal onLogin={googleAuth.signIn} error={authError} />;
   }
 
+  if (isApiKeyModalOpen) {
+    return <EnterApiKeyModal onSave={handleSaveApiKey} />;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <Header user={user} userProfile={userProfile} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
@@ -1603,17 +1651,17 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         </nav>
       </footer>
 
-      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} onLogout={handleLogout} username={userProfile?.name || ''} />}
-      {isAddQuestModalOpen && <AddQuestModal isOpen={isAddQuestModalOpen} onClose={() => setIsAddQuestModalOpen(false)} onAddQuest={handleAddPersonalQuest} />}
-      {isSkillModalOpen && <AddEditSkillModal isOpen={isSkillModalOpen} onClose={() => { setIsSkillModalOpen(false); setEditingSkill(null); }} onSave={handleSaveSkill} skillToEdit={editingSkill} />}
-      {isTopicModalOpen && <AddEditTopicModal isOpen={isTopicModalOpen} onClose={() => { setIsTopicModalOpen(false); setEditingTopic(null); setDefaultSkillForTopic(undefined); }} onSave={handleSaveTopic} topicToEdit={editingTopic} skills={Object.values(user.skill_tree)} defaultSkillId={defaultSkillForTopic} />}
-      {isBulkAddModalOpen && <AddBulkTopicsModal isOpen={isBulkAddModalOpen} onClose={() => { setIsBulkAddModalOpen(false); setSkillForBulkAdd(null); }} skill={skillForBulkAdd} onSaveTopics={handleSaveBulkTopics} onGenerateTopics={generateKnowledgeTopics} />}
-      {isMajorGoalModalOpen && <AddEditMajorGoalModal isOpen={isMajorGoalModalOpen} onClose={() => { setIsMajorGoalModalOpen(false); setEditingMajorGoal(null); }} onSave={handleSaveMajorGoal} goalToEdit={editingMajorGoal} skills={Object.values(user.skill_tree)} />}
-      {isBulkGoalModalOpen && <BulkAddMajorGoalsModal isOpen={isBulkGoalModalOpen} onClose={() => setIsBulkGoalModalOpen(false)} onSave={handleSaveBulkMajorGoals} user={user} xpForNextSixLevels={calculateXpForNextNLevels(user.level_overall, 6)} />}
+      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} onLogout={handleLogout} userProfile={userProfile} onProfilePictureChange={handleProfilePictureChange} apiKey={apiKey} onSaveApiKey={handleSaveApiKey} />}
+      {isAddQuestModalOpen && <AddQuestModal isOpen={isAddQuestModalOpen} onClose={() => setIsAddQuestModalOpen(false)} onAddQuest={handleAddPersonalQuest} apiKey={apiKey} />}
+      {isSkillModalOpen && <AddEditSkillModal isOpen={isSkillModalOpen} onClose={() => { setIsSkillModalOpen(false); setEditingSkill(null); }} onSave={handleSaveSkill} skillToEdit={editingSkill} apiKey={apiKey} />}
+      {isTopicModalOpen && <AddEditTopicModal isOpen={isTopicModalOpen} onClose={() => { setIsTopicModalOpen(false); setEditingTopic(null); setDefaultSkillForTopic(undefined); }} onSave={handleSaveTopic} topicToEdit={editingTopic} skills={Object.values(user.skill_tree)} defaultSkillId={defaultSkillForTopic} apiKey={apiKey} />}
+      {isBulkAddModalOpen && <AddBulkTopicsModal isOpen={isBulkAddModalOpen} onClose={() => { setIsBulkAddModalOpen(false); setSkillForBulkAdd(null); }} skill={skillForBulkAdd} onSaveTopics={handleSaveBulkTopics} onGenerateTopics={(skill) => generateKnowledgeTopics(apiKey, skill)} />}
+      {isMajorGoalModalOpen && <AddEditMajorGoalModal isOpen={isMajorGoalModalOpen} onClose={() => { setIsMajorGoalModalOpen(false); setEditingMajorGoal(null); }} onSave={handleSaveMajorGoal} goalToEdit={editingMajorGoal} skills={Object.values(user.skill_tree)} apiKey={apiKey} />}
+      {isBulkGoalModalOpen && <BulkAddMajorGoalsModal isOpen={isBulkGoalModalOpen} onClose={() => setIsBulkGoalModalOpen(false)} onSave={handleSaveBulkMajorGoals} user={user} xpForNextSixLevels={calculateXpForNextNLevels(user.level_overall, 6)} apiKey={apiKey} />}
       {isBreakdownModalOpen && <SyllabusBreakdownModal isOpen={isBreakdownModalOpen} onClose={() => setIsBreakdownModalOpen(false)} goal={goalForBreakdown} isLoading={isGeneratingTopics} generatedTopics={generatedTopics} onConfirm={(selected) => handleSaveBulkTopics(goalForBreakdown!.skillId!, selected)} />}
-      {isArcModalOpen && <AddEditArcModal isOpen={isArcModalOpen} onClose={() => setIsArcModalOpen(false)} onSave={handleSaveArc} />}
-      {isBadgeModalOpen && <AddEditBadgeModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} onSave={handleSaveBadge} badgeToEdit={editingBadge} onGenerateBadge={generateBadge} />}
-      {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} />}
+      {isArcModalOpen && <AddEditArcModal isOpen={isArcModalOpen} onClose={() => setIsArcModalOpen(false)} onSave={handleSaveArc} apiKey={apiKey} />}
+      {isBadgeModalOpen && <AddEditBadgeModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} onSave={handleSaveBadge} badgeToEdit={editingBadge} onGenerateBadge={(prompt) => generateBadge(apiKey, prompt)} />}
+      {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} apiKey={apiKey} />}
       {isRecommendationsModalOpen && <RecommendationsModal isOpen={isRecommendationsModalOpen} onClose={() => setIsRecommendationsModalOpen(false)} recommendations={aiRecommendations} onSave={handleSaveRecommendations} isLoading={isGeneratingRecommendations} userSkills={user.skill_tree} />}
 
       {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} />}
@@ -1635,7 +1683,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         onSetStreak={handleSetStreak}
         onAddGems={handleAddGems}
         onAddQuest={handleAddDevQuest}
-        onDevGenerateText={devGenerateText}
+        onDevGenerateText={(prompt) => devGenerateText(apiKey, prompt)}
         userGoal={user.state.longTermGoals}
         majorGoals={majorGoals}
         timeOffsetInHours={timeOffsetInHours}

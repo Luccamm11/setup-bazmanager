@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Quest, Realm, Difficulty } from '../types';
-import { CheckCircle, Star, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Star, DollarSign, Clock, AlertTriangle, Calendar, User as UserIcon, Bot, GitCommit, Cpu } from 'lucide-react';
 
 interface QuestCardProps {
   quest: Quest;
@@ -67,6 +67,16 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
       cardClasses += ' quest-fail-animation';
   }
 
+  const sourceConfig = {
+    google_calendar: { icon: <Calendar size={16} />, text: 'From Google Calendar', color: 'text-blue-400' },
+    github: { icon: <GitCommit size={16} />, text: 'From GitHub Activity', color: 'text-gray-400' },
+    user: { icon: <UserIcon size={16} />, text: 'Personal Quest', color: 'text-green-400' },
+    ai_chatbot: { icon: <Bot size={16} />, text: 'From AI Chat', color: 'text-purple-400' },
+    ai_system: { icon: <Cpu size={16} />, text: 'System Generated', color: 'text-gray-500' },
+  };
+
+  const sourceInfo = quest.source ? sourceConfig[quest.source] : null;
+
   return (
     <>
     <style>{`
@@ -99,7 +109,14 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
     <div className={cardClasses}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div className="flex-grow">
-          <h3 className="text-lg font-bold text-text-primary">{quest.title}</h3>
+          <div className="flex items-center space-x-2">
+             <h3 className="text-lg font-bold text-text-primary">{quest.title}</h3>
+             {sourceInfo && (
+                <div title={sourceInfo.text} className={sourceInfo.color}>
+                    {sourceInfo.icon}
+                </div>
+             )}
+          </div>
           <p className="text-sm text-text-secondary mt-1">{quest.description}</p>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-text-primary">

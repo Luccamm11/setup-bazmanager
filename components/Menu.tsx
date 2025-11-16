@@ -8,7 +8,8 @@ interface MenuProps {
 }
 
 const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
-  const menuItems = [
+  // FIX: Explicitly typed the array to ensure item.view is of type `View`, not `string`.
+  const menuItems: { view: View, label: string, icon: React.ElementType, description: string }[] = [
     { view: 'store', label: 'Store', icon: Store, description: 'Acquire buffs and rewards.' },
     { view: 'staking', label: 'Staking', icon: Landmark, description: 'Stake credits for passive boosts.' },
     { view: 'analytics', label: 'Analytics', icon: BarChart2, description: 'Track your progress.' },

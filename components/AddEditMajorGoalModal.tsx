@@ -11,10 +11,11 @@ interface AddEditMajorGoalModalProps {
   onSave: (goalData: Omit<MajorGoal, 'id'>) => void;
   goalToEdit: MajorGoal | null;
   skills: Skill[];
+  apiKey: string;
 }
 
 // FIX: Renamed component for clarity.
-const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, onClose, onSave, goalToEdit, skills }) => {
+const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, onClose, onSave, goalToEdit, skills, apiKey }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'Siege' | 'Forge' | 'Gauntlet'>('Forge');
@@ -88,6 +89,7 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
              <div className="relative">
                 <input type="text" id="challenge-title" value={title} onChange={e => setTitle(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm pr-10" />
                 <AiTextGenerator
+                    apiKey={apiKey}
                     context="a title for a major goal"
                     onGenerated={setTitle}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
@@ -99,6 +101,7 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
             <div className="relative">
                 <textarea id="challenge-description" value={description} onChange={e => setDescription(e.target.value)} rows={2} className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm pr-10" />
                  <AiTextGenerator
+                    apiKey={apiKey}
                     context="a short description for a major goal"
                     onGenerated={setDescription}
                     className="absolute right-2 top-2"

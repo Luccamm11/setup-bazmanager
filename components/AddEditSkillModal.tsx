@@ -8,9 +8,10 @@ interface AddEditSkillModalProps {
   onClose: () => void;
   onSave: (skillData: { id?: string; name: string; realm: Realm }) => void;
   skillToEdit: Skill | null;
+  apiKey: string;
 }
 
-const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, onSave, skillToEdit }) => {
+const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, onSave, skillToEdit, apiKey }) => {
   const [name, setName] = useState('');
   const [realm, setRealm] = useState<Realm>(Realm.Mind);
 
@@ -57,6 +58,7 @@ const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, 
                     className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" 
                 />
                 <AiTextGenerator
+                    apiKey={apiKey}
                     context="a name for a new skill"
                     onGenerated={setName}
                     className="absolute right-2 top-1/2 -translate-y-1/2"

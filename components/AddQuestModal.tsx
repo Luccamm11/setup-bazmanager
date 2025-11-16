@@ -6,10 +6,11 @@ import AiTextGenerator from './AiTextGenerator';
 interface AddQuestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddQuest: (questData: Omit<Quest, 'id' | 'status' | 'isPersonal'>) => void;
+  onAddQuest: (questData: Omit<Quest, 'id' | 'status' | 'source'>) => void;
+  apiKey: string;
 }
 
-const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQuest }) => {
+const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQuest, apiKey }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [realm, setRealm] = useState<Realm>(Realm.Mind);
@@ -51,6 +52,7 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
             <div className="relative">
                 <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" />
                 <AiTextGenerator
+                    apiKey={apiKey}
                     context="a title for a personal quest"
                     onGenerated={setTitle}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
@@ -62,6 +64,7 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
             <div className="relative">
                 <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" />
                  <AiTextGenerator
+                    apiKey={apiKey}
                     context="a short description for a personal quest"
                     onGenerated={setDescription}
                     className="absolute right-2 top-2"
