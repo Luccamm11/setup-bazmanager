@@ -1,5 +1,3 @@
-
-
 // This file handles the entire Google Sign-In and API client flow.
 // It uses Google Identity Services (GIS) for Web.
 
@@ -181,4 +179,11 @@ export const getGapiClient = (): Promise<any> => {
         };
         checkGapi();
     });
+};
+
+/**
+ * Returns the current access token.
+ */
+export const getAccessToken = (): string | null => {
+    return accessToken;
 };

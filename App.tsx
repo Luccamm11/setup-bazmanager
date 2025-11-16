@@ -347,6 +347,7 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(() => {
     googleAuth.signOut();
+    driveService.clearCache(); // Clear Drive file ID cache
     setIsAuthenticated(false);
     setUserProfile(null);
     setStateFromData({}); // Reset state to initial to avoid showing previous user's data

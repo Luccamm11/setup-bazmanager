@@ -93,20 +93,34 @@ export const saveDataToDrive = async (data: any): Promise<boolean> => {
         return false;
     }
 
-    const gapi = await googleAuth.getGapiClient();
     try {
-        await gapi.client.request({
-            path: `/upload/drive/v3/files/${fileId}`,
+        const accessToken = googleAuth.getAccessToken();
+        if (!accessToken) {
+            throw new Error("User not authenticated or token is missing.");
+        }
+
+        const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
             method: 'PATCH',
-            params: { uploadType: 'media' },
             headers: {
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
         });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(errorBody.error.message || 'Failed to save to Google Drive');
+        }
+        
         return true;
     } catch (error) {
         console.error("Error saving data to Drive:", error);
         return false;
     }
+};
+
+// Clears the cached file ID on logout.
+export const clearCache = () => {
+    saveFileId = null;
 };
