@@ -38,12 +38,15 @@ import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, gene
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import * as googleAuth from './auth/googleAuth';
-import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
+import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, Loader2 } from 'lucide-react';
 
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
+const LAST_USER_ID_KEY = 'lastLoggedInUserId';
+const USER_PROFILE_PREFIX = 'levelUpAwakeningUserProfile_';
+
 
 const migrateLoadedState = (loadedState: any): any => {
     if (!loadedState) return undefined;
@@ -182,6 +185,7 @@ const recalculateSkillTree = (
 
 
 const App: React.FC = () => {
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
   const [originalProfilePicture, setOriginalProfilePicture] = useState<string | null>(null);
@@ -246,6 +250,8 @@ const App: React.FC = () => {
   const [simulateApiError, setSimulateApiError] = useState(false);
   const [timeOffsetInHours, setTimeOffsetInHours] = useState(0);
   
+  type StoredUserProfile = googleAuth.UserProfile & { originalPicture?: string };
+
   const setStateFromData = useCallback((data: any) => {
     _setUser(data.user || INITIAL_USER);
     setQuests(data.quests || INITIAL_QUESTS);
@@ -297,9 +303,12 @@ const App: React.FC = () => {
     }
 
     setUserProfile(finalProfile);
-    // This is the most critical part: set isAuthenticated to true as soon as the user's identity is verified.
-    // This stops the login loop, regardless of whether API authorization succeeds.
     setIsAuthenticated(true);
+    
+    // Save session to local storage for persistence
+    localStorage.setItem(LAST_USER_ID_KEY, profile.id);
+    const profileToSave: StoredUserProfile = { ...finalProfile, originalPicture: profile.picture };
+    localStorage.setItem(`${USER_PROFILE_PREFIX}${profile.id}`, JSON.stringify(profileToSave));
 
     const isAiStudio = !!(window as any).aistudio;
     
@@ -320,53 +329,85 @@ const App: React.FC = () => {
     if (userProfile) {
         if (dataUrl) {
              localStorage.setItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`, dataUrl);
-             setUserProfile(prev => prev ? { ...prev, picture: dataUrl } : null);
-             setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: 'Profile picture updated.', timestamp: 'Just now', type: 'system' }, ...prev]);
         } else {
-            // Reset to original Google picture
             localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
-            if (originalProfilePicture) {
-                setUserProfile(prev => prev ? { ...prev, picture: originalProfilePicture } : null);
-                setSystemMessages(prev => [{ id: `pfp-reset-${Date.now()}`, text: 'Profile picture reset to Google default.', timestamp: 'Just now', type: 'system' }, ...prev]);
-            }
         }
+        
+        const newProfile = { ...userProfile };
+        newProfile.picture = dataUrl || originalProfilePicture || '';
+        setUserProfile(newProfile);
+        
+        // Update the full profile object in storage to persist picture changes
+        const profileToSave: StoredUserProfile = { ...newProfile, originalPicture: originalProfilePicture || userProfile.picture };
+        localStorage.setItem(`${USER_PROFILE_PREFIX}${userProfile.id}`, JSON.stringify(profileToSave));
+
+        setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
     }
   }, [userProfile, originalProfilePicture]);
 
 
   const handleLogout = useCallback(() => {
+    const userId = userProfile?.id;
     googleAuth.signOut();
     setIsAuthenticated(false);
     setUserProfile(null);
+    
+    // Clear session from local storage
+    if (userId) {
+        localStorage.removeItem(LAST_USER_ID_KEY);
+        localStorage.removeItem(`${USER_PROFILE_PREFIX}${userId}`);
+        localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userId}`);
+    }
+
     setStateFromData({}); // Reset state to initial to avoid showing previous user's data
-  }, [setStateFromData]);
+  }, [setStateFromData, userProfile]);
   
   useEffect(() => {
-    const isAiStudio = !!(window as any).aistudio;
+    const authCheck = () => {
+      const isAiStudio = !!(window as any).aistudio;
 
-    if (isAiStudio) {
-      // In AI Studio, bypass Google Sign-In entirely.
-      const mockProfile: googleAuth.UserProfile = {
-        id: 'aistudio_user',
-        name: 'AI Studio User',
-        email: 'aistudio@example.com',
-        picture: 'https://www.gstatic.com/images/branding/product/2x/google_for_developers_logomark_color_192dp.png',
-      };
-      // Call login success but signal that API integrations are not available.
-      handleLoginSuccess(mockProfile, false);
-    } else {
-      // Standard browser authentication flow.
+      if (isAiStudio) {
+        const mockProfile: googleAuth.UserProfile = {
+          id: 'aistudio_user',
+          name: 'AI Studio User',
+          email: 'aistudio@example.com',
+          picture: 'https://www.gstatic.com/images/branding/product/2x/google_for_developers_logomark_color_192dp.png',
+        };
+        handleLoginSuccess(mockProfile, false);
+        setIsAuthLoading(false);
+        return;
+      }
+
       try {
+        const lastUserId = localStorage.getItem(LAST_USER_ID_KEY);
+        if (lastUserId) {
+          const savedProfileStr = localStorage.getItem(`${USER_PROFILE_PREFIX}${lastUserId}`);
+          const localData = loadUser(lastUserId);
+
+          if (savedProfileStr && localData) {
+            const savedProfile = JSON.parse(savedProfileStr) as StoredUserProfile;
+            setStateFromData(localData);
+            setUserProfile(savedProfile);
+            setOriginalProfilePicture(savedProfile.originalPicture);
+            setIsAuthenticated(true);
+          }
+        }
+        
+        // Always initialize Google Auth to handle silent sign-in or prompt for login.
         googleAuth.init(handleLoginSuccess, handleLogout);
       } catch (error) {
-        if (error instanceof Error) {
-            setAuthError(error.message);
-        } else {
-            setAuthError("An unknown authentication error occurred.");
-        }
+        const message = error instanceof Error ? error.message : "An unknown authentication error occurred.";
+        setAuthError(message);
+        localStorage.removeItem(LAST_USER_ID_KEY);
+      } finally {
+        setIsAuthLoading(false);
       }
-    }
-  }, [handleLoginSuccess, handleLogout]);
+    };
+
+    authCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     if (isAuthenticated && !apiKey) {
@@ -1682,6 +1723,14 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       { view: 'more', label: 'More', icon: MoreHorizontal },
   ];
   
+  if (isAuthLoading) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-accent-primary" />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <LoginModal onRestoreFromFile={handleRestoreFromFile} error={authError} />;
   }
