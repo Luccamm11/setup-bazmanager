@@ -1,9 +1,9 @@
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 // FIX: Imported MajorGoal type to resolve definition errors.
-import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus } from './types';
+import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest } from './types';
 // FIX: Imported INITIAL_MAJOR_GOALS constant to resolve definition errors.
-import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill } from './constants';
+import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill, INITIAL_JOURNAL_ENTRIES } from './constants';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SkillTree from './components/SkillTree';
@@ -20,6 +20,8 @@ import Chatbot from './components/Chatbot';
 import Badges from './components/Badges';
 import SystemLog from './components/SystemLog';
 import Menu from './components/Menu';
+import Journal from './components/Journal';
+import Timer from './components/Timer';
 import AddQuestModal from './components/AddQuestModal';
 import AddEditSkillModal from './components/AddEditSkillModal';
 import AddEditTopicModal from './components/AddEditTopicModal';
@@ -34,13 +36,13 @@ import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
 import LoginModal from './components/LoginModal';
 import EnterApiKeyModal from './components/EnterApiKeyModal';
-import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations } from './services/geminiService';
+import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import * as googleAuth from './auth/googleAuth';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, Loader2 } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges';
+type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -61,6 +63,7 @@ const migrateLoadedState = (loadedState: any): any => {
         unlockedBadges: [],
         inventory: [],
         stakedBuffs: {},
+        activeTimedQuest: null,
     };
 
     const migratedUser = { ...defaults, ...user };
@@ -198,6 +201,7 @@ const App: React.FC = () => {
   const [user, _setUser] = useState<User>(INITIAL_USER);
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
   const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(INITIAL_STORY_LOG);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(INITIAL_WEEKLY_PROGRESS);
   const [activityLog, setActivityLog] = useState<ActivityData[]>(INITIAL_ACTIVITY_DATA);
   const [systemMessages, setSystemMessages] = useState<SystemMessage[]>(INITIAL_SYSTEM_MESSAGES);
@@ -256,6 +260,7 @@ const App: React.FC = () => {
     _setUser(data.user || INITIAL_USER);
     setQuests(data.quests || INITIAL_QUESTS);
     setStoryLog(data.storyLog || INITIAL_STORY_LOG);
+    setJournalEntries(data.journalEntries || INITIAL_JOURNAL_ENTRIES);
     setWeeklyProgress(data.weeklyProgress || INITIAL_WEEKLY_PROGRESS);
     setActivityLog(data.activityLog || INITIAL_ACTIVITY_DATA);
     setSystemMessages(data.systemMessages || INITIAL_SYSTEM_MESSAGES);
@@ -422,7 +427,7 @@ const App: React.FC = () => {
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
         integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
-        lastLootboxClaim, chatHistory,
+        lastLootboxClaim, chatHistory, journalEntries,
     };
 
     // Debounce local save
@@ -443,7 +448,7 @@ const App: React.FC = () => {
   }, [
     userProfile, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
-    lastLootboxClaim, chatHistory
+    lastLootboxClaim, chatHistory, journalEntries
   ]);
   
   useEffect(() => {
@@ -1177,6 +1182,108 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     }
   }, [apiKey, chatHistory, user, quests, majorGoals, storeItems]);
 
+  const handleJournalSubmit = useCallback(async (goalId: string, reflection: string) => {
+    const goal = user.completedMajorGoals?.find(g => g.id === goalId);
+    if (!goal) return;
+
+    setIsChatbotLoading(true);
+
+    try {
+      // 1. Grant journaling XP
+      handleGrantReward(25, 0, Realm.Spirit, 'journal-entry');
+
+      // 2. Generate checklist quests
+      const checklistItems = await generateJournalChecklist(apiKey, reflection, goal, user);
+      
+      const newQuests: Quest[] = checklistItems.map((item, index) => ({
+        ...item,
+        id: `journal-quest-${Date.now()}-${index}`,
+        status: QuestStatus.Pending,
+        source: 'ai_system',
+        difficulty: Difficulty.Easy, // Journal quests are simple fix-its
+        credit_reward: 5,
+        duration_est_min: 15,
+        knowledgeTopics: [],
+      }));
+
+      // 3. Create journal entry
+      const newJournalEntry: JournalEntry = {
+        id: `journal-${Date.now()}`,
+        majorGoalId: goal.id,
+        majorGoalTitle: goal.title,
+        reflectionText: reflection,
+        generatedChecklistQuestIds: newQuests.map(q => q.id),
+        timestamp: new Date().toISOString(),
+      };
+
+      // 4. Update state
+      setQuests(prev => [...prev, ...newQuests]);
+      setJournalEntries(prev => [...prev, newJournalEntry]);
+      setSystemMessages(prev => [{id: `journal-ok-${Date.now()}`, text: `Journal entry logged for "${goal.title}". Improvement plan generated.`, timestamp: 'Just now', type: 'system'}, ...prev]);
+
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+      setSystemMessages(prev => [{id: `journal-err-${Date.now()}`, text: `Journaling Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+    } finally {
+      setIsChatbotLoading(false);
+    }
+  }, [apiKey, user, handleGrantReward]);
+
+  const handleStartTimedQuest = useCallback((title: string, realm: Realm, estimatedMinutes: number) => {
+    const newTimedQuest: ActiveTimedQuest = {
+        title,
+        realm,
+        estimatedMinutes,
+        startTime: new Date().toISOString(),
+    };
+    setUser(prev => ({ ...prev, activeTimedQuest: newTimedQuest }));
+    setView('timer');
+    setSystemMessages(prev => [{
+        id: `timer-start-${Date.now()}`,
+        text: `Timed quest started: "${title}". Estimated time: ${estimatedMinutes} minutes.`,
+        timestamp: 'Just now',
+        type: 'info'
+    }, ...prev]);
+  }, [setUser]);
+
+  const handleCompleteTimedQuest = useCallback(() => {
+    const activeQuest = user.activeTimedQuest;
+    if (!activeQuest) return;
+
+    const startTime = new Date(activeQuest.startTime).getTime();
+    const endTime = Date.now();
+    const elapsedSeconds = Math.floor((endTime - startTime) / 1000);
+    const elapsedMinutes = elapsedSeconds / 60;
+    
+    const baseXp = Math.floor(activeQuest.estimatedMinutes * 1.5);
+    const baseCredits = Math.floor(activeQuest.estimatedMinutes * 0.5);
+
+    let bonusXp = 0;
+    let bonusCredits = 0;
+    let bonusMessage = '';
+
+    if (elapsedMinutes <= activeQuest.estimatedMinutes) {
+        const timeSavedRatio = (activeQuest.estimatedMinutes - elapsedMinutes) / activeQuest.estimatedMinutes;
+        const bonusPercentage = Math.min(timeSavedRatio, 0.5); // Cap bonus at 50%
+        bonusXp = Math.floor(baseXp * bonusPercentage);
+        bonusCredits = Math.floor(baseCredits * bonusPercentage);
+        bonusMessage = ` Time bonus: +${bonusXp} XP, +${bonusCredits} Credits!`;
+    }
+    
+    handleGrantReward(baseXp + bonusXp, baseCredits + bonusCredits, activeQuest.realm, 'timed-quest');
+
+    setSystemMessages(prev => [{
+        id: `timer-complete-${Date.now()}`,
+        text: `Timed quest "${activeQuest.title}" completed in ${Math.round(elapsedMinutes)}m. Reward: +${baseXp + bonusXp} XP, +${baseCredits + bonusCredits} Credits.${bonusMessage}`,
+        timestamp: 'Just now',
+        type: 'reward'
+    }, ...prev]);
+    
+    setUser(prev => ({ ...prev, activeTimedQuest: null }));
+    setView('dashboard');
+
+  }, [user.activeTimedQuest, setUser, handleGrantReward]);
+
   const handleIntegrationToggle = useCallback((id: string) => {
     setIntegrations(prev => prev.map(i => i.id === id ? { ...i, connected: !i.connected } : i));
   }, []);
@@ -1370,7 +1477,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const backupData = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
         integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
-        lastLootboxClaim, chatHistory,
+        lastLootboxClaim, chatHistory, journalEntries,
     };
     const jsonString = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
@@ -1381,7 +1488,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     a.click();
     URL.revokeObjectURL(url);
     setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: 'User data backup downloaded.', timestamp: 'Just now', type: 'system' }, ...prev]);
-  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, userProfile]);
+  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, userProfile, journalEntries]);
 
   const handleUploadBackup = useCallback((file: File) => {
     if (!window.confirm("Are you sure you want to restore from this backup? All current progress for this user will be overwritten.")) {
@@ -1702,13 +1809,15 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     switch(view) {
       case 'dashboard': return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
       case 'skill_tree': return <SkillTree user={user} onUpdateTopicDifficulty={handleUpdateTopicDifficulty} onAddSkill={() => setIsSkillModalOpen(true)} onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} onDeleteSkill={handleDeleteSkill} onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} onDeleteTopic={handleDeleteTopic} onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} onUpdateSkillPriority={handleUpdateSkillPriority} onToggleSkillActive={handleToggleSkillActive} onGenerateRecommendations={handleGenerateRecommendations} />;
-      case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} />;
+      case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} completedMajorGoals={user.completedMajorGoals || []} onJournalSubmit={handleJournalSubmit} />;
       case 'inventory': return <Inventory inventory={user.inventory} storeItems={storeItems} onUseItem={handleUseItem} />;
       case 'store': return <Store items={storeItems} onBuyItem={handleBuyItem} userCredits={user.wallet.credits} onAddItem={() => setIsStoreItemModalOpen(true)} onEditItem={(item) => { setEditingStoreItem(item); setIsStoreItemModalOpen(true); }} onDeleteItem={handleDeleteStoreItem} />;
       case 'staking': return <Staking user={user} storeItems={storeItems} onStakeCredits={handleStakeCredits} onWithdrawCredits={handleWithdrawCredits} onStakeBuff={handleStakeBuff} />;
       case 'system_log': return <SystemLog messages={systemMessages} />;
       case 'analytics': return <Analytics user={user} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
       case 'story_log': return <StoryLog entries={storyLog} />;
+      case 'journal': return <Journal journalEntries={journalEntries} quests={quests} onCompleteQuest={handleCompleteQuest} currentDate={getCurrentDate()} />;
+      case 'timer': return <Timer activeQuest={user.activeTimedQuest || null} onStartQuest={handleStartTimedQuest} onCompleteQuest={handleCompleteTimedQuest} apiKey={apiKey} />;
       case 'badges': return <Badges user={user} allBadges={allBadges} onAddBadge={() => setIsBadgeModalOpen(true)} onEditBadge={(badge) => { setEditingBadge(badge); setIsBadgeModalOpen(true); }} onDeleteBadge={handleDeleteBadge} />;
       case 'more': return <Menu onNavigate={setView} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;

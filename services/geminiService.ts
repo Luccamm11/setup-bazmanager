@@ -595,3 +595,55 @@ export const generateRecommendations = async (apiKey: string, user: User, majorG
         handleApiError(error);
     }
 };
+
+export const generateJournalChecklist = async (apiKey:string, reflectionText: string, majorGoal: MajorGoal, user: User): Promise<any[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const userProfile = getSanitizedUserForPrompt(user);
+        const prompt = `
+            You are the System, an AI that helps a user reflect on their performance and create actionable improvement plans.
+            
+            USER PROFILE:
+            ${JSON.stringify(userProfile, null, 2)}
+            
+            CONTEXT:
+            The user has just completed a Major Goal titled "${majorGoal.title}" and has written a journal entry reflecting on their experience.
+            
+            USER'S REFLECTION:
+            "${reflectionText}"
+            
+            INSTRUCTIONS:
+            1.  Analyze the user's reflection to understand their perceived strengths, weaknesses, and areas for improvement.
+            2.  Generate a checklist of 3-5 small, actionable "fix-it" quests based on their reflection. These quests are concrete steps they can take to address the issues they mentioned.
+            3.  Each quest must be a simple, completable task.
+            4.  For each quest, provide a 'title', 'description', a small 'xp_reward' (between 10-25 XP), and an appropriate 'realm' from the user's available realms.
+            5.  The tone should be encouraging but firm, like a coach helping them patch up their weaknesses.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: { type: Type.STRING },
+                            description: { type: Type.STRING },
+                            realm: { type: Type.STRING, enum: Object.values(Realm) },
+                            xp_reward: { type: Type.INTEGER },
+                        },
+                        required: ["title", "description", "realm", "xp_reward"]
+                    },
+                },
+            },
+        });
+
+        return JSON.parse(response.text);
+
+    } catch (error) {
+        handleApiError(error);
+    }
+};

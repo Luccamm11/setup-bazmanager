@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2 } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 
 interface SkillTreeProps {
@@ -152,6 +152,11 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
 
 const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const { user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations } = props;
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
 
   const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
     const realm = skill.realm || Realm.Meta;
@@ -165,6 +170,33 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     acc[topic.skillId].push(topic);
     return acc;
   }, {} as Record<string, KnowledgeTopic[]>);
+
+  const filteredSkillsByRealm = Object.entries(skillsByRealm).reduce((acc, [realm, skills]) => {
+    const filteredSkills = skills.map(skill => {
+      const allTopics = topicsBySkillId[skill.id] || [];
+      
+      if (!searchQuery) {
+        return { skill, topics: allTopics };
+      }
+
+      const skillNameMatches = skill.name.toLowerCase().includes(searchQuery);
+      const matchingTopics = allTopics.filter(topic => topic.name.toLowerCase().includes(searchQuery));
+
+      if (skillNameMatches) {
+        return { skill, topics: allTopics };
+      }
+      if (matchingTopics.length > 0) {
+        return { skill, topics: matchingTopics };
+      }
+      return null;
+    }).filter(Boolean) as { skill: Skill; topics: KnowledgeTopic[] }[];
+
+    if (filteredSkills.length > 0) {
+      acc[realm as Realm] = filteredSkills;
+    }
+    return acc;
+  }, {} as Record<Realm, { skill: Skill; topics: KnowledgeTopic[] }[]>);
+
 
   return (
     <div className="space-y-8">
@@ -180,17 +212,28 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
                 <span>Get AI Recommendations</span>
             </button>
         </div>
+        <div className="max-w-xl mx-auto mb-8">
+            <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+                <input
+                    type="text"
+                    placeholder="Search skills or topics..."
+                    onChange={handleSearchChange}
+                    className="w-full bg-background border border-border-color rounded-full py-3 pl-12 pr-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                />
+            </div>
+        </div>
       </div>
 
-      {Object.entries(skillsByRealm).map(([realm, skills]) => (
+      {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
         <div key={realm}>
           <h3 className={`text-xl sm:text-2xl font-semibold mb-4 capitalize ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>{realm}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {skills.map(skill => (
+            {skillData.map(({ skill, topics }) => (
                 <SkillCard 
                     key={skill.id} 
                     skill={skill} 
-                    topics={topicsBySkillId[skill.id] || []} 
+                    topics={topics} 
                     onUpdateTopicDifficulty={onUpdateTopicDifficulty} 
                     onEditSkill={onEditSkill}
                     onDeleteSkill={onDeleteSkill}
@@ -205,6 +248,11 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
           </div>
         </div>
       ))}
+      {Object.keys(filteredSkillsByRealm).length === 0 && searchQuery && (
+        <div className="text-center py-10">
+          <p className="text-text-secondary">No skills or topics found for "{searchQuery}".</p>
+        </div>
+      )}
     </div>
   );
 };

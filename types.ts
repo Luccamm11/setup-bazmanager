@@ -127,6 +127,13 @@ export interface UserState {
   sideQuests: string;
 }
 
+export interface ActiveTimedQuest {
+  title: string;
+  realm: Realm;
+  estimatedMinutes: number;
+  startTime: string; // ISO string
+}
+
 export interface User {
   name: string;
   rank: string;
@@ -157,6 +164,7 @@ export interface User {
   lastWeeklyBossDate?: string | null;
   state: UserState;
   completedMajorGoals?: MajorGoal[];
+  activeTimedQuest?: ActiveTimedQuest | null;
 }
 
 export interface StoryLogEntry {
@@ -213,6 +221,15 @@ export interface MajorGoal {
       type: 'xp' | 'credits';
       amount: number;
   };
+}
+
+export interface JournalEntry {
+    id: string;
+    majorGoalId: string;
+    majorGoalTitle: string;
+    reflectionText: string;
+    generatedChecklistQuestIds: string[];
+    timestamp: string;
 }
 
 export interface RewardNotification {

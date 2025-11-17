@@ -1,11 +1,11 @@
 import React from 'react';
 // FIX: Replaced BossChallenge with MajorGoal for consistency.
-import { User, Skill, Realm, Quest, Difficulty, QuestStatus, StoryLogEntry, Integration, Arc, KnowledgeTopic, TopicDifficulty, SystemMessage, StoreItem, Badge, WeeklyProgress, ActivityData, MajorGoal } from './types';
-import { Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck, TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat } from 'lucide-react';
+import { User, Skill, Realm, Quest, Difficulty, QuestStatus, StoryLogEntry, Integration, Arc, KnowledgeTopic, TopicDifficulty, SystemMessage, StoreItem, Badge, WeeklyProgress, ActivityData, MajorGoal, JournalEntry } from './types';
+import { Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck, TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat, BookText, Timer } from 'lucide-react';
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
     Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck,
-    TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat
+    TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat, BookText, Timer
 };
 
 export const TOPIC_XP_MAP: { [key in TopicDifficulty]: number } = {
@@ -141,6 +141,7 @@ export const INITIAL_USER: User = {
   stakedBuffs: {},
   lastWeeklyBossDate: null,
   completedMajorGoals: [],
+  activeTimedQuest: null,
   state: {
     coreMission: `To become a multidisciplinary innovator — merging Electronics, AI, and IoT to build intelligent systems that improve lives. I aim to master embedded systems, machine learning, and ethical hacking, and use them to design smart wearable and connected devices.`,
     longTermGoals: 'Master advanced concepts in Transformer models. Contribute to an open-source ML project.',
@@ -248,6 +249,8 @@ export const INITIAL_INTEGRATIONS: Integration[] = [
 export const INITIAL_SYSTEM_MESSAGES: SystemMessage[] = [
     { id: 'sys1', text: 'System Initialized. Welcome, Awakened.', timestamp: 'Just now', type: 'system' }
 ];
+
+export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [];
 
 export const STORE_ITEMS: StoreItem[] = [
     {
