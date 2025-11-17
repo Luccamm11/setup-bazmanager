@@ -61,35 +61,48 @@ const decodeJwtResponse = (token: string): UserProfile => {
  * This callback is triggered by Google after a user successfully signs in
  * via One Tap or the Sign-In button.
  */
-const handleCredentialResponse = async (response: any) => {
+const handleCredentialResponse = (response: any) => {
     if (!response.credential) {
         console.error("Credential response is missing credential.", response);
+        if (onLoginSuccessCallback) {
+            // Can't proceed without a credential, treat as a failed login attempt.
+            // In a real app, you might want more specific error handling.
+        }
         return;
     }
 
     const profile = decodeJwtResponse(response.credential);
 
-    // After identifying the user, get an access token for Google API calls (e.g., Calendar).
+    // FIX: The user is now considered authenticated.
+    // The `onLoginSuccessCallback` is called immediately to log the user into the app.
+    // We initially assume API authorization is not granted.
+    // This prevents the login loop if the subsequent API token request fails.
+    if (onLoginSuccessCallback) {
+        onLoginSuccessCallback(profile, false);
+    }
+    
+    // Now, separately attempt to get an API access token for Google Calendar.
     const tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: (tokenResponse: any) => {
             if (tokenResponse.error) {
                 console.error('Token Error:', tokenResponse.error, tokenResponse.error_description);
-                if (onLoginSuccessCallback) {
-                    // Notify app of login, but signal that API authorization failed.
-                    onLoginSuccessCallback(profile, false);
-                }
+                // The user is already logged in, so we just log the API error.
+                // The app will show integrations as disconnected.
                 return;
             }
             accessToken = tokenResponse.access_token;
             
-            // Wait for GAPI to be ready before setting the token
             const checkGapi = () => {
                 if (gapiInited) {
                     window.gapi.client.setToken({ access_token: accessToken });
+                    // API authorization was successful.
+                    // We call the login callback AGAIN, this time with apiAuthorized = true.
+                    // The app's `handleLoginSuccess` function is idempotent and will simply
+                    // update the integration status without re-loading all user data.
                     if (onLoginSuccessCallback) {
-                        onLoginSuccessCallback(profile, true); // API access granted
+                        onLoginSuccessCallback(profile, true);
                     }
                 } else {
                     setTimeout(checkGapi, 100);
@@ -99,7 +112,7 @@ const handleCredentialResponse = async (response: any) => {
         },
     });
     
-    // Request an access token. Since the user just signed in, this should not require a new popup.
+    // Request an access token silently. If consent is required, a popup may appear.
     tokenClient.requestAccessToken({ prompt: '' });
 };
 

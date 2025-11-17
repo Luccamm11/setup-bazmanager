@@ -270,7 +270,7 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: 'API Key has been saved.', timestamp: 'Just now', type: 'system' }, ...prev]);
   }, []);
 
-  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile, apiAuthorized: boolean) => {
+  const handleLoginSuccess = useCallback((profile: googleAuth.UserProfile, apiAuthorized: boolean) => {
     setAuthError(null);
     let loadedSuccessfully = false;
 
@@ -297,7 +297,9 @@ const App: React.FC = () => {
     }
 
     setUserProfile(finalProfile);
-    setIsAuthenticated(true); // This is critical to stop the login loop.
+    // This is the most critical part: set isAuthenticated to true as soon as the user's identity is verified.
+    // This stops the login loop, regardless of whether API authorization succeeds.
+    setIsAuthenticated(true);
 
     const isAiStudio = !!(window as any).aistudio;
     
