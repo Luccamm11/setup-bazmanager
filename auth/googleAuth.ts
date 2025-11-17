@@ -22,7 +22,7 @@ const CLIENT_ID = '491446243605-n7p1jb6p7k0flvoq61mudl2vp0c5pjqq.apps.googleuser
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 
 // --- Module State ---
-let onLoginSuccessCallback: ((profile: UserProfile) => void) | null = null;
+let onLoginSuccessCallback: ((profile: UserProfile, apiAuthorized: boolean) => void) | null = null;
 let onLogoutCallback: (() => void) | null = null;
 let accessToken: string | null = null;
 let gapiInited = false;
@@ -76,6 +76,10 @@ const handleCredentialResponse = async (response: any) => {
         callback: (tokenResponse: any) => {
             if (tokenResponse.error) {
                 console.error('Token Error:', tokenResponse.error, tokenResponse.error_description);
+                if (onLoginSuccessCallback) {
+                    // Notify app of login, but signal that API authorization failed.
+                    onLoginSuccessCallback(profile, false);
+                }
                 return;
             }
             accessToken = tokenResponse.access_token;
@@ -85,7 +89,7 @@ const handleCredentialResponse = async (response: any) => {
                 if (gapiInited) {
                     window.gapi.client.setToken({ access_token: accessToken });
                     if (onLoginSuccessCallback) {
-                        onLoginSuccessCallback(profile);
+                        onLoginSuccessCallback(profile, true); // API access granted
                     }
                 } else {
                     setTimeout(checkGapi, 100);
@@ -131,7 +135,7 @@ const initializeGis = () => {
  * Sets up GIS for sign-in and loads GAPI for Calendar API access.
  */
 export const init = (
-    onLogin: (profile: UserProfile) => void,
+    onLogin: (profile: UserProfile, apiAuthorized: boolean) => void,
     onLogout: () => void
 ) => {
     onLoginSuccessCallback = onLogin;

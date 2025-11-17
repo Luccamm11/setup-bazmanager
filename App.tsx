@@ -270,7 +270,7 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: 'API Key has been saved.', timestamp: 'Just now', type: 'system' }, ...prev]);
   }, []);
 
-  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile, connectIntegrations: boolean = true) => {
+  const handleLoginSuccess = useCallback(async (profile: googleAuth.UserProfile, apiAuthorized: boolean) => {
     setAuthError(null);
     let loadedSuccessfully = false;
 
@@ -297,10 +297,20 @@ const App: React.FC = () => {
     }
 
     setUserProfile(finalProfile);
-    setIsAuthenticated(true);
-    if (connectIntegrations) {
-        // Auto-connect Google Calendar on login
-        setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: true } : i));
+    setIsAuthenticated(true); // This is critical to stop the login loop.
+
+    const isAiStudio = !!(window as any).aistudio;
+    
+    // Auto-connect Google Calendar only if API authorization was successful
+    setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: apiAuthorized } : i));
+
+    if (!apiAuthorized && !isAiStudio) {
+      setSystemMessages(prev => [{
+          id: `gcal-auth-err-${Date.now()}`,
+          text: 'Could not connect Google Calendar. API access might need to be granted.',
+          timestamp: 'Just now',
+          type: 'warning'
+      }, ...prev]);
     }
   }, [setStateFromData]);
 
@@ -340,12 +350,12 @@ const App: React.FC = () => {
         email: 'aistudio@example.com',
         picture: 'https://www.gstatic.com/images/branding/product/2x/google_for_developers_logomark_color_192dp.png',
       };
-      // Call login success but disable auto-connecting integrations that require a real user token.
+      // Call login success but signal that API integrations are not available.
       handleLoginSuccess(mockProfile, false);
     } else {
       // Standard browser authentication flow.
       try {
-        googleAuth.init((profile) => handleLoginSuccess(profile, true), handleLogout);
+        googleAuth.init(handleLoginSuccess, handleLogout);
       } catch (error) {
         if (error instanceof Error) {
             setAuthError(error.message);
