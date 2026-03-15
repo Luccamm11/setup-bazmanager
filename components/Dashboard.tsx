@@ -31,23 +31,23 @@ interface DashboardProps {
 }
 
 const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => (
-    <div className="relative bg-primary/40 backdrop-blur-2xl overflow-hidden rounded-3xl border border-white/5 mb-8 shadow-glass group transition-all hover:shadow-[0_8px_40px_rgba(168,85,247,0.15)] hover:border-accent-tertiary/30">
+    <div className="relative bg-primary/20 backdrop-blur-3xl overflow-hidden rounded-2xl border border-white/[0.05] mb-6 group transition-all duration-700">
         <div className="absolute top-0 right-0 w-72 h-72 bg-accent-tertiary/10 rounded-full mix-blend-screen filter blur-[60px] pointer-events-none group-hover:bg-accent-tertiary/20 transition-all duration-700"></div>
-        <div className="relative z-10 p-6 sm:p-8">
-            <div className="flex items-center space-x-4 mb-4">
-                <div className="p-3 bg-accent-tertiary/10 rounded-xl text-accent-tertiary border border-accent-tertiary/20 shadow-glow-tertiary">
-                    <Target className="w-7 h-7" />
+        <div className="relative z-10 p-5 sm:p-6">
+            <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-accent-tertiary/5 rounded-lg text-accent-tertiary border border-accent-tertiary/10 shadow-sm shrink-0">
+                    <Target size={20} />
                 </div>
                 <div>
-                    <div className="text-xs font-bold tracking-widest text-accent-tertiary uppercase mb-1">Active Story Arc</div>
-                    <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-text-primary via-white to-accent-tertiary/80 tracking-tight leading-none drop-shadow-sm">{arc.title}</h2>
+                    <div className="text-[9px] font-black tracking-[0.2em] text-accent-tertiary/60 uppercase mb-0.5">Active Story Arc</div>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">{arc.title}</h2>
                 </div>
             </div>
-            <p className="text-base text-text-secondary md:ml-[4.5rem] mb-6 leading-relaxed max-w-3xl">{arc.description}</p>
-            <div className="flex flex-wrap gap-x-3 gap-y-2 md:ml-[4.5rem]">
+            <p className="text-sm text-text-secondary/80 md:ml-[3.5rem] mb-4 leading-relaxed max-w-3xl">{arc.description}</p>
+            <div className="flex flex-wrap gap-x-2 gap-y-1.5 md:ml-[3.5rem]">
                 {arc.effects.map((effect, index) => (
-                    <div key={index} className="flex items-center text-xs font-bold px-3 py-1.5 rounded-lg bg-accent-primary/10 text-accent-primary border border-accent-primary/20 backdrop-blur-sm shadow-sm transition-transform hover:-translate-y-0.5">
-                        <Zap size={14} className="mr-1.5"/>
+                    <div key={index} className="flex items-center text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded bg-white/[0.03] text-accent-primary border border-white/5 backdrop-blur-sm">
+                        <Zap size={10} className="mr-1.5"/>
                         <span>{effect}</span>
                     </div>
                 ))}
@@ -57,10 +57,10 @@ const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => (
 );
 
 const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = ({ onOpen, isClaimed }) => (
-    <div className={`relative overflow-hidden p-6 sm:p-8 rounded-3xl border flex flex-wrap items-center justify-between gap-5 transition-all duration-500 shadow-glass
+    <div className={`relative overflow-hidden p-5 sm:p-6 rounded-2xl border flex flex-wrap items-center justify-between gap-5 transition-all duration-500
         ${isClaimed 
-            ? 'bg-primary/20 border-white/5 grayscale-[0.5] opacity-60 backdrop-blur-md' 
-            : 'bg-primary/60 backdrop-blur-2xl border-accent-secondary/30 hover:shadow-glow-secondary hover:border-accent-secondary/50 cursor-pointer group hover:-translate-y-1'
+            ? 'bg-primary/10 border-white/[0.03] opacity-40 grayscale pointer-events-none' 
+            : 'bg-primary/40 backdrop-blur-3xl border-accent-secondary/20 hover:border-accent-secondary/40 cursor-pointer group hover:bg-primary/50'
         }`}
         onClick={!isClaimed ? onOpen : undefined}
     >
@@ -70,17 +70,17 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
             </div>
         )}
         
-        <div className="relative z-10 flex items-center gap-5 w-full sm:w-auto">
-            <div className={`p-4 rounded-2xl border ${isClaimed ? 'bg-white/5 border-white/5 text-text-muted' : 'bg-accent-secondary/10 border-accent-secondary/30 text-accent-secondary group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-glow-secondary'}`}>
-                <Gift className="w-8 h-8" />
+        <div className="relative z-10 flex items-center gap-4 w-full sm:w-auto">
+            <div className={`p-3 rounded-xl border ${isClaimed ? 'bg-white/5 border-white/5 text-text-muted' : 'bg-accent-secondary/5 border-accent-secondary/10 text-accent-secondary transition-all duration-500 shadow-sm'}`}>
+                <Gift className="w-6 h-6" />
             </div>
             <div className="text-left flex-1 min-w-0">
-                <h3 className={`text-xl font-black tracking-tight flex items-center gap-2 ${isClaimed ? 'text-text-muted' : 'text-accent-secondary drop-shadow-sm'}`}>
-                    Daily Supply Drop
-                    {!isClaimed && <span className="flex h-2.5 w-2.5 relative ml-1"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-secondary"></span></span>}
+                <h3 className={`text-lg font-black tracking-tight flex items-center gap-2 ${isClaimed ? 'text-text-muted' : 'text-accent-secondary uppercase text-[15px]'}`}>
+                    Daily Payload
+                    {!isClaimed && <span className="flex h-2 w-2 relative ml-1"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-accent-secondary"></span></span>}
                 </h3>
-                <p className={`text-sm mt-1 truncate font-medium ${isClaimed ? 'text-text-muted/70' : 'text-text-secondary'}`}>
-                    {isClaimed ? 'Next drop arrives tomorrow' : 'Encrypted payload ready for decryption'}
+                <p className={`text-xs mt-0.5 truncate font-medium ${isClaimed ? 'text-text-muted/70' : 'text-text-secondary/70'}`}>
+                    {isClaimed ? 'Syncing next drop...' : 'Encrypted rewards ready'}
                 </p>
             </div>
         </div>
@@ -88,13 +88,13 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
         <button
             onClick={(e) => { e.stopPropagation(); onOpen(); }}
             disabled={isClaimed}
-            className={`relative z-10 px-8 py-3.5 font-bold tracking-wide rounded-xl transition-all duration-300 w-full sm:w-auto
+            className={`relative z-10 px-6 py-2.5 font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-500 w-full sm:w-auto border
                 ${isClaimed 
-                    ? 'bg-white/5 border border-white/5 text-text-muted' 
-                    : 'bg-accent-secondary text-background hover:bg-[#fde047] hover:shadow-glow-secondary active:scale-95'
+                    ? 'bg-transparent border-white/5 text-text-muted' 
+                    : 'bg-accent-secondary/10 border-accent-secondary/30 text-accent-secondary hover:bg-accent-secondary hover:text-background active:scale-95'
                 }`}
         >
-            {isClaimed ? 'Decrypted' : 'Decrypt Now'}
+            {isClaimed ? 'Claimed' : 'Decrypt'}
         </button>
     </div>
 );
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
 
   return (
     <motion.div 
-      className="space-y-8 max-w-7xl mx-auto pb-10"
+      className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-10"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -138,14 +138,14 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
       
       {activeArc && <motion.div variants={itemVariants}><ActiveArcDisplay arc={activeArc} /></motion.div>}
       
-      <div className="flex flex-col xl:flex-row gap-8">
-          <div className="flex-1 space-y-8 min-w-0">
+      <div className="flex flex-col xl:flex-row gap-6 sm:gap-8">
+          <div className="flex-1 space-y-6 sm:space-y-8 min-w-0">
               <motion.div variants={itemVariants}><ActiveBuffs activeBuffs={user.activeBuffs} /></motion.div>
               
-              <motion.div variants={itemVariants} className="bg-primary/40 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border border-white/5 shadow-glass relative overflow-hidden">
+              <motion.div variants={itemVariants} className="bg-primary/40 backdrop-blur-2xl p-5 sm:p-8 rounded-3xl border border-white/5 shadow-glass relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-accent-primary/5 to-transparent pointer-events-none"></div>
 
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-8 gap-4 border-b border-white/5 pb-5 relative z-10">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4 border-b border-white/5 pb-4 relative z-10">
                   <div className="flex items-center gap-4">
                       <div className="p-3 bg-accent-primary/10 rounded-xl border border-accent-primary/20 text-accent-primary shadow-glow-primary shrink-0">
                           <Activity size={26} />
@@ -188,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               </motion.div>
           </div>
           
-          <div className="w-full xl:w-[400px] 2xl:w-[450px] shrink-0 space-y-8">
+          <div className="w-full xl:w-[400px] 2xl:w-[450px] shrink-0 space-y-6 sm:space-y-8">
               <motion.div variants={itemVariants}>
                 <DailyLootboxDrop onOpen={onOpenLootbox} isClaimed={isLootboxClaimed} />
               </motion.div>

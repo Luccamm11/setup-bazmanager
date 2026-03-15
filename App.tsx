@@ -1761,10 +1761,10 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         </div>
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
            {navItems.map(item => (
-             <button key={item.view} onClick={() => setView(item.view)} className={`flex items-center w-full px-3 py-3 rounded-xl transition-all duration-300 group ${view === item.view ? 'bg-accent-primary/15 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)] text-white relative' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}>
-                {view === item.view && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-primary rounded-r-md shadow-glow-primary"></div>}
-                <item.icon size={22} className={`shrink-0 md:mx-auto lg:mx-0 ${view === item.view ? 'text-accent-primary drop-shadow-sm' : 'group-hover:text-text-primary'}`} />
-                <span className={`ml-4 font-bold tracking-wide text-sm hidden lg:block ${view === item.view ? 'uppercase' : ''}`}>{item.label}</span>
+             <button key={item.view} onClick={() => setView(item.view)} className={`flex items-center w-full px-3 py-3 rounded-xl transition-all duration-500 group ${view === item.view ? 'bg-white/[0.03] text-white relative border border-white/10' : 'text-text-secondary hover:text-white'}`}>
+                {view === item.view && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-accent-primary rounded-r-full shadow-glow-primary"></div>}
+                <item.icon size={20} className={`shrink-0 md:mx-auto lg:mx-0 ${view === item.view ? 'text-accent-primary' : 'opacity-60 group-hover:opacity-100'}`} />
+                <span className={`ml-4 font-black tracking-[0.1em] text-[11px] uppercase hidden lg:block ${view === item.view ? 'text-white' : 'text-text-muted'}`}>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -1774,7 +1774,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       <div className="flex flex-col flex-1 h-full min-w-0">
           <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
             <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
-            <div className="flex-1 p-4 sm:p-6 lg:p-8 pt-0 sm:pt-0 lg:pt-0 w-full min-h-min relative">
+            <div className="flex-1 w-full relative">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={view}
@@ -1782,7 +1782,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  className="w-full h-full absolute inset-0 pt-0 sm:pt-0 lg:pt-0 px-4 sm:px-6 lg:px-8 pb-32"
+                  className="w-full h-full pt-4 sm:pt-6 lg:pt-8 px-4 sm:px-6 lg:px-8 pb-32"
                 >
                   {renderView()}
                 </motion.div>
@@ -1796,9 +1796,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         <nav className="max-w-7xl mx-auto flex justify-around relative z-10">
           {navItems.map(item => (
-             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full p-2 rounded-xl transition-all duration-300 ${view === item.view ? 'text-accent-primary bg-accent-primary/10 shadow-[inset_0_0_15px_rgba(59,130,246,0.2)] -translate-y-1' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
-                <item.icon size={24} className={view === item.view ? 'drop-shadow-sm' : ''} />
-                <span className={`text-[10px] mt-1 font-bold tracking-wide ${view === item.view ? 'uppercase' : ''}`}>{item.label}</span>
+             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full py-1.5 px-1 transition-all duration-500 ${view === item.view ? 'text-accent-primary' : 'text-text-secondary opacity-50 hover:opacity-100'}`}>
+                <div className={`p-1.5 rounded-lg transition-all duration-500 ${view === item.view ? 'bg-accent-primary/10 shadow-sm' : ''}`}>
+                    <item.icon size={20} className={view === item.view ? 'drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]' : ''} />
+                </div>
+                <span className={`text-[8px] mt-1 font-black tracking-[0.15em] uppercase ${view === item.view ? 'opacity-100' : 'opacity-0 scale-75'}`}>{item.label}</span>
             </button>
           ))}
         </nav>

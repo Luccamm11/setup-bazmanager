@@ -54,16 +54,16 @@ const MajorGoalCard: React.FC<{ goal: MajorGoal; onEdit: (goal: MajorGoal) => vo
             .border-accent-primary.animate-pulse-glow { animation: pulse-glow-primary 3s infinite ease-in-out; }
             .border-accent-tertiary.animate-pulse-glow { animation: pulse-glow-tertiary 3s infinite ease-in-out; }
         `}</style>
-        <div className={`bg-white/[0.03] backdrop-blur-md border-l-4 ${config.color} p-6 sm:p-8 rounded-2xl border border-white/5 border-l-[6px] shadow-sm hover:shadow-glass hover:-translate-y-1 transition-all duration-300 animate-pulse-glow group`}>
+        <div className={`bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] border-l-2 ${config.color} p-5 sm:p-6 rounded-xl transition-all duration-500 hover:bg-white/[0.04] group`}>
             <div className="flex flex-wrap justify-between items-start gap-3">
                 <div className="flex-1 min-w-[200px]">
-                    <div className={`flex items-center space-x-3 font-black text-xl tracking-tight ${config.text}`}>
-                        <div className={`p-2 rounded-xl bg-white/5 ${config.shadow}`}>
-                            {config.icon}
+                    <div className={`flex items-center space-x-2.5 font-black text-lg tracking-tight ${config.text}`}>
+                        <div className={`p-1.5 rounded-lg bg-white/5 shrink-0`}>
+                            {React.cloneElement(config.icon as React.ReactElement, { size: 18 })}
                         </div>
                         <h4>{goal.title}</h4>
                     </div>
-                    <p className="text-base text-text-secondary mt-3 font-medium leading-relaxed">{goal.description}</p>
+                    <p className="text-xs sm:text-sm text-text-secondary mt-2.5 font-medium leading-relaxed opacity-80">{goal.description}</p>
                 </div>
                 <div className="flex space-x-2">
                     <button onClick={() => onEdit(goal)} className="p-2 rounded-lg bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white transition-colors"><Edit size={18} /></button>
@@ -134,13 +134,12 @@ const MajorGoals: React.FC<MajorGoalsProps> = ({ goals, onAdd, onBulkAdd, onEdit
                         <p className="text-sm text-text-secondary mt-1 font-medium">Long-term objectives and boss challenges</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                    <button onClick={onBulkAdd} className="flex items-center justify-center space-x-2 bg-white/5 border border-white/10 hover:bg-white/10 text-text-primary font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm active:scale-95 group">
-                        <Layers size={18} className="text-text-secondary group-hover:text-text-primary transition-colors" />
-                        <span className="hidden sm:inline">Bulk Add</span>
+                <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={onBulkAdd} className="flex items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:text-white transition-all active:scale-95 group" title="Bulk Add">
+                        <Layers size={18} />
                     </button>
-                    <button onClick={onAdd} className="flex items-center justify-center space-x-2 bg-accent-primary hover:bg-[#2563eb] border border-accent-primary/80 hover:shadow-glow-primary text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm active:scale-95 group">
-                        <PlusCircle size={18} className="group-hover:scale-110 transition-transform" />
+                    <button onClick={onAdd} className="flex items-center justify-center space-x-2 bg-accent-primary/10 border border-accent-primary/30 text-accent-primary font-black py-2.5 px-4 rounded-xl transition-all hover:bg-accent-primary hover:text-white active:scale-95 text-xs uppercase tracking-widest">
+                        <PlusCircle size={16} />
                         <span>New Goal</span>
                     </button>
                 </div>

@@ -60,11 +60,11 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const [isFailed, setIsFailed] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
-  let cardClasses = `relative p-6 sm:p-7 rounded-3xl border transition-all duration-300 overflow-hidden group shadow-sm flex flex-col h-full w-full `;
+  let cardClasses = `relative p-5 sm:p-7 rounded-3xl border transition-all duration-300 overflow-hidden group shadow-sm flex flex-col h-full w-full `;
   if (isBoss && !isFailed && !isCompleting) {
-    cardClasses += ' bg-accent-red/5 backdrop-blur-md border-accent-red/30 shadow-[0_0_15px_rgba(239,68,68,0.1)] hover:shadow-[0_0_20px_rgba(239,68,68,0.2)] hover:border-accent-red/60 hover:-translate-y-1';
+    cardClasses += ' bg-accent-red/[0.03] backdrop-blur-3xl border-accent-red/20 hover:border-accent-red/40';
   } else if (!isFailed && !isCompleting) {
-    cardClasses += ' bg-white/[0.03] backdrop-blur-sm border-white/5 hover:border-white/10 hover:bg-white/[0.05] hover:shadow-glass hover:-translate-y-1 cursor-pointer';
+    cardClasses += ' bg-white/[0.015] backdrop-blur-3xl border-white/[0.04] hover:border-white/[0.08] hover:bg-white/[0.03] cursor-pointer';
   }
 
   if (isFailed) {
@@ -141,10 +141,10 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
       </AnimatePresence>
 
       <div className="flex flex-col h-full relative z-10 w-full">
-        <div className="flex items-start justify-between mb-3 w-full gap-4">
+        <div className="flex items-start justify-between mb-2 sm:mb-3 w-full gap-4">
            <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
-              <h3 className={`text-xl font-black tracking-tight ${isBoss ? 'text-accent-red' : 'text-text-primary'}`}>
-                 {isBoss && <span className="mr-2.5 inline-block px-2 py-0.5 text-[10px] sm:text-xs bg-accent-red/20 text-accent-red border border-accent-red/50 rounded-lg uppercase tracking-widest font-black align-middle">Boss</span>}
+              <h3 className={`text-lg font-black tracking-tight ${isBoss ? 'text-accent-red' : 'text-text-primary'}`}>
+                 {isBoss && <span className="mr-2 inline-block px-1.5 py-0.5 text-[8px] bg-accent-red/10 text-accent-red border border-accent-red/30 rounded uppercase tracking-[0.2em] font-black align-middle">Boss</span>}
                  {quest.title}
               </h3>
            </div>
@@ -155,9 +155,9 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
            )}
         </div>
         
-        <p className="text-[15px] text-text-secondary leading-relaxed mb-6 flex-grow">{quest.description}</p>
+        <p className="text-sm text-text-secondary leading-relaxed mb-4 flex-grow opacity-70">{quest.description}</p>
 
-        <div className="mt-auto border-t border-white/5 pt-5">
+        <div className="mt-auto border-t border-white/5 pt-4 sm:pt-5">
            <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2.5 text-sm font-bold w-full">
                 <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 shadow-sm">
@@ -173,7 +173,7 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
                   <span>{quest.duration_est_min}m</span>
                 </div>
                 <div className="flex items-center space-x-1.5">
-                    <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest bg-white/5 border border-white/10 shadow-sm ${difficultyColors[quest.difficulty]}`}>
+                    <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-white/[0.02] border border-white/5 ${difficultyColors[quest.difficulty]}`}>
                         {quest.difficulty}
                     </span>
                 </div>
@@ -194,14 +194,14 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
                 <button
                   onClick={handleComplete}
                   disabled={isFailed || isCompleting}
-                  className={`w-full sm:w-[160px] flex items-center justify-center space-x-2 font-black tracking-wide py-3 px-6 rounded-xl transition-all duration-300 transform active:scale-95
+                  className={`w-full sm:w-[140px] flex items-center justify-center space-x-2 font-black text-[11px] uppercase tracking-[0.1em] py-2.5 px-4 rounded-lg transition-all duration-500
                     ${(isFailed || isCompleting) 
-                      ? 'bg-white/5 border border-white/10 text-text-muted cursor-not-allowed shadow-none' 
-                      : 'bg-gradient-to-r from-accent-green hover:to-accent-green-hover to-[#16a34a] text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] hover:shadow-[0_0_25px_rgba(34,197,94,0.5)] border border-accent-green-hover/50'
+                      ? 'bg-transparent border border-white/5 text-text-muted cursor-not-allowed' 
+                      : 'bg-accent-green/10 border border-accent-green/30 text-accent-green hover:bg-accent-green hover:text-white'
                     }
                   `}
                 >
-                  <CheckCircle className={`w-5 h-5 ${(isFailed || isCompleting) ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                  <CheckCircle className={`w-4 h-4`} />
                   <span>Complete</span>
                 </button>
               </div>

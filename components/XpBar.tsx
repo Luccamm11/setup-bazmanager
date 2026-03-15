@@ -11,11 +11,11 @@ const XpBar: React.FC<XpBarProps> = ({ currentXp, xpToNextLevel }) => {
 
   return (
     <div className="w-full group">
-      <div className="flex justify-between items-end mb-2">
-        <span className="text-[10px] sm:text-xs font-black tracking-widest text-accent-primary uppercase drop-shadow-sm">Experience</span>
-        <span className="text-xs sm:text-sm font-bold text-white border border-white/10 bg-white/5 px-2 py-0.5 rounded-md shadow-sm">{`${currentXp} / ${xpToNextLevel}`}</span>
+      <div className="flex justify-between items-end mb-1.5">
+        <span className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] text-accent-primary/60 uppercase">Progress</span>
+        <span className="text-[10px] sm:text-xs font-bold text-white/80 bg-white/[0.03] px-2 py-0.5 rounded border border-white/5">{`${currentXp} / ${xpToNextLevel}`}</span>
       </div>
-      <div className="w-full bg-black/40 rounded-full h-3 sm:h-4 border border-white/5 p-0.5 relative overflow-hidden shadow-inner flex items-center">
+      <div className="w-full bg-black/20 rounded-full h-1.5 sm:h-2 relative overflow-hidden flex items-center">
         <motion.div 
           className="h-full bg-gradient-to-r from-accent-primary via-blue-400 to-accent-tertiary rounded-full shadow-glow-primary relative overflow-hidden"
           initial={{ width: 0 }}
