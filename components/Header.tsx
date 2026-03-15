@@ -2,19 +2,23 @@ import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
 import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import * as googleAuth from '../auth/googleAuth';
 
 interface HeaderProps {
   user: User;
-  userProfile: googleAuth.UserProfile | null;
+  userPicture?: string | null;
   onSettingsClick: () => void;
   syncStatus: SyncStatus;
 }
 
-const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; color: string }> = ({ icon, value, color }) => (
-  <div className={`flex items-center space-x-1 text-sm font-semibold ${color}`}>
-    {icon}
-    <span>{value}</span>
+const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: string; bgClass: string; label: string }> = ({ icon, value, colorClass, bgClass, label }) => (
+  <div className={`flex items-center space-x-2 px-3 py-2 rounded-xl border border-white/5 ${bgClass} transition-transform hover:-translate-y-0.5 group`}>
+    <div className={`p-1.5 rounded-lg bg-black/20 ${colorClass}`}>
+      {icon}
+    </div>
+    <div className="flex flex-col">
+        <span className="text-[10px] uppercase font-bold text-text-muted tracking-wider leading-none shadow-none">{label}</span>
+        <span className={`text-base font-black ${colorClass} leading-none drop-shadow-sm`}>{value}</span>
+    </div>
   </div>
 );
 
@@ -29,26 +33,26 @@ const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     if (status === 'idle') return null;
 
     return (
-        <div className={`flex items-center space-x-1 text-xs font-semibold p-1 rounded-md ${current.color} transition-opacity duration-500`}>
+        <div className={`flex items-center space-x-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10 ${current.color} transition-all duration-500`}>
             {current.icon}
             <span>{current.text}</span>
         </div>
     );
 };
 
-const Header: React.FC<HeaderProps> = ({ user, userProfile, onSettingsClick, syncStatus }) => {
+const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus }) => {
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
   return (
-    <header className="bg-background p-3 sm:p-4 sticky top-0 z-40">
+    <header className="bg-primary/60 backdrop-blur-xl border-b border-white/5 px-4 sm:px-6 lg:px-8 py-6 mb-6 sticky top-0 z-40 shadow-glass">
        <style>{`
         @keyframes streak-pulse-anim {
           0%, 100% { 
             transform: scale(1);
-            text-shadow: 0 0 4px rgba(88, 166, 255, 0.4);
+            filter: drop-shadow(0 0 5px rgba(234, 179, 8, 0.4));
           }
           50% { 
             transform: scale(1.05);
-            text-shadow: 0 0 10px rgba(88, 166, 255, 0.7);
+            filter: drop-shadow(0 0 12px rgba(234, 179, 8, 0.8));
           }
         }
         .streak-pulse {
@@ -57,62 +61,80 @@ const Header: React.FC<HeaderProps> = ({ user, userProfile, onSettingsClick, syn
         @keyframes buff-pulse-anim {
           0%, 100% { 
             transform: scale(1);
-            filter: drop-shadow(0 0 2px #E3B341);
+            filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.5));
           }
           50% { 
-            transform: scale(1.1);
-            filter: drop-shadow(0 0 5px #E3B341);
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.9));
           }
         }
         .buff-pulse {
           animation: buff-pulse-anim 2s infinite ease-in-out;
         }
       `}</style>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <img 
-                src={userProfile?.picture} 
-                alt="User profile"
-                className="w-14 h-14 rounded-full bg-primary border border-border-color"
-              />
-              <span className="absolute -bottom-2 -right-2 text-xs bg-accent-secondary text-background font-black px-2 py-0.5 rounded-full uppercase">LVL {user.level_overall}</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-x-3">
-                <h1 className="text-lg sm:text-xl font-bold text-text-primary">{user.name}</h1>
-                 {user.activeBuffs.length > 0 && (
-                    <div className="relative group" title={`Active Buffs: ${activeBuffNames}`}>
-                        <Zap size={20} className="text-accent-secondary buff-pulse" />
-                    </div>
-                )}
-                {user.streaks.daily_streak > 0 && (
-                  <div className="flex items-center space-x-1 text-accent-primary px-2 py-0.5 rounded-full text-sm font-semibold streak-pulse" title={`Current daily streak: ${user.streaks.daily_streak} days`}>
-                    <Flame size={16} />
-                    <span>{user.streaks.daily_streak}</span>
-                  </div>
-                )}
+      <div className="max-w-7xl mx-auto flex flex-col gap-5">
+        <div className="flex justify-between items-start lg:items-center w-full gap-4">
+            {/* User Info Section */}
+            <div className="flex items-center space-x-3 sm:space-x-5 shrink min-w-0">
+              <div className="relative group cursor-pointer shrink-0">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-accent-primary to-accent-tertiary rounded-full opacity-60 group-hover:opacity-100 blur-[2px] transition duration-500"></div>
+                <img 
+                  src={userPicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`} 
+                  alt="User profile"
+                  className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary border-2 border-background object-cover"
+                />
+                <span className="absolute -bottom-1 -right-2 text-[10px] sm:text-xs bg-gradient-to-r from-accent-tertiary to-accent-primary text-white font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 z-10">LVL {user.level_overall}</span>
               </div>
-              <p className="text-sm text-text-secondary font-semibold">{user.rank}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">
+                  <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight drop-shadow-md truncate">{user.name}</h1>
+                   {user.activeBuffs.length > 0 && (
+                      <div className="relative group shrink-0" title={`Active Buffs: ${activeBuffNames}`}>
+                          <Zap size={20} className="text-accent-tertiary buff-pulse sm:w-[22px] sm:h-[22px]" />
+                      </div>
+                  )}
+                  {user.streaks.daily_streak > 0 && (
+                    <div className="flex items-center space-x-1.5 bg-gradient-to-r from-accent-secondary/20 to-orange-500/20 border border-accent-secondary/30 px-2 py-0.5 rounded-full text-xs sm:text-sm font-bold streak-pulse text-accent-secondary shadow-glow-secondary shrink-0" title={`Current daily streak: ${user.streaks.daily_streak} days`}>
+                      <Flame size={14} className="sm:w-4 sm:h-4" />
+                      <span>{user.streaks.daily_streak}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] sm:text-sm text-accent-primary/90 font-bold uppercase tracking-widest mt-0.5 truncate">{user.rank}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <SyncIndicator status={syncStatus} />
-            <button onClick={onSettingsClick} className="p-2 rounded-full text-text-secondary hover:bg-primary/50 hover:text-white transition-colors">
-              <Settings className="w-6 h-6" />
-            </button>
-          </div>
+            
+            {/* Right Actions & Stats Section */}
+            <div className="flex flex-col items-end space-y-4 shrink-0">
+                <div className="flex items-center space-x-2 sm:space-x-3 bg-white/5 p-1 sm:p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+                    <SyncIndicator status={syncStatus} />
+                    <button onClick={onSettingsClick} className="p-1.5 sm:p-2 rounded-xl text-text-secondary hover:bg-white/10 hover:text-white hover:shadow-glass hover:-translate-y-0.5 transition-all">
+                        <Settings className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                {/* Desktop Stats Row */}
+                <div className="hidden lg:flex gap-3">
+                    <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 hover:bg-accent-primary/20" label="Mind" />
+                    <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 hover:bg-accent-red/20" label="Body" />
+                    <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 hover:bg-accent-secondary/20" label="Creation" />
+                    <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 hover:bg-accent-tertiary/20" label="Spirit" />
+                </div>
+            </div>
         </div>
-
+        
+        {/* Mobile/Tablet Stats Row */}
+        <div className="flex lg:hidden w-full gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 shrink-0" label="Mind" />
+            <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 shrink-0" label="Body" />
+            <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 shrink-0" label="Creation" />
+            <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 shrink-0" label="Spirit" />
+        </div>
+      </div>
+      
+      {/* XP Bar moved slightly out of the main grid for full-width layout inside header */}
+      <div className="max-w-7xl mx-auto mt-5">
         <XpBar currentXp={user.xp_total} xpToNextLevel={user.xpToNextLevel} />
-
-        <div className="mt-4 flex justify-around items-center bg-primary p-2 rounded-lg border border-border-color">
-          <StatDisplay icon={<BrainCircuit size={18} />} value={user.stats[Realm.Mind]} color="text-accent-primary" />
-          <StatDisplay icon={<Heart size={18} />} value={user.stats[Realm.Body]} color="text-accent-red" />
-          <StatDisplay icon={<Zap size={18} />} value={user.stats[Realm.Creation]} color="text-accent-secondary" />
-          <StatDisplay icon={<Sparkles size={18} />} value={user.stats[Realm.Spirit]} color="text-accent-tertiary" />
-        </div>
       </div>
     </header>
   );

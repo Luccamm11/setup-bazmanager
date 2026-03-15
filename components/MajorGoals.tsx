@@ -2,6 +2,7 @@ import React from 'react';
 // FIX: Replaced BossChallenge with MajorGoal.
 import { MajorGoal } from '../types';
 import { Target, PlusCircle, ShieldCheck, Zap, Star, DollarSign, Edit, CheckCircle, Wand2, Layers, AlertTriangle, Swords, Anvil } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // FIX: Renamed props interface.
 interface MajorGoalsProps {
@@ -53,45 +54,48 @@ const MajorGoalCard: React.FC<{ goal: MajorGoal; onEdit: (goal: MajorGoal) => vo
             .border-accent-primary.animate-pulse-glow { animation: pulse-glow-primary 3s infinite ease-in-out; }
             .border-accent-tertiary.animate-pulse-glow { animation: pulse-glow-tertiary 3s infinite ease-in-out; }
         `}</style>
-        <div className={`bg-background border-l-4 ${config.color} p-4 rounded-r-lg border border-border-color border-l-4 animate-pulse-glow`}>
-            <div className="flex justify-between items-start">
-                <div>
-                    <div className={`flex items-center space-x-2 font-bold text-lg ${config.text}`}>
-                        {config.icon}
+        <div className={`bg-white/[0.03] backdrop-blur-md border-l-4 ${config.color} p-6 sm:p-8 rounded-2xl border border-white/5 border-l-[6px] shadow-sm hover:shadow-glass hover:-translate-y-1 transition-all duration-300 animate-pulse-glow group`}>
+            <div className="flex flex-wrap justify-between items-start gap-3">
+                <div className="flex-1 min-w-[200px]">
+                    <div className={`flex items-center space-x-3 font-black text-xl tracking-tight ${config.text}`}>
+                        <div className={`p-2 rounded-xl bg-white/5 ${config.shadow}`}>
+                            {config.icon}
+                        </div>
                         <h4>{goal.title}</h4>
                     </div>
-                    <p className="text-sm text-text-secondary mt-1">{goal.description}</p>
+                    <p className="text-base text-text-secondary mt-3 font-medium leading-relaxed">{goal.description}</p>
                 </div>
                 <div className="flex space-x-2">
-                    <button onClick={() => onEdit(goal)} className="p-1 text-text-secondary hover:text-white"><Edit size={16} /></button>
+                    <button onClick={() => onEdit(goal)} className="p-2 rounded-lg bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white transition-colors"><Edit size={18} /></button>
                 </div>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm">
-                <div className="flex items-center space-x-1 font-semibold text-text-primary bg-border-color/50 px-2 py-1 rounded-full">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-5 text-sm font-bold">
+                <div className="flex items-center space-x-1.5 font-bold text-text-primary bg-white/10 px-3 py-1.5 rounded-lg border border-white/5 shadow-sm overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
                     <Countdown deadline={goal.deadline} currentDate={currentDate} />
                 </div>
-                <div className="flex items-center space-x-1 text-accent-secondary">
+                <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 shadow-sm">
                     <Star size={16} /> <span>{goal.xp_reward} XP</span>
                 </div>
-                <div className="flex items-center space-x-1 text-accent-green">
-                    <DollarSign size={16} /> <span>{goal.credit_reward} Credits</span>
+                <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-accent-green/10 text-accent-green border border-accent-green/20 shadow-sm">
+                    <DollarSign size={16} /> <span>{goal.credit_reward} CR</span>
                 </div>
                 {goal.penalty && (
-                    <div className="flex items-center space-x-1 text-accent-red font-semibold">
+                    <div className="flex items-center space-x-1.5 text-accent-red font-bold px-3 py-1.5 rounded-lg bg-accent-red/10 border border-accent-red/20 shadow-sm">
                         <AlertTriangle size={16} />
-                        <span>-{goal.penalty.amount} {goal.penalty.type} on fail</span>
+                        <span>-{goal.penalty.amount} {goal.penalty.type}</span>
                     </div>
                 )}
             </div>
-            <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 {goal.type === 'Siege' && goal.syllabus && (
-                    <button onClick={() => onBreakdown(goal)} className="flex-1 bg-accent-tertiary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded flex items-center justify-center space-x-2">
-                        <Wand2 size={18} />
+                    <button onClick={() => onBreakdown(goal)} className="flex-1 bg-accent-tertiary/20 hover:bg-accent-tertiary hover:shadow-glow-tertiary border border-accent-tertiary/50 text-white font-bold py-2.5 px-5 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 group/btn">
+                        <Wand2 size={18} className="group-hover/btn:rotate-12 transition-transform" />
                         <span>Analyze Syllabus</span>
                     </button>
                 )}
-                <button onClick={() => onComplete(goal)} className="flex-1 bg-accent-green hover:bg-accent-green-hover text-white font-bold py-2 px-4 rounded flex items-center justify-center space-x-2">
-                    <CheckCircle size={18} />
+                <button onClick={() => onComplete(goal)} className="flex-1 bg-accent-green border border-accent-green-hover/50 hover:bg-[#16a34a] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] text-white font-bold py-2.5 px-5 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 group/btn">
+                    <CheckCircle size={18} className="group-hover/btn:scale-110 transition-transform" />
                     <span>Claim Victory</span>
                 </button>
             </div>
@@ -103,37 +107,66 @@ const MajorGoalCard: React.FC<{ goal: MajorGoal; onEdit: (goal: MajorGoal) => vo
 const MajorGoals: React.FC<MajorGoalsProps> = ({ goals, onAdd, onBulkAdd, onEdit, onComplete, onBreakdown, currentDate }) => {
     const activeGoals = goals.filter(g => new Date(g.deadline) >= currentDate);
     
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, scale: 0.95, y: 10 },
+        visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4 } }
+    };
+
     return (
-        <div className="bg-primary p-3 sm:p-4 rounded-lg border border-border-color">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-                <h2 className="text-2xl font-bold text-text-primary flex items-center space-x-2">
-                    <ShieldCheck />
-                    <span>Major Goals</span>
-                </h2>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <button onClick={onBulkAdd} className="flex items-center justify-center space-x-2 bg-primary border border-border-color hover:bg-border-color text-text-primary font-semibold py-2 px-4 rounded-lg transition-colors">
-                        <Layers size={18} />
-                        <span>Bulk Add</span>
+        <motion.div 
+            className="p-6 sm:p-8 w-full h-full rounded-3xl"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            <div className="flex flex-wrap justify-between items-center mb-6 gap-4 border-b border-white/5 pb-5">
+                <div className="flex items-center space-x-3 shrink-0">
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-white shadow-sm">
+                        <ShieldCheck size={26} />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-white tracking-tight">Major Goals</h2>
+                        <p className="text-sm text-text-secondary mt-1 font-medium">Long-term objectives and boss challenges</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                    <button onClick={onBulkAdd} className="flex items-center justify-center space-x-2 bg-white/5 border border-white/10 hover:bg-white/10 text-text-primary font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm active:scale-95 group">
+                        <Layers size={18} className="text-text-secondary group-hover:text-text-primary transition-colors" />
+                        <span className="hidden sm:inline">Bulk Add</span>
                     </button>
-                    <button onClick={onAdd} className="flex items-center justify-center space-x-2 bg-accent-primary hover:bg-opacity-80 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                        <PlusCircle size={18} />
+                    <button onClick={onAdd} className="flex items-center justify-center space-x-2 bg-accent-primary hover:bg-[#2563eb] border border-accent-primary/80 hover:shadow-glow-primary text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm active:scale-95 group">
+                        <PlusCircle size={18} className="group-hover:scale-110 transition-transform" />
                         <span>New Goal</span>
                     </button>
                 </div>
             </div>
+             <AnimatePresence>
              {activeGoals.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {activeGoals.map(goal => (
-                        <MajorGoalCard key={goal.id} goal={goal} onEdit={onEdit} onComplete={onComplete} onBreakdown={onBreakdown} currentDate={currentDate} />
+                        <motion.div key={goal.id} variants={itemVariants} layout>
+                            <MajorGoalCard goal={goal} onEdit={onEdit} onComplete={onComplete} onBreakdown={onBreakdown} currentDate={currentDate} />
+                        </motion.div>
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-10 px-4 bg-background border border-border-color rounded-lg">
-                    <p className="text-text-secondary">No active Major Goals.</p>
-                    <p className="text-text-muted mt-2">Set a major objective to focus your efforts!</p>
-                </div>
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16 px-6 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm"
+                >
+                    <ShieldCheck className="w-14 h-14 text-text-muted mb-5 opacity-40" />
+                    <p className="text-xl font-bold text-text-secondary mb-2">No active Major Goals.</p>
+                    <p className="text-text-muted mt-2 max-w-sm mx-auto leading-relaxed">Set a major objective to focus your efforts and reap massive rewards!</p>
+                </motion.div>
             )}
-        </div>
+            </AnimatePresence>
+        </motion.div>
     );
 };
 

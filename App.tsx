@@ -14,7 +14,7 @@ import Staking from './components/Staking';
 import Inventory from './components/Inventory';
 import SettingsModal from './components/SettingsModal';
 import MyState from './components/MyState';
-import TestingPanel from './components/TestingPanel';
+
 import LevelUpAnimation from './components/LevelUpAnimation';
 import Chatbot from './components/Chatbot';
 import Badges from './components/Badges';
@@ -34,20 +34,19 @@ import RewardToast from './components/RewardToast';
 import AddEditBadgeModal from './components/AddEditBadgeModal';
 import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
-import LoginModal from './components/LoginModal';
 import EnterApiKeyModal from './components/EnterApiKeyModal';
+import NameEntryModal from './components/NameEntryModal';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
-import * as googleAuth from './auth/googleAuth';
-import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
-const LAST_USER_ID_KEY = 'lastLoggedInUserId';
-const USER_PROFILE_PREFIX = 'levelUpAwakeningUserProfile_';
+const LOCAL_USER_ID = 'local_user';
 
 
 const migrateLoadedState = (loadedState: any): any => {
@@ -188,35 +187,86 @@ const recalculateSkillTree = (
 
 
 const App: React.FC = () => {
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userProfile, setUserProfile] = useState<googleAuth.UserProfile | null>(null);
-  const [originalProfilePicture, setOriginalProfilePicture] = useState<string | null>(null);
+  const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('googleAiApiKey') || '');
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(!localStorage.getItem('googleAiApiKey'));
+  const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
-  const [user, _setUser] = useState<User>(INITIAL_USER);
-  const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
-  const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(INITIAL_STORY_LOG);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
-  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(INITIAL_WEEKLY_PROGRESS);
-  const [activityLog, setActivityLog] = useState<ActivityData[]>(INITIAL_ACTIVITY_DATA);
-  const [systemMessages, setSystemMessages] = useState<SystemMessage[]>(INITIAL_SYSTEM_MESSAGES);
-  const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
-  const [storeItems, setStoreItems] = useState<StoreItem[]>(STORE_ITEMS);
-  const [allArcs, setAllArcs] = useState<Arc[]>(ALL_ARCS);
-  const [activeArcId, setActiveArcId] = useState<string | null>(INITIAL_USER.activeArc?.id || null);
-  const [allBadges, setAllBadges] = useState<Badge[]>(BADGE_DEFINITIONS);
+  const [user, _setUser] = useState<User>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.user || INITIAL_USER;
+  });
+  const [quests, setQuests] = useState<Quest[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.quests || INITIAL_QUESTS;
+  });
+  const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.storyLog || INITIAL_STORY_LOG;
+  });
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.journalEntries || INITIAL_JOURNAL_ENTRIES;
+  });
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.weeklyProgress || INITIAL_WEEKLY_PROGRESS;
+  });
+  const [activityLog, setActivityLog] = useState<ActivityData[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.activityLog || INITIAL_ACTIVITY_DATA;
+  });
+  const [systemMessages, setSystemMessages] = useState<SystemMessage[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.systemMessages || INITIAL_SYSTEM_MESSAGES;
+  });
+  const [integrations, setIntegrations] = useState<Integration[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.integrations || INITIAL_INTEGRATIONS;
+  });
+  const [storeItems, setStoreItems] = useState<StoreItem[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.storeItems || STORE_ITEMS;
+  });
+  const [allArcs, setAllArcs] = useState<Arc[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.allArcs || ALL_ARCS;
+  });
+  const [activeArcId, setActiveArcId] = useState<string | null>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.activeArcId || INITIAL_USER.activeArc?.id || null;
+  });
+  const [allBadges, setAllBadges] = useState<Badge[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.allBadges || BADGE_DEFINITIONS;
+  });
   const [view, setView] = useState<View>('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingQuests, setIsLoadingQuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(null);
+  const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.lastLootboxClaim || null;
+  });
+
+  useEffect(() => {
+    if (user.name === "Awakened") {
+      setIsNameEntryModalOpen(true);
+    }
+  }, [user.name]);
+
+  const handleSaveName = (newName: string) => {
+    setUser(prev => ({ ...prev, name: newName }));
+    setIsNameEntryModalOpen(false);
+  };
   const [levelUpData, setLevelUpData] = useState<{ level: number, rank: string } | null>(null);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const previousLevel = useRef<number>(user.level_overall);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.chatHistory || [];
+  });
   const [isChatbotLoading, setIsChatbotLoading] = useState(false);
   const [isAddQuestModalOpen, setIsAddQuestModalOpen] = useState(false);
 
@@ -228,7 +278,10 @@ const App: React.FC = () => {
   const [isBulkAddModalOpen, setIsBulkAddModalOpen] = useState(false);
   const [skillForBulkAdd, setSkillForBulkAdd] = useState<Skill | null>(null);
 
-  const [majorGoals, setMajorGoals] = useState<MajorGoal[]>(INITIAL_MAJOR_GOALS);
+  const [majorGoals, setMajorGoals] = useState<MajorGoal[]>(() => {
+    const localData = loadUser(LOCAL_USER_ID);
+    return localData?.majorGoals || INITIAL_MAJOR_GOALS;
+  });
   const [isMajorGoalModalOpen, setIsMajorGoalModalOpen] = useState(false);
   const [editingMajorGoal, setEditingMajorGoal] = useState<MajorGoal | null>(null);
   const [isBulkGoalModalOpen, setIsBulkGoalModalOpen] = useState(false);
@@ -251,10 +304,7 @@ const App: React.FC = () => {
   const [aiRecommendations, setAiRecommendations] = useState<AiRecommendations | null>(null);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
 
-  const [simulateApiError, setSimulateApiError] = useState(false);
   const [timeOffsetInHours, setTimeOffsetInHours] = useState(0);
-  
-  type StoredUserProfile = googleAuth.UserProfile & { originalPicture?: string };
 
   const setStateFromData = useCallback((data: any) => {
     _setUser(data.user || INITIAL_USER);
@@ -281,162 +331,30 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: 'API Key has been saved.', timestamp: 'Just now', type: 'system' }, ...prev]);
   }, []);
 
-  const handleLoginSuccess = useCallback((profile: googleAuth.UserProfile, apiAuthorized: boolean) => {
-    setAuthError(null);
-    let loadedSuccessfully = false;
-
-    // 1. Try loading from local storage
-    const localData = loadUser(profile.id);
-    if (localData) {
-        setStateFromData(localData);
-        loadedSuccessfully = true;
-        setSystemMessages(prev => [{ id: `local-load-ok-${Date.now()}`, text: 'Progress loaded from local backup.', timestamp: 'Just now', type: 'system' }, ...prev]);
-    }
-    
-    // 2. If it fails, use initial state
-    if (!loadedSuccessfully) {
-        const newUser = { ...INITIAL_USER, name: profile.name };
-        setStateFromData({ user: newUser }); // Use setStateFromData to reset everything else too
-    }
-
-    setOriginalProfilePicture(profile.picture);
-
-    const customPic = localStorage.getItem(`${PROFILE_PIC_PREFIX}${profile.id}`);
-    const finalProfile = { ...profile };
-    if (customPic) {
-      finalProfile.picture = customPic;
-    }
-
-    setUserProfile(finalProfile);
-    setIsAuthenticated(true);
-    
-    // Save session to local storage for persistence
-    localStorage.setItem(LAST_USER_ID_KEY, profile.id);
-    const profileToSave: StoredUserProfile = { ...finalProfile, originalPicture: profile.picture };
-    localStorage.setItem(`${USER_PROFILE_PREFIX}${profile.id}`, JSON.stringify(profileToSave));
-
-    const isAiStudio = !!(window as any).aistudio;
-    
-    // Auto-connect Google Calendar only if API authorization was successful
-    setIntegrations(prev => prev.map(i => i.id === 'google_calendar' ? { ...i, connected: apiAuthorized } : i));
-
-    if (!apiAuthorized && !isAiStudio) {
-      setSystemMessages(prev => [{
-          id: `gcal-auth-err-${Date.now()}`,
-          text: 'Could not connect Google Calendar. API access might need to be granted.',
-          timestamp: 'Just now',
-          type: 'warning'
-      }, ...prev]);
-    }
-  }, [setStateFromData]);
-
   const handleProfilePictureChange = useCallback((dataUrl: string | null) => {
-    if (userProfile) {
-        if (dataUrl) {
-             localStorage.setItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`, dataUrl);
-        } else {
-            localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
-        }
-        
-        const newProfile = { ...userProfile };
-        newProfile.picture = dataUrl || originalProfilePicture || '';
-        setUserProfile(newProfile);
-        
-        // Update the full profile object in storage to persist picture changes
-        const profileToSave: StoredUserProfile = { ...newProfile, originalPicture: originalProfilePicture || userProfile.picture };
-        localStorage.setItem(`${USER_PROFILE_PREFIX}${userProfile.id}`, JSON.stringify(profileToSave));
-
-        setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
+    if (dataUrl) {
+      localStorage.setItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`, dataUrl);
+    } else {
+      localStorage.removeItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`);
     }
-  }, [userProfile, originalProfilePicture]);
+    setUserPicture(dataUrl);
+    setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
+  }, [setSystemMessages]);
 
-
-  const handleLogout = useCallback(() => {
-    const userId = userProfile?.id;
-    googleAuth.signOut();
-    setIsAuthenticated(false);
-    setUserProfile(null);
-    
-    // Clear session from local storage
-    if (userId) {
-        localStorage.removeItem(LAST_USER_ID_KEY);
-        localStorage.removeItem(`${USER_PROFILE_PREFIX}${userId}`);
-        localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userId}`);
-    }
-
-    setStateFromData({}); // Reset state to initial to avoid showing previous user's data
-  }, [setStateFromData, userProfile]);
-  
+  // Autosave to localStorage on state change
   useEffect(() => {
-    const authCheck = () => {
-      const isAiStudio = !!(window as any).aistudio;
-
-      if (isAiStudio) {
-        const mockProfile: googleAuth.UserProfile = {
-          id: 'aistudio_user',
-          name: 'AI Studio User',
-          email: 'aistudio@example.com',
-          picture: 'https://www.gstatic.com/images/branding/product/2x/google_for_developers_logomark_color_192dp.png',
-        };
-        handleLoginSuccess(mockProfile, false);
-        setIsAuthLoading(false);
-        return;
-      }
-
-      try {
-        const lastUserId = localStorage.getItem(LAST_USER_ID_KEY);
-        if (lastUserId) {
-          const savedProfileStr = localStorage.getItem(`${USER_PROFILE_PREFIX}${lastUserId}`);
-          const localData = loadUser(lastUserId);
-
-          if (savedProfileStr && localData) {
-            const savedProfile = JSON.parse(savedProfileStr) as StoredUserProfile;
-            setStateFromData(localData);
-            setUserProfile(savedProfile);
-            setOriginalProfilePicture(savedProfile.originalPicture);
-            setIsAuthenticated(true);
-          }
-        }
-        
-        // Always initialize Google Auth to handle silent sign-in or prompt for login.
-        googleAuth.init(handleLoginSuccess, handleLogout);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "An unknown authentication error occurred.";
-        setAuthError(message);
-        localStorage.removeItem(LAST_USER_ID_KEY);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    authCheck();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
-  useEffect(() => {
-    if (isAuthenticated && !apiKey) {
-      setIsApiKeyModalOpen(true);
-    }
-  }, [isAuthenticated, apiKey]);
-
-
-  useEffect(() => {
-    if (!userProfile?.id || userProfile.id.startsWith('local_user') || userProfile.id.startsWith('aistudio_user')) return;
-
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
         integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
         lastLootboxClaim, chatHistory, journalEntries,
     };
 
-    // Debounce local save
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = window.setTimeout(() => {
         setSyncStatus('syncing');
         try {
             const serializedState = JSON.stringify(stateToSave);
-            localStorage.setItem(`${SAVE_DATA_PREFIX}${userProfile.id}`, serializedState);
+            localStorage.setItem(`${SAVE_DATA_PREFIX}${LOCAL_USER_ID}`, serializedState);
             setSyncStatus('synced');
             setTimeout(() => setSyncStatus('idle'), 1500);
         } catch (err) {
@@ -446,16 +364,12 @@ const App: React.FC = () => {
     }, 1000);
 
   }, [
-    userProfile, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory, journalEntries
   ]);
-  
-  useEffect(() => {
-    if (userProfile) {
-        _setUser(u => ({ ...u, name: userProfile.name }));
-    }
-  }, [userProfile]);
+
+
 
   const setUser = useCallback((newUserOrFn: React.SetStateAction<User>) => {
       _setUser(currentUser => {
@@ -484,14 +398,12 @@ const App: React.FC = () => {
   
   const handleResetData = useCallback(() => {
     if (window.confirm("Are you sure you want to delete all your progress? This action cannot be undone.")) {
-      if (userProfile?.id) {
-        localStorage.removeItem(`${SAVE_DATA_PREFIX}${userProfile.id}`);
-        localStorage.removeItem(`${PROFILE_PIC_PREFIX}${userProfile.id}`);
-      }
+      localStorage.removeItem(`${SAVE_DATA_PREFIX}${LOCAL_USER_ID}`);
+      localStorage.removeItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`);
       localStorage.removeItem('googleAiApiKey');
       window.location.reload();
     }
-  }, [userProfile]);
+  }, []);
 
   const getCurrentDate = useCallback(() => {
     const date = new Date();
@@ -552,6 +464,18 @@ const App: React.FC = () => {
       handleCheckForNewBadges();
   }, [user.questsCompleted, user.bossQuestsCompleted, user.level_overall, user.skill_tree, handleCheckForNewBadges]);
 
+
+  useEffect(() => {
+    if (user.level_overall > previousLevel.current) {
+        setLevelUpData({ level: user.level_overall, rank: user.rank });
+        let sound = new Audio('/src/assets/audio/level_up.mp3');
+        if (sound) {
+            sound.volume = 0.5;
+            sound.play().catch(e => console.log("Audio play blocked by browser:", e));
+        }
+    }
+    previousLevel.current = user.level_overall;
+  }, [user.level_overall, user.rank]);
 
   useEffect(() => {
     if (levelUpData) {
@@ -671,10 +595,6 @@ const App: React.FC = () => {
     setIsLoadingQuests(true);
     setError(null);
     try {
-      if (simulateApiError) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        throw new Error("Simulated API Error: The AI core is offline.");
-      }
       
       const now = getCurrentDate();
 
@@ -735,7 +655,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingQuests(false);
     }
-  }, [apiKey, user, integrations, chatHistory, simulateApiError, getCurrentDate, getFutureDateWithOffset, setUser]);
+  }, [apiKey, user, integrations, chatHistory, getCurrentDate, getFutureDateWithOffset, setUser]);
   
  const handleGrantReward = useCallback((
     baseXp: number,
@@ -776,8 +696,6 @@ const App: React.FC = () => {
             newLevel++;
             xpForNext = getXpThresholdForLevel(newLevel);
             newRank = getRankForLevel(newLevel);
-            // Side effect for animation
-            setLevelUpData({ level: newLevel, rank: newRank });
         }
         
         // --- 4. Log Activity
@@ -941,7 +859,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                 newLevel++;
                 xpForNext = getXpThresholdForLevel(newLevel);
                 newRank = getRankForLevel(newLevel);
-                setLevelUpData({ level: newLevel, rank: newRank });
             }
         } else if (xpDifference < 0) {
             while (newXpTotal < 0) {
@@ -1484,11 +1401,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `levelup-awakening-backup-${userProfile?.id}-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `levelup-awakening-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: 'User data backup downloaded.', timestamp: 'Just now', type: 'system' }, ...prev]);
-  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, userProfile, journalEntries]);
+  }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, journalEntries]);
 
   const handleUploadBackup = useCallback((file: File) => {
     if (!window.confirm("Are you sure you want to restore from this backup? All current progress for this user will be overwritten.")) {
@@ -1535,30 +1452,16 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             
             const parsedData = JSON.parse(content);
             const migratedData = migrateLoadedState(parsedData);
-            
             setStateFromData(migratedData);
-
-            const loadedUser = migratedData.user as User;
-            const localProfile: googleAuth.UserProfile = {
-                id: `local_user_${Date.now()}`,
-                name: loadedUser.name || 'Local User',
-                email: 'local@levelup.app',
-                picture: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(loadedUser.name || 'LU')}`,
-            };
-
-            setUserProfile(localProfile);
-            setOriginalProfilePicture(localProfile.picture);
-            setIsAuthenticated(true);
-            
             setSystemMessages(prev => [{ id: `restore-login-${Date.now()}`, text: 'Data successfully loaded from file.', timestamp: 'Just now', type: 'system' }, ...prev]);
 
         } catch (err) {
              const errorMessage = err instanceof Error ? err.message : "Unknown error.";
-             setAuthError(`Failed to load backup: ${errorMessage}`);
+             setError(`Failed to load backup: ${errorMessage}`);
         }
     };
     reader.onerror = () => {
-        setAuthError('Failed to read the backup file.');
+        setError('Failed to read the backup file.');
     };
     reader.readAsText(file);
   };
@@ -1823,6 +1726,12 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }
   };
+
+  const pageVariants = {
+    initial: { opacity: 0, y: 10, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
+    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] } }
+  };
   
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
       { view: 'dashboard', label: 'Quests', icon: LayoutDashboard },
@@ -1832,40 +1741,70 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       { view: 'more', label: 'More', icon: MoreHorizontal },
   ];
   
-  if (isAuthLoading) {
-    return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-accent-primary" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <LoginModal onRestoreFromFile={handleRestoreFromFile} error={authError} />;
-  }
-
   if (isApiKeyModalOpen) {
     return <EnterApiKeyModal onSave={handleSaveApiKey} />;
   }
 
+  if (isNameEntryModalOpen) {
+    return <NameEntryModal onSave={handleSaveName} />;
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      <Header user={user} userProfile={userProfile} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
-      <main className="flex-grow p-4 sm:p-6 overflow-y-auto">
-        {renderView()}
-      </main>
-      <footer className="flex-shrink-0 bg-primary border-t border-border-color p-2 z-40">
-        <nav className="max-w-7xl mx-auto flex justify-around">
+    <div className="flex flex-col md:flex-row h-full w-full bg-background overflow-hidden relative">
+      {/* Desktop Sidebar (hidden on mobile) */}
+      <aside className="hidden md:flex flex-col w-64 md:w-24 lg:w-64 bg-primary/80 backdrop-blur-3xl border-r border-white/5 shadow-[8px_0_32px_rgba(0,0,0,0.3)] z-50 shrink-0">
+        <div className="p-4 md:p-2 lg:p-4 border-b border-white/5 flex items-center justify-center lg:justify-start gap-3">
+             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-primary to-accent-tertiary flex items-center justify-center shadow-glow-primary shrink-0">
+                 <Dna className="w-6 h-6 text-white" />
+             </div>
+             <span className="font-black text-xl tracking-tight text-white hidden lg:block">Level-Up</span>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+           {navItems.map(item => (
+             <button key={item.view} onClick={() => setView(item.view)} className={`flex items-center w-full px-3 py-3 rounded-xl transition-all duration-300 group ${view === item.view ? 'bg-accent-primary/15 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)] text-white relative' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}>
+                {view === item.view && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-primary rounded-r-md shadow-glow-primary"></div>}
+                <item.icon size={22} className={`shrink-0 md:mx-auto lg:mx-0 ${view === item.view ? 'text-accent-primary drop-shadow-sm' : 'group-hover:text-text-primary'}`} />
+                <span className={`ml-4 font-bold tracking-wide text-sm hidden lg:block ${view === item.view ? 'uppercase' : ''}`}>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 h-full min-w-0">
+          <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
+            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
+            <div className="flex-1 p-4 sm:p-6 lg:p-8 pt-0 sm:pt-0 lg:pt-0 w-full min-h-min relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={view}
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="w-full h-full absolute inset-0 pt-0 sm:pt-0 lg:pt-0 px-4 sm:px-6 lg:px-8 pb-32"
+                >
+                  {renderView()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+      </div>
+
+      {/* Mobile Bottom Navigation (hidden on desktop) */}
+      <footer className="md:hidden flex-shrink-0 bg-primary/80 backdrop-blur-3xl border-t border-white/5 p-2 z-40 shadow-[0_-8px_32px_rgba(0,0,0,0.4)] relative">
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <nav className="max-w-7xl mx-auto flex justify-around relative z-10">
           {navItems.map(item => (
-             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full p-2 rounded-lg transition-colors ${view === item.view ? 'text-accent-primary bg-accent-primary/10' : 'text-text-secondary hover:bg-border-color/50'}`}>
-                <item.icon size={24} />
-                <span className="text-xs mt-1">{item.label}</span>
+             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full p-2 rounded-xl transition-all duration-300 ${view === item.view ? 'text-accent-primary bg-accent-primary/10 shadow-[inset_0_0_15px_rgba(59,130,246,0.2)] -translate-y-1' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
+                <item.icon size={24} className={view === item.view ? 'drop-shadow-sm' : ''} />
+                <span className={`text-[10px] mt-1 font-bold tracking-wide ${view === item.view ? 'uppercase' : ''}`}>{item.label}</span>
             </button>
           ))}
         </nav>
       </footer>
 
-      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} onLogout={handleLogout} userProfile={userProfile} onProfilePictureChange={handleProfilePictureChange} apiKey={apiKey} onSaveApiKey={handleSaveApiKey} />}
+      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} userName={user.name} userPicture={userPicture} onProfilePictureChange={handleProfilePictureChange} apiKey={apiKey} onSaveApiKey={handleSaveApiKey} />}
       {isAddQuestModalOpen && <AddQuestModal isOpen={isAddQuestModalOpen} onClose={() => setIsAddQuestModalOpen(false)} onAddQuest={handleAddPersonalQuest} apiKey={apiKey} />}
       {isSkillModalOpen && <AddEditSkillModal isOpen={isSkillModalOpen} onClose={() => { setIsSkillModalOpen(false); setEditingSkill(null); }} onSave={handleSaveSkill} skillToEdit={editingSkill} apiKey={apiKey} />}
       {isTopicModalOpen && <AddEditTopicModal isOpen={isTopicModalOpen} onClose={() => { setIsTopicModalOpen(false); setEditingTopic(null); setDefaultSkillForTopic(undefined); }} onSave={handleSaveTopic} topicToEdit={editingTopic} skills={Object.values(user.skill_tree)} defaultSkillId={defaultSkillForTopic} apiKey={apiKey} />}
@@ -1878,36 +1817,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} apiKey={apiKey} />}
       {isRecommendationsModalOpen && <RecommendationsModal isOpen={isRecommendationsModalOpen} onClose={() => setIsRecommendationsModalOpen(false)} recommendations={aiRecommendations} onSave={handleSaveRecommendations} isLoading={isGeneratingRecommendations} userSkills={user.skill_tree} />}
 
-      {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} />}
+      {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} onClose={() => setLevelUpData(null)} />}
       <RewardToast notifications={rewardNotifications} onRemove={(id) => setRewardNotifications(prev => prev.filter(n => n.id !== id))} />
-      <TestingPanel
-        user={user}
-        storeItems={storeItems}
-        simulateApiError={simulateApiError}
-        onAddXp={handleAddXp}
-        onAddCredits={handleAddCredits}
-        onResetUser={handleSimpleReset}
-        onAddItem={handleAddItemToInventory}
-        onResetLootbox={handleResetLootbox}
-        onToggleApiError={() => setSimulateApiError(p => !p)}
-        onAddSkillXp={handleAddSkillXp}
-        onClearQuests={() => setQuests([])}
-        onClearInventory={() => setUser(p => ({...p, inventory: []}))}
-        onSetStat={handleSetStat}
-        onSetStreak={handleSetStreak}
-        onAddGems={handleAddGems}
-        onAddQuest={handleAddDevQuest}
-        onDevGenerateText={(prompt) => devGenerateText(apiKey, prompt)}
-        userGoal={user.state.longTermGoals}
-        majorGoals={majorGoals}
-        timeOffsetInHours={timeOffsetInHours}
-        onUpdateGoal={(goal) => handleUpdateUserState({ longTermGoals: goal })}
-        onUpdateMajorGoals={setMajorGoals}
-        onSetTimeOffsetHours={setTimeOffsetInHours}
-        onInduceAnomaly={handleInduceAnomaly}
-        onRunDiagnostics={handleRunDiagnostics}
-        currentDate={getCurrentDate()}
-      />
     </div>
   );
 };

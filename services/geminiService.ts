@@ -255,7 +255,8 @@ export const getAiChatResponseAndActions = async (apiKey: string, user: User, hi
         3.  **SEEK CLARIFICATION:** If a command is ambiguous (e.g., "I finished the signals task"), ask for clarification (e.g., "Which signals quest did you complete?").
         4.  **PROVIDE CONVERSATIONAL RESPONSES:** For questions or general chat, respond naturally in your persona.
         5.  **COMBINE ACTIONS AND TEXT:** You can both call a function AND provide a text response in the same turn. For example, if the user says "Add a quest to read for 1 hour", you can call \`addQuest\` and also respond with "Consider it done. A new quest has been added to your log."
-        6.  **CONTEXT IS KEY:** Use the provided user profile, active quests, and major goals to inform your responses and actions.
+        6.  **AUTO-GENERATE MISSIONS & GOALS:** If the user asks you to help them define or brainstorm their "Core Mission", "Long-Term Goals", "Short-Term Goals", "Emergency Goals", or "Side Quests", OR if they simply state what their goals are, you MUST use the \`updateUserState\` tool to save these generated goals seamlessly into their profile. Provide a confirmation message when doing so.
+        7.  **CONTEXT IS KEY:** Use the provided user profile, active quests, and major goals to inform your responses and actions.
         
         USER PROFILE: ${JSON.stringify(userProfile, null, 2)}
         

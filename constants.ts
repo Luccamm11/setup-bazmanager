@@ -106,7 +106,7 @@ export const ALL_ARCS: Arc[] = [EXAM_ARC, FITNESS_ARC];
 
 
 export const INITIAL_USER: User = {
-  name: "Shounak",
+  name: "Awakened",
   rank: RANKS[0].title,
   level_overall: 1,
   xp_total: 0,
@@ -227,7 +227,7 @@ export const INITIAL_STORY_LOG: StoryLogEntry[] = [
     id: 'log1',
     date: "Week 1",
     title: "The Awakening",
-    narrative: "The System activated. Initial diagnostics are complete. User entity 'Shounak' has been identified. Primary objective: Level Up. The path to multidisciplinary innovation begins now."
+    narrative: "The System activated. Initial diagnostics are complete. A new User entity has been identified. Primary objective: Level Up. The path to multidisciplinary innovation begins now."
   }
 ];
 

@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from 'react';
 interface LevelUpAnimationProps {
   level: number;
   rank: string;
+  onClose?: () => void;
 }
 
 // =================================================================
@@ -283,7 +284,7 @@ const digitalRain = (ctx: CanvasRenderingContext2D, width: number, height: numbe
 // END: Generative Art Simulators
 // =================================================================
 
-const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank }) => {
+const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank, onClose }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     // FIX: Changed useRef type to be nullable and initialized with null.
     // Calling useRef<T>() with no argument implicitly initializes it with `undefined`, which is a type error if T is not assignable from `undefined`.
@@ -363,12 +364,13 @@ const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank }) => {
         }
       `}</style>
       <div 
-        className="fixed inset-0 flex items-center justify-center z-[100]"
+        className="fixed inset-0 flex items-center justify-center z-[100] cursor-pointer"
         style={{ animation: 'fade-in-backdrop 0.5s ease-out forwards' }}
+        onClick={onClose}
       >
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
         <div 
-          className="relative flex flex-col items-center justify-center text-center p-8 w-full max-w-md m-4"
+          className="relative flex flex-col items-center justify-center text-center p-8 w-full max-w-md m-4 pointer-events-none"
           style={{ 
             animation: 'scale-up-content 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards',
             textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)'
@@ -402,6 +404,9 @@ const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank }) => {
                 {rank}
             </p>
           </div>
+          <p className="absolute bottom-[-4rem] text-sm text-text-muted animate-pulse">
+            Click anywhere to continue
+          </p>
         </div>
       </div>
     </>

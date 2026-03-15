@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, LogOut, Upload, RefreshCcw } from 'lucide-react';
+import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, Upload, RefreshCcw } from 'lucide-react';
 import { Integration, Arc, UserState } from '../types';
 import MyState from './MyState';
-import * as googleAuth from '../auth/googleAuth';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,14 +18,14 @@ interface SettingsModalProps {
   onDownloadBackup: () => void;
   onUploadBackup: (file: File) => void;
   onResetData: () => void;
-  onLogout: () => void;
-  userProfile: googleAuth.UserProfile | null;
+  userName?: string;
+  userPicture?: string | null;
   onProfilePictureChange: (dataUrl: string | null) => void;
   apiKey: string;
   onSaveApiKey: (key: string) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrations, onIntegrationToggle, allArcs, activeArcId, onSetActiveArc, onDeleteArc, onOpenArcModal, userState, onUpdateUserState, onDownloadBackup, onUploadBackup, onResetData, onLogout, userProfile, onProfilePictureChange, apiKey, onSaveApiKey }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrations, onIntegrationToggle, allArcs, activeArcId, onSetActiveArc, onDeleteArc, onOpenArcModal, userState, onUpdateUserState, onDownloadBackup, onUploadBackup, onResetData, userName, userPicture, onProfilePictureChange, apiKey, onSaveApiKey }) => {
   const [localApiKey, setLocalApiKey] = useState(apiKey);
   const fileInputRef = useRef<HTMLInputElement>(null);
   if (!isOpen) return null;
@@ -73,7 +72,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
               <div className="flex items-center space-x-4">
                   <div className="relative group">
                     <img 
-                        src={userProfile?.picture} 
+                        src={userPicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=0D8ABC&color=fff`} 
                         alt="User profile" 
                         className="w-16 h-16 rounded-full object-cover cursor-pointer"
                         onClick={handleProfilePicClick}
@@ -90,8 +89,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
                     />
                   </div>
                   <div>
-                    <p className="font-semibold text-text-primary">Logged in as: <span className="text-accent-primary">{userProfile?.name}</span></p>
-                    <p className="text-sm text-text-secondary">{userProfile?.email}</p>
+                    <p className="font-semibold text-text-primary">Player: <span className="text-accent-primary">{userName || 'Adventurer'}</span></p>
                     <div className="flex items-center space-x-4 mt-2">
                         <button onClick={handleProfilePicClick} className="text-xs text-accent-primary hover:underline flex items-center gap-1">
                             <Upload size={12}/>
@@ -103,13 +101,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
                     </div>
                   </div>
               </div>
-              <button 
-                  onClick={onLogout}
-                  className="bg-accent-red hover:bg-opacity-80 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center space-x-2"
-              >
-                  <LogOut size={16} />
-                  <span>Logout</span>
-              </button>
           </div>
         </div>
 

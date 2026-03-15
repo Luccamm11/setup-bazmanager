@@ -116,31 +116,46 @@ const handleCredentialResponse = (response: any) => {
     tokenClient.requestAccessToken({ prompt: '' });
 };
 
+let gisInitialized = false;
+
 /**
  * Polls until the Google Identity Services (GIS) script is loaded and ready.
  */
 const initializeGis = () => {
-    if (window.google?.accounts?.id) {
+    if (window.google?.accounts?.id && !gisInitialized) {
         window.google.accounts.id.initialize({
             client_id: CLIENT_ID,
             callback: handleCredentialResponse,
             auto_select: true, // Enables automatic sign-in for returning users
         });
-
-        // Render the official "Sign in with Google" button into the specified element.
-        const signInButtonElement = document.getElementById('google-signin-button');
-        if (signInButtonElement) {
-            window.google.accounts.id.renderButton(
-                signInButtonElement,
-                { theme: 'outline', size: 'large', type: 'standard', text: 'signin_with', width: '280' }
-            );
-        }
         
+        gisInitialized = true;
+
         // Display the One Tap prompt for returning users.
         window.google.accounts.id.prompt();
-    } else {
+    } else if (!window.google?.accounts?.id) {
         setTimeout(initializeGis, 100);
     }
+};
+
+/**
+ * Renders the Google Sign-In button in the specified container.
+ */
+export const renderSignInButton = (containerId: string) => {
+    const tryRender = () => {
+        if (window.google?.accounts?.id && gisInitialized) {
+            const signInButtonElement = document.getElementById(containerId);
+            if (signInButtonElement) {
+                window.google.accounts.id.renderButton(
+                    signInButtonElement,
+                    { theme: 'outline', size: 'large', type: 'standard', text: 'signin_with', width: '280' }
+                );
+            }
+        } else {
+            setTimeout(tryRender, 100);
+        }
+    };
+    tryRender();
 };
 
 /**

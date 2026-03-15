@@ -7,32 +7,46 @@
     <title>LevelUp: AI Awakening</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+              sans: ['Outfit', 'sans-serif'],
             },
             colors: {
-              'background': '#0D1117',
-              'primary': '#161B22',    // Component/Card background
-              'border-color': '#30363D',
-              'text-primary': '#E6EDF3',
-              'text-secondary': '#8B949E',
-              'text-muted': '#484F58',
-              'accent-primary': '#58A6FF',    // Blue
-              'accent-secondary': '#E3B341',  // Yellow/Gold
-              'accent-tertiary': '#A371F7',   // Purple
-              'accent-red': '#DA3633',
-              'accent-green': '#238636',
-              'accent-green-hover': '#2EA043',
+              'background': '#020617', // slate-950 deep rich background
+              'primary': '#0f172a',    // slate-900 component background
+              'border-color': '#1e293b', // slate-800 soft borders
+              'text-primary': '#f8fafc',
+              'text-secondary': '#94a3b8',
+              'text-muted': '#475569',
+              'accent-primary': '#3b82f6',    // Vibrant Blue
+              'accent-secondary': '#eab308',  // Vibrant Yellow/Gold
+              'accent-tertiary': '#a855f7',   // Vibrant Purple
+              'accent-red': '#ef4444',
+              'accent-green': '#22c55e',
+              'accent-green-hover': '#16a34a',
             },
             boxShadow: {
               'none': 'none',
+              'glow-primary': '0 0 20px rgba(59, 130, 246, 0.6)',
+              'glow-secondary': '0 0 20px rgba(234, 179, 8, 0.6)',
+              'glow-tertiary': '0 0 20px rgba(168, 85, 247, 0.6)',
+              'glow-red': '0 0 20px rgba(239, 68, 68, 0.6)',
+              'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
             }
           },
         },
@@ -54,6 +68,46 @@
     height: 100%;
     margin: 0;
     overflow: hidden;
+  }
+  
+  @media (min-width: 1024px) {
+      body {
+          zoom: 0.8;
+      }
+      #root {
+          height: 125vh;
+      }
+  }
+
+  /* Custom Scrollbar Styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5); 
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5); 
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.8); 
+  }
+
+  /* Hide scrollbar for clean UI where needed but allow scroll */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Utility for super glowing text */
+  .text-glow {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
   }
 </style>
 </head>
