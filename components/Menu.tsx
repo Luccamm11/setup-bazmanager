@@ -1,17 +1,18 @@
 import React from 'react';
-import { Store, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare } from 'lucide-react';
 
-type View = 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer';
+type View = 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
 }
 
 const Menu: React.FC<MenuProps> = ({ onNavigate }) => {
-  // FIX: Explicitly typed the array to ensure item.view is of type `View`, not `string`.
   const menuItems: { view: View, label: string, icon: React.ElementType, description: string }[] = [
     { view: 'timer', label: 'Timer', icon: Timer, description: 'Start a timed ad-hoc quest.' },
-    { view: 'store', label: 'Store', icon: Store, description: 'Acquire buffs and rewards.' },
+    { view: 'chatbot', label: 'AI Chat', icon: BotMessageSquare, description: 'Consult the system intelligence.' },
+    { view: 'system_mechanics', label: 'Mechanics', icon: Dna, description: 'Review system algorithms.' },
+    { view: 'store', label: 'Store', icon: LucideStore, description: 'Acquire buffs and rewards.' },
     { view: 'staking', label: 'Staking', icon: Landmark, description: 'Stake credits for passive boosts.' },
     { view: 'analytics', label: 'Analytics', icon: BarChart2, description: 'Track your progress.' },
     { view: 'story_log', label: 'Story Log', icon: BookOpen, description: 'Review your journey.' },

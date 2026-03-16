@@ -22,6 +22,7 @@ import SystemLog from './components/SystemLog';
 import Menu from './components/Menu';
 import Journal from './components/Journal';
 import Timer from './components/Timer';
+import SystemMechanics from './components/SystemMechanics';
 import AddQuestModal from './components/AddQuestModal';
 import AddEditSkillModal from './components/AddEditSkillModal';
 import AddEditTopicModal from './components/AddEditTopicModal';
@@ -42,7 +43,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer';
+type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -1722,6 +1723,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'journal': return <Journal journalEntries={journalEntries} quests={quests} onCompleteQuest={handleCompleteQuest} currentDate={getCurrentDate()} />;
       case 'timer': return <Timer activeQuest={user.activeTimedQuest || null} onStartQuest={handleStartTimedQuest} onCompleteQuest={handleCompleteTimedQuest} apiKey={apiKey} />;
       case 'badges': return <Badges user={user} allBadges={allBadges} onAddBadge={() => setIsBadgeModalOpen(true)} onEditBadge={(badge) => { setEditingBadge(badge); setIsBadgeModalOpen(true); }} onDeleteBadge={handleDeleteBadge} />;
+      case 'system_mechanics': return <SystemMechanics />;
       case 'more': return <Menu onNavigate={setView} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }
@@ -1736,7 +1738,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
       { view: 'dashboard', label: 'Quests', icon: LayoutDashboard },
       { view: 'skill_tree', label: 'Skills', icon: TreeDeciduous },
-      { view: 'chatbot', label: 'Chat', icon: BotMessageSquare },
+      { view: 'system_mechanics', label: 'System', icon: Dna },
       { view: 'inventory', label: 'Inventory', icon: Package },
       { view: 'more', label: 'More', icon: MoreHorizontal },
   ];
@@ -1792,15 +1794,15 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       </div>
 
       {/* Mobile Bottom Navigation (hidden on desktop) */}
-      <footer className="md:hidden flex-shrink-0 bg-primary/80 backdrop-blur-3xl border-t border-white/5 p-2 z-40 shadow-[0_-8px_32px_rgba(0,0,0,0.4)] relative">
+      <footer className="md:hidden fixed bottom-0 left-0 right-0 bg-primary/95 backdrop-blur-3xl border-t border-white/5 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         <nav className="max-w-7xl mx-auto flex justify-around relative z-10">
           {navItems.map(item => (
-             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full py-1.5 px-1 transition-all duration-500 ${view === item.view ? 'text-accent-primary' : 'text-text-secondary opacity-50 hover:opacity-100'}`}>
-                <div className={`p-1.5 rounded-lg transition-all duration-500 ${view === item.view ? 'bg-accent-primary/10 shadow-sm' : ''}`}>
-                    <item.icon size={20} className={view === item.view ? 'drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]' : ''} />
+             <button key={item.view} onClick={() => setView(item.view)} className={`flex flex-col items-center justify-center w-full py-1.5 px-1 transition-all duration-300 ${view === item.view ? 'text-accent-primary' : 'text-text-secondary opacity-60 hover:opacity-100'}`}>
+                <div className={`p-1.5 rounded-xl transition-all duration-300 ${view === item.view ? 'bg-accent-primary/15 shadow-[0_0_12px_rgba(59,130,246,0.15)]' : ''}`}>
+                    <item.icon size={22} className={`transition-transform duration-300 ${view === item.view ? 'scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]' : ''}`} />
                 </div>
-                <span className={`text-[8px] mt-1 font-black tracking-[0.15em] uppercase ${view === item.view ? 'opacity-100' : 'opacity-0 scale-75'}`}>{item.label}</span>
+                <span className={`text-[8px] mt-0.5 font-black tracking-[0.12em] uppercase transition-all duration-300 ${view === item.view ? 'opacity-100 text-accent-primary' : 'opacity-50'}`}>{item.label}</span>
             </button>
           ))}
         </nav>
