@@ -168,22 +168,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
           </motion.button>
         </form>
 
-        <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
-            <div className="flex -space-x-3">
+        <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-5">
+            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{t('authorizedTeam')}</h3>
+            <div className="flex flex-wrap justify-center gap-3">
                 {VALID_USERS.map((user, idx) => (
                     <motion.div 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 * idx }}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.05 * idx }}
+                        whileHover="hover"
                         key={user} 
-                        className="w-8 h-8 rounded-full border-2 border-zinc-950 bg-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-500 cursor-help"
-                        title={user}
+                        className="h-9 rounded-xl border border-white/10 bg-white/5 flex items-center px-3 cursor-help hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all shrink-0 shadow-lg overflow-hidden whitespace-nowrap"
                     >
-                        {user[0]}
+                        <span className="shrink-0 text-xs font-black text-yellow-500/80">{user[0]}</span>
+                        <motion.span 
+                            variants={{
+                                hover: { width: 'auto', opacity: 1, marginLeft: 8 }
+                            }}
+                            initial={{ width: 0, opacity: 0, marginLeft: 0 }}
+                            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                            className="text-[10px] uppercase tracking-wider font-bold text-white/70"
+                        >
+                            {user.substring(1)}
+                        </motion.span>
                     </motion.div>
                 ))}
             </div>
-            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: VALID_USERS.length }) || '7 AUTHORIZED MEMBERS'}</p>
+            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: VALID_USERS.length })}</p>
         </div>
       </motion.div>
     </div>

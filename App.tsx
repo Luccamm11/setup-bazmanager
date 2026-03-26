@@ -1719,10 +1719,21 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             .then(data => {
               if (data.success && data.data) {
                 const migratedData = migrateLoadedState(data.data);
+                // If the loaded user still has the default name, update it to the member name
+                if (!migratedData.user.name || migratedData.user.name === "Awakened") {
+                  migratedData.user.name = username;
+                }
                 setStateFromData(migratedData);
+              } else {
+                // New user logic: set the name from the selected member
+                setUser(prev => ({ ...prev, name: username }));
               }
             })
-            .catch(err => console.error('Failed to load user state from server:', err))
+            .catch(err => {
+              console.error('Failed to load user state from server:', err);
+              // Fallback for offline/error: still set the name to the selected member
+              setUser(prev => ({ ...prev, name: username }));
+            })
             .finally(() => setIsInitialLoading(false));
         }} 
         isLoading={isInitialLoading} 

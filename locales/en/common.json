@@ -18,6 +18,16 @@
     "add_manual": "Manual Add",
     "reset": "Reset"
   },
+  "enterPasscode": "Enter Passcode",
+  "incorrectPassword": "Incorrect passcode.",
+  "serverConnectionError": "Server connection error.",
+  "systemLogin": "System Login",
+  "accessRestricted": "Access restricted. Authenticate to sync your data.",
+  "authenticate": "Authenticate",
+  "user": "User",
+  "authorizedTeam": "Authorized Team",
+  "teamMembersCount_one": "1 AUTHORIZED MEMBER",
+  "teamMembersCount_other": "{{count}} AUTHORIZED MEMBERS",
   "states": {
     "syncing": "Syncing...",
     "synced": "Synced",

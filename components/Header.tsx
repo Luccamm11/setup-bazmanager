@@ -26,18 +26,21 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: 
 const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     const { t } = useTranslation();
     const config = {
-        idle: { icon: null, text: '', color: '' },
-        syncing: { icon: <Loader2 size={16} className="animate-spin" />, text: t('states.syncing'), color: 'text-accent-primary' },
-        synced: { icon: <CheckCircle size={16} />, text: t('states.synced'), color: 'text-accent-green' },
-        error: { icon: <AlertTriangle size={16} />, text: t('states.error'), color: 'text-accent-red' },
+        idle: { icon: null, text: '', color: '', bg: '' },
+        syncing: { icon: <Loader2 size={14} className="animate-spin" />, text: t('states.syncing'), color: 'text-accent-primary', bg: 'bg-accent-primary/5' },
+        synced: { icon: <CheckCircle size={14} />, text: t('states.synced'), color: 'text-accent-green', bg: 'bg-accent-green/5' },
+        error: { icon: <AlertTriangle size={14} />, text: t('states.error'), color: 'text-accent-red', bg: 'bg-accent-red/5' },
     };
     const current = config[status];
     if (status === 'idle') return null;
 
     return (
-        <div className={`flex items-center space-x-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10 ${current.color} transition-all duration-500`}>
+        <div 
+            className={`flex items-center space-x-2 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/5 backdrop-blur-md ${current.bg} ${current.color} transition-all duration-500 shadow-glass animate-in fade-in slide-in-from-right-4`}
+            title={status === 'error' ? 'Connection to System Core lost. Retrying on next change.' : ''}
+        >
             {current.icon}
-            <span>{current.text}</span>
+            <span className="hidden sm:inline">{current.text}</span>
         </div>
     );
 };

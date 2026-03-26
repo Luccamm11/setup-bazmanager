@@ -13,10 +13,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await redis.set(`levelup_user_${username}`, JSON.stringify(data));
+    console.log(`Saving progress for: ${username}`);
+    const key = `levelup_user_${username}`;
+    const serializedData = JSON.stringify(data);
+    
+    await redis.set(key, serializedData);
+    
+    console.log(`Successfully saved data for ${username}. Length: ${serializedData.length}`);
     return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Error saving data to Redis:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+  } catch (error: any) {
+    console.error(`FAILURE: Error saving data for ${username}:`, error.message || error);
+    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 }
+
