@@ -1,0 +1,44 @@
+{
+  "store": "Store",
+  "store_subtitle": "Spend your credits on buffs and rewards",
+  "inventory": "Inventory",
+  "inventory_subtitle": "Your owned items and active buffs",
+  "staking": "Staking",
+  "staking_subtitle": "Stake credits for long-term passive gains",
+  "buy": "Buy",
+  "use": "Use",
+  "activate": "Activate",
+  "insufficient_credits": "Insufficient Credits",
+  "not_enough_credits": "Not enough credits to purchase this item.",
+  "item_purchased": "Purchased: {{item}}!",
+  "item_activated": "{{item}} activated!",
+  "item_real_world": "This is a real-world reward. Go enjoy it!",
+  "no_items": "Your inventory is empty.",
+  "category": {
+    "Buff": "Buff",
+    "Reward": "Reward",
+    "Utility": "Utility"
+  },
+  "effect": {
+    "XP_BOOST": "XP Boost x{{value}} ({{duration}}h)",
+    "STREAK_SAVER": "Streak Shield",
+    "QUEST_REROLL": "Quest Re-roll",
+    "INSTANT_STREAK": "Instant 3-Day Streak",
+    "REAL_WORLD_REWARD": "Real World Reward"
+  },
+  "buff_expired": "Buff expired: {{name}}.",
+  "active_buffs": "Active Buffs",
+  "no_active_buffs": "No active buffs.",
+  "expires_in": "Expires in {{time}}",
+  "staking": {
+    "stake": "Stake",
+    "unstake": "Unstake",
+    "staked_amount": "Staked: {{amount}} Credits",
+    "daily_return": "Daily Return: {{amount}} Credits",
+    "total_earned": "Total Earned: {{amount}} Credits",
+    "unstake_confirm": "Are you sure you want to unstake? You will lose all pending returns.",
+    "stake_amount_placeholder": "Amount to stake"
+  },
+  "add_store_item": "Add Store Item",
+  "edit_store_item": "Edit Store Item"
+}

@@ -1,0 +1,42 @@
+{
+  "active_objectives": "Objetivos Ativos",
+  "active_objectives_subtitle": "Suas tarefas imediatas e operações diárias",
+  "active_arc": "Arco de História Ativo",
+  "system_disruption": "Falha no Sistema",
+  "no_objectives": "Nenhum objetivo ativo detectado.",
+  "no_objectives_hint": "Inicie uma sincronização com o Núcleo IA para gerar novas tarefas baseadas nos seus objetivos e agenda.",
+  "daily_payload": "Recompensa Diária",
+  "daily_payload_syncing": "Sincronizando próxima entrega...",
+  "daily_payload_ready": "Recompensas criptografadas prontas",
+  "decrypt": "Descriptografar",
+  "quest": {
+    "complete": "Concluir",
+    "complete_quest": "Concluir Missão",
+    "boss_quest": "CHEFE",
+    "weekly_boss": "CHEFE SEMANAL",
+    "mystery": "MISTÉRIO",
+    "timed": "CRONOMETRADO",
+    "chain": "Cadeia {{current}}/{{total}}",
+    "xp_reward": "XP",
+    "credit_reward": "Créditos",
+    "duration": "{{min}} min",
+    "penalty": "Penalidade: {{amount}} {{type}}",
+    "deadline": "Prazo",
+    "deadline_expired": "EXPIRADO",
+    "realm": "Reino",
+    "difficulty": "Dificuldade",
+    "start_timer": "Iniciar Timer",
+    "topics": "Tópicos",
+    "no_quests_ai": "Gerar com IA",
+    "generate_quests": "Gerar Missões",
+    "generating": "Gerando..."
+  },
+  "lootbox": {
+    "found_credits": "Você encontrou {{amount}} Créditos!",
+    "found_xp": "Você ganhou {{amount}} XP bônus!",
+    "found_gems": "Você encontrou {{amount}} Gemas!",
+    "found_item": "Você encontrou: {{item}}!",
+    "already_claimed": "Recompensa diária já coletada.",
+    "streak_bonus": "(inclui +{{percent}}% de bônus de sequência)"
+  }
+}

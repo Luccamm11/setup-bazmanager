@@ -1,7 +1,8 @@
 import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
-import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   user: User;
@@ -23,11 +24,12 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: 
 );
 
 const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
+    const { t } = useTranslation();
     const config = {
         idle: { icon: null, text: '', color: '' },
-        syncing: { icon: <Loader2 size={16} className="animate-spin" />, text: 'Saving...', color: 'text-accent-primary' },
-        synced: { icon: <CheckCircle size={16} />, text: 'Saved', color: 'text-accent-green' },
-        error: { icon: <AlertTriangle size={16} />, text: 'Save Error', color: 'text-accent-red' },
+        syncing: { icon: <Loader2 size={16} className="animate-spin" />, text: t('states.syncing'), color: 'text-accent-primary' },
+        synced: { icon: <CheckCircle size={16} />, text: t('states.synced'), color: 'text-accent-green' },
+        error: { icon: <AlertTriangle size={16} />, text: t('states.error'), color: 'text-accent-red' },
     };
     const current = config[status];
     if (status === 'idle') return null;
@@ -40,7 +42,31 @@ const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     );
 };
 
+const LanguageToggle: React.FC = () => {
+    const { i18n } = useTranslation();
+    const currentLang = i18n.language;
+
+    const toggleLanguage = () => {
+        const newLang = currentLang === 'pt-BR' || currentLang === 'pt' ? 'en' : 'pt-BR';
+        i18n.changeLanguage(newLang);
+    };
+
+    const isPtBR = currentLang === 'pt-BR' || currentLang === 'pt';
+
+    return (
+        <button
+            onClick={toggleLanguage}
+            title={isPtBR ? 'Switch to English' : 'Mudar para Português'}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-text-secondary hover:text-white transition-all text-xs font-bold"
+        >
+            <Globe size={13} />
+            <span>{isPtBR ? 'EN' : 'PT'}</span>
+        </button>
+    );
+};
+
 const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus }) => {
+    const { t } = useTranslation();
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
   return (
     <header className="bg-primary/60 backdrop-blur-xl border-b border-white/5 px-3 sm:px-6 lg:px-8 py-2 sm:py-6 mb-2 sm:mb-6 sticky top-0 z-40 shadow-glass">
@@ -89,12 +115,12 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                 <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">
                   <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight drop-shadow-md truncate">{user.name}</h1>
                    {user.activeBuffs.length > 0 && (
-                      <div className="relative group shrink-0" title={`Active Buffs: ${activeBuffNames}`}>
+                      <div className="relative group shrink-0" title={`${t('store:active_buffs')}: ${activeBuffNames}`}>
                           <Zap size={20} className="text-accent-tertiary buff-pulse sm:w-[22px] sm:h-[22px]" />
                       </div>
                   )}
                   {user.streaks.daily_streak > 0 && (
-                    <div className="flex items-center space-x-1.5 bg-gradient-to-r from-accent-secondary/20 to-orange-500/20 border border-accent-secondary/30 px-2 py-0.5 rounded-full text-xs sm:text-sm font-bold streak-pulse text-accent-secondary shadow-glow-secondary shrink-0" title={`Current daily streak: ${user.streaks.daily_streak} days`}>
+                    <div className="flex items-center space-x-1.5 bg-gradient-to-r from-accent-secondary/20 to-orange-500/20 border border-accent-secondary/30 px-2 py-0.5 rounded-full text-xs sm:text-sm font-bold streak-pulse text-accent-secondary shadow-glow-secondary shrink-0" title={`${t('streak')}: ${user.streaks.daily_streak} ${t('days')}`}>
                       <Flame size={14} className="sm:w-4 sm:h-4" />
                       <span>{user.streaks.daily_streak}</span>
                     </div>
@@ -108,6 +134,7 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
             <div className="flex flex-col items-end space-y-2 sm:space-y-4 shrink-0">
                 <div className="flex items-center space-x-2 sm:space-x-3 bg-white/[0.03] p-1 rounded-xl border border-white/5 backdrop-blur-md">
                     <SyncIndicator status={syncStatus} />
+                    <LanguageToggle />
                     <button onClick={onSettingsClick} className="p-1 sm:p-2 rounded-lg text-text-secondary hover:text-white transition-all">
                         <Settings className="w-4 h-4 sm:w-5 sm:h-5 opacity-60 group-hover:opacity-100" />
                     </button>
@@ -115,24 +142,24 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                 
                 {/* Desktop Stats Row */}
                 <div className="hidden lg:flex gap-3">
-                    <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 hover:bg-accent-primary/20" label="Mind" />
-                    <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 hover:bg-accent-red/20" label="Body" />
-                    <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 hover:bg-accent-secondary/20" label="Creation" />
-                    <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 hover:bg-accent-tertiary/20" label="Spirit" />
+                    <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 hover:bg-accent-primary/20" label={t('realm.Mind')} />
+                    <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 hover:bg-accent-red/20" label={t('realm.Body')} />
+                    <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 hover:bg-accent-secondary/20" label={t('realm.Creation')} />
+                    <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 hover:bg-accent-tertiary/20" label={t('realm.Spirit')} />
                 </div>
             </div>
         </div>
         
         {/* Mobile/Tablet Stats Row */}
         <div className="flex lg:hidden w-full gap-1 sm:gap-3 overflow-x-auto scrollbar-hide">
-            <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 shrink-0" label="Mind" />
-            <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 shrink-0" label="Body" />
-            <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 shrink-0" label="Creation" />
-            <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 shrink-0" label="Spirit" />
+            <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 shrink-0" label={t('realm.Mind')} />
+            <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 shrink-0" label={t('realm.Body')} />
+            <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 shrink-0" label={t('realm.Creation')} />
+            <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 shrink-0" label={t('realm.Spirit')} />
         </div>
       </div>
       
-      {/* XP Bar moved slightly out of the main grid for full-width layout inside header */}
+      {/* XP Bar */}
       <div className="max-w-7xl mx-auto mt-1.5 sm:mt-5">
         <XpBar currentXp={user.xp_total} xpToNextLevel={user.xpToNextLevel} />
       </div>

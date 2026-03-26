@@ -1,5 +1,4 @@
 import React from 'react';
-// FIX: Replaced BossChallenge with MajorGoal for consistency.
 import { Quest, Realm, Arc, MajorGoal, User } from '../types';
 import QuestBoard from './QuestBoard';
 import QuestCard from './QuestCard';
@@ -7,12 +6,12 @@ import MajorGoals from './MajorGoals';
 import ActiveBuffs from './ActiveBuffs';
 import { Target, Zap, Gift, PlusCircle, Activity, Sparkles, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardProps {
   user: User;
   quests: Quest[];
   activeArc: Arc | null;
-  // FIX: Renamed `challenges` to `majorGoals` and updated type.
   majorGoals: MajorGoal[];
   onCompleteQuest: (questId: string) => void;
   onGenerateQuests: () => void;
@@ -21,7 +20,6 @@ interface DashboardProps {
   onOpenLootbox: () => void;
   isLootboxClaimed: boolean;
   onAddQuestClick: () => void;
-  // FIX: Renamed props to match App.tsx and new component names.
   onAddMajorGoal: () => void;
   onBulkAddMajorGoal: () => void;
   onEditMajorGoal: (goal: MajorGoal) => void;
@@ -30,7 +28,9 @@ interface DashboardProps {
   currentDate: Date;
 }
 
-const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => (
+const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => {
+  const { t } = useTranslation('dashboard');
+  return (
     <div className="relative bg-primary/20 backdrop-blur-3xl overflow-hidden rounded-2xl border border-white/[0.05] mb-6 group transition-all duration-700">
         <div className="absolute top-0 right-0 w-72 h-72 bg-accent-tertiary/10 rounded-full mix-blend-screen filter blur-[60px] pointer-events-none group-hover:bg-accent-tertiary/20 transition-all duration-700"></div>
         <div className="relative z-10 p-5 sm:p-6">
@@ -39,7 +39,7 @@ const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => (
                     <Target size={20} />
                 </div>
                 <div>
-                    <div className="text-[9px] font-black tracking-[0.2em] text-accent-tertiary/60 uppercase mb-0.5">Active Story Arc</div>
+                    <div className="text-[9px] font-black tracking-[0.2em] text-accent-tertiary/60 uppercase mb-0.5">{t('active_arc')}</div>
                     <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">{arc.title}</h2>
                 </div>
             </div>
@@ -54,9 +54,12 @@ const ActiveArcDisplay: React.FC<{ arc: Arc }> = ({ arc }) => (
             </div>
         </div>
     </div>
-);
+  );
+};
 
-const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = ({ onOpen, isClaimed }) => (
+const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = ({ onOpen, isClaimed }) => {
+  const { t } = useTranslation('dashboard');
+  return (
     <div className={`relative overflow-hidden p-5 sm:p-6 rounded-2xl border flex flex-wrap items-center justify-between gap-5 transition-all duration-500
         ${isClaimed 
             ? 'bg-primary/10 border-white/[0.03] opacity-40 grayscale pointer-events-none' 
@@ -76,11 +79,11 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
             </div>
             <div className="text-left flex-1 min-w-0">
                 <h3 className={`text-lg font-black tracking-tight flex items-center gap-2 ${isClaimed ? 'text-text-muted' : 'text-accent-secondary uppercase text-[15px]'}`}>
-                    Daily Payload
+                    {t('daily_payload')}
                     {!isClaimed && <span className="flex h-2 w-2 relative ml-1"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-secondary opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-accent-secondary"></span></span>}
                 </h3>
                 <p className={`text-xs mt-0.5 truncate font-medium ${isClaimed ? 'text-text-muted/70' : 'text-text-secondary/70'}`}>
-                    {isClaimed ? 'Syncing next drop...' : 'Encrypted rewards ready'}
+                    {isClaimed ? t('daily_payload_syncing') : t('daily_payload_ready')}
                 </p>
             </div>
         </div>
@@ -94,15 +97,16 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
                     : 'bg-accent-secondary/10 border-accent-secondary/30 text-accent-secondary hover:bg-accent-secondary hover:text-background active:scale-95'
                 }`}
         >
-            {isClaimed ? 'Claimed' : 'Decrypt'}
+            {isClaimed ? t('..common:states.claimed') : t('decrypt')}
         </button>
     </div>
-);
+  );
+};
 
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  // FIX: Destructure renamed props.
   const { user, quests, activeArc, onCompleteQuest, onGenerateQuests, isLoading, error, onOpenLootbox, isLootboxClaimed, onAddQuestClick, majorGoals, onAddMajorGoal, onBulkAddMajorGoal, onEditMajorGoal, onCompleteMajorGoal, onSyllabusBreakdown, currentDate } = props;
+  const { t } = useTranslation(['dashboard', 'common']);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -130,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         <motion.div variants={itemVariants} className="bg-accent-red/10 border border-accent-red/40 text-accent-red px-5 py-4 rounded-xl flex items-start shadow-[0_4px_15px_rgba(218,54,51,0.1)] backdrop-blur-sm animate-pulse" role="alert">
           <ShieldAlert className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
           <div>
-            <strong className="font-bold block text-sm tracking-wide uppercase">System Disruption</strong>
+            <strong className="font-bold block text-sm tracking-wide uppercase">{t('system_disruption')}</strong>
             <span className="block mt-1 opacity-90">{error}</span>
           </div>
         </motion.div>
@@ -151,8 +155,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                           <Activity size={26} />
                       </div>
                       <div>
-                          <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">Active Objectives</h2>
-                          <p className="text-sm text-text-secondary mt-1 font-medium hidden sm:block">Your immediate tasks and daily operations</p>
+                          <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">{t('active_objectives')}</h2>
+                          <p className="text-sm text-text-secondary mt-1 font-medium hidden sm:block">{t('active_objectives_subtitle')}</p>
                       </div>
                   </div>
                   <div className="flex items-center space-x-3 shrink-0">
@@ -161,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                         className="flex items-center justify-center space-x-2 bg-white/5 border border-white/10 hover:bg-white/10 text-text-primary font-bold py-2.5 px-4 sm:px-5 rounded-xl transition-all shadow-sm hover:shadow-glass hover:-translate-y-0.5 active:scale-95 group"
                     >
                         <PlusCircle className="w-5 h-5 text-text-secondary group-hover:text-accent-primary transition-colors" />
-                        <span className="hidden sm:inline">Manual Add</span>
+                        <span className="hidden sm:inline">{t('common:buttons.add_manual')}</span>
                     </button>
                     <QuestBoard 
                         onGenerateQuests={onGenerateQuests}
@@ -180,8 +184,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                   ) : (
                       <div className="text-center py-20 px-6 bg-white/5 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden backdrop-blur-sm">
                           <Sparkles className="w-14 h-14 text-text-muted mb-5 opacity-50" />
-                          <p className="text-xl font-bold text-text-secondary">No active objectives detected.</p>
-                          <p className="text-text-muted mt-2 max-w-md mx-auto leading-relaxed">Initiate a sync with the AI Core to generate new tasks based on your goals and schedule.</p>
+                          <p className="text-xl font-bold text-text-secondary">{t('no_objectives')}</p>
+                          <p className="text-text-muted mt-2 max-w-md mx-auto leading-relaxed">{t('no_objectives_hint')}</p>
                       </div>
                   )}
                 </div>

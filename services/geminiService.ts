@@ -37,7 +37,14 @@ function getSanitizedUserForPrompt(user: User) {
     return { name, rank, level: level_overall, stats, state, skills, knowledge_topics: topics };
 }
 
-export const generateDailyQuests = async (apiKey: string, user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean): Promise<any[]> => {
+const getLocaleInstruction = (locale: string): string => {
+    if (locale === 'pt-BR' || locale === 'pt') {
+        return `\n\nIMPORTANT: You MUST respond entirely in Brazilian Portuguese (PT-BR). All quest titles, descriptions, and any text content you generate must be in Portuguese. Do not use English in any generated text fields.`;
+    }
+    return '';
+};
+
+export const generateDailyQuests = async (apiKey: string, user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean, locale: string = 'en'): Promise<any[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         
@@ -62,8 +69,11 @@ export const generateDailyQuests = async (apiKey: string, user: User, contextual
             .map(([source, data]) => `--- START ${source.toUpperCase()} DATA ---\n${data}\n--- END ${source.toUpperCase()} DATA ---`)
             .join('\n\n');
 
+        const localeInstruction = getLocaleInstruction(locale);
+
         const prompt = `
             You are LevelUp's Quest System, an AI that generates personalized daily quests for a user in a real-life RPG app.
+            ${localeInstruction}
             
             USER PROFILE AND STATE:
             ${JSON.stringify(userProfile, null, 2)}
@@ -235,7 +245,7 @@ const tools: FunctionDeclaration[] = [
 ];
 
 // FIX: Completed the function implementation to make the API call and return a response object, resolving errors in App.tsx.
-export const getAiChatResponseAndActions = async (apiKey: string, user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[]): Promise<{ text: string, functionCalls: any[] | undefined }> => {
+export const getAiChatResponseAndActions = async (apiKey: string, user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[], locale: string = 'en'): Promise<{ text: string, functionCalls: any[] | undefined }> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
@@ -245,7 +255,8 @@ export const getAiChatResponseAndActions = async (apiKey: string, user: User, hi
             parts: [{ text: msg.text }]
         }));
 
-        const systemInstruction = `You are the System, an AI Mentor for the LevelUp app. Your persona is a blend of a wise guide and a firm trainer (like J.A.R.V.I.S. or the Solo Leveling System). Refer to the user as "Awakened" or by name.
+        const localeInstruction = getLocaleInstruction(locale);
+        const systemInstruction = `You are the System, an AI Mentor for the LevelUp app. Your persona is a blend of a wise guide and a firm trainer (like J.A.R.V.I.S. or the Solo Leveling System). Refer to the user as "Awakened" or by name.${localeInstruction}
         
         You have access to a set of tools to directly modify the application state based on the user's commands.
         
@@ -303,13 +314,15 @@ export const generateShortText = async (apiKey: string, prompt: string): Promise
 export const devGenerateText = generateShortText;
 
 // FIX: Implemented missing function to generate knowledge topics for a skill.
-export const generateKnowledgeTopics = async (apiKey: string, skill: Skill): Promise<string[]> => {
+export const generateKnowledgeTopics = async (apiKey: string, skill: Skill, locale: string = 'en'): Promise<string[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
+        const localeInstruction = getLocaleInstruction(locale);
         const prompt = `
             Generate a list of 5-10 specific, beginner-friendly knowledge topics for the skill "${skill.name}".
             The topics should be actionable and represent concrete things to learn or practice.
             For example, for "Circuit Design", topics could be "Ohm's Law", "KVL/KCL", "Thevenin's Theorem".
+            ${localeInstruction}
         `;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -336,7 +349,7 @@ export const generateKnowledgeTopics = async (apiKey: string, skill: Skill): Pro
 };
 
 // FIX: Implemented missing function to break down a syllabus into knowledge topics.
-export const generateTopicsFromSyllabus = async (apiKey: string, syllabus: string, skill: Skill, existingTopics: KnowledgeTopic[]): Promise<string[]> => {
+export const generateTopicsFromSyllabus = async (apiKey: string, syllabus: string, skill: Skill, existingTopics: KnowledgeTopic[], locale: string = 'en'): Promise<string[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const existingTopicNames = existingTopics.map(t => t.name.toLowerCase());
@@ -376,11 +389,12 @@ export const generateTopicsFromSyllabus = async (apiKey: string, syllabus: strin
 };
 
 // FIX: Implemented missing function to generate major goals from a user prompt.
-export const generateMajorGoals = async (apiKey: string, prompt: string, user: User, xpForNextSixLevels: number): Promise<Omit<MajorGoal, 'id'>[]> => {
+export const generateMajorGoals = async (apiKey: string, prompt: string, user: User, xpForNextSixLevels: number, locale: string = 'en'): Promise<Omit<MajorGoal, 'id'>[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
 
+        const localeInstruction = getLocaleInstruction(locale);
         const systemPrompt = `
             You are an AI that helps a user break down their high-level goals into structured "Major Goals" for their real-life RPG app.
             
@@ -396,6 +410,7 @@ export const generateMajorGoals = async (apiKey: string, prompt: string, user: U
             5.  Assign appropriate XP and credit rewards. The total XP for all goals should be significant but not excessive. A good benchmark is that completing all goals might grant the user 1-2 levels. For reference, the total XP for the user to gain the next 6 levels is approximately ${xpForNextSixLevels}.
             6.  For exam-type goals ('Siege'), identify the most relevant 'skillId' from the user's skill list and create a concise 'syllabus'.
             7.  For project-type goals ('Forge'), leave 'skillId' and 'syllabus' empty.
+            ${localeInstruction}
         `;
 
         const response = await ai.models.generateContent({
@@ -430,14 +445,16 @@ export const generateMajorGoals = async (apiKey: string, prompt: string, user: U
 };
 
 // FIX: Implemented missing function to generate story arcs.
-export const generateArc = async (apiKey: string, prompt: string): Promise<Omit<Arc, 'id' | 'isGenerated'>> => {
+export const generateArc = async (apiKey: string, prompt: string, locale: string = 'en'): Promise<Omit<Arc, 'id' | 'isGenerated'>> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
+        const localeInstruction = getLocaleInstruction(locale);
         const systemPrompt = `
             Generate a story Arc for a real-life RPG app based on this user prompt: "${prompt}".
             An Arc is a high-level theme or event that affects the user's game, like a special event.
             It needs a title, description, type, and a list of 2-3 in-game effects.
             Effects should be concise, like "Study XP x1.5" or "Body quests appear more often".
+            ${localeInstruction}
         `;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -463,7 +480,7 @@ export const generateArc = async (apiKey: string, prompt: string): Promise<Omit<
 };
 
 // FIX: Implemented missing function to generate badges.
-export const generateBadge = async (apiKey: string, description: string): Promise<Omit<Badge, 'id' | 'isGenerated'>> => {
+export const generateBadge = async (apiKey: string, description: string, locale: string = 'en'): Promise<Omit<Badge, 'id' | 'isGenerated'>> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const availableIcons = Object.keys(ICON_MAP).join(', ');
@@ -541,10 +558,11 @@ export const generateStoreItem = async (apiKey: string, prompt: string, user: Us
 };
 
 // FIX: Implemented missing function to generate skill and topic recommendations.
-export const generateRecommendations = async (apiKey: string, user: User, majorGoals: MajorGoal[]): Promise<AiRecommendations> => {
+export const generateRecommendations = async (apiKey: string, user: User, majorGoals: MajorGoal[], locale: string = 'en'): Promise<AiRecommendations> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
+        const localeInstruction = getLocaleInstruction(locale);
         const prompt = `
             Analyze the user's profile and major goals to provide personalized recommendations for growth.
             USER PROFILE: ${JSON.stringify(userProfile, null, 2)}
@@ -553,6 +571,7 @@ export const generateRecommendations = async (apiKey: string, user: User, majorG
             INSTRUCTIONS:
             1.  Suggest 2-3 NEW skills the user might be interested in, based on their existing skills and goals. For each skill, provide a 'name', 'realm', and a short 'reason'. Do not suggest skills they already have.
             2.  Suggest 3-5 NEW knowledge topics for their EXISTING skills. These topics should bridge gaps or directly support their major goals. For each topic, provide a 'name', the 'skillId' it belongs to, and a short 'reason'. Do not suggest topics they already have.
+            ${localeInstruction}
         `;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -597,10 +616,11 @@ export const generateRecommendations = async (apiKey: string, user: User, majorG
     }
 };
 
-export const generateJournalChecklist = async (apiKey:string, reflectionText: string, majorGoal: MajorGoal, user: User): Promise<any[]> => {
+export const generateJournalChecklist = async (apiKey:string, reflectionText: string, majorGoal: MajorGoal, user: User, locale: string = 'en'): Promise<any[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
+        const localeInstruction = getLocaleInstruction(locale);
         const prompt = `
             You are the System, an AI that helps a user reflect on their performance and create actionable improvement plans.
             
@@ -619,6 +639,7 @@ export const generateJournalChecklist = async (apiKey:string, reflectionText: st
             3.  Each quest must be a simple, completable task.
             4.  For each quest, provide a 'title', 'description', a small 'xp_reward' (between 10-25 XP), and an appropriate 'realm' from the user's available realms.
             5.  The tone should be encouraging but firm, like a coach helping them patch up their weaknesses.
+            ${localeInstruction}
         `;
 
         const response = await ai.models.generateContent({

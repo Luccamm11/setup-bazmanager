@@ -1,0 +1,44 @@
+{
+  "store": "Loja",
+  "store_subtitle": "Gaste seus créditos em bônus e recompensas",
+  "inventory": "Inventário",
+  "inventory_subtitle": "Seus itens e bônus ativos",
+  "staking_page": "Staking",
+  "staking_subtitle": "Deposite créditos para ganhos passivos de longo prazo",
+  "buy": "Comprar",
+  "use": "Usar",
+  "activate": "Ativar",
+  "insufficient_credits": "Créditos Insuficientes",
+  "not_enough_credits": "Créditos insuficientes para comprar este item.",
+  "item_purchased": "Comprado: {{item}}!",
+  "item_activated": "{{item}} ativado!",
+  "item_real_world": "Esta é uma recompensa do mundo real. Vá aproveitar!",
+  "no_items": "Seu inventário está vazio.",
+  "category": {
+    "Buff": "Bônus",
+    "Reward": "Recompensa",
+    "Utility": "Utilidade"
+  },
+  "effect": {
+    "XP_BOOST": "Bônus de XP x{{value}} ({{duration}}h)",
+    "STREAK_SAVER": "Escudo de Sequência",
+    "QUEST_REROLL": "Re-rolar Missões",
+    "INSTANT_STREAK": "Sequência Instantânea de 3 Dias",
+    "REAL_WORLD_REWARD": "Recompensa do Mundo Real"
+  },
+  "buff_expired": "Bônus expirado: {{name}}.",
+  "active_buffs": "Bônus Ativos",
+  "no_active_buffs": "Nenhum bônus ativo.",
+  "expires_in": "Expira em {{time}}",
+  "staking_section": {
+    "stake": "Depositar",
+    "unstake": "Retirar",
+    "staked_amount": "Depositado: {{amount}} Créditos",
+    "daily_return": "Retorno Diário: {{amount}} Créditos",
+    "total_earned": "Total Ganho: {{amount}} Créditos",
+    "unstake_confirm": "Tem certeza que deseja retirar? Você perderá todos os retornos pendentes.",
+    "stake_amount_placeholder": "Quantidade a depositar"
+  },
+  "add_store_item": "Adicionar Item à Loja",
+  "edit_store_item": "Editar Item da Loja"
+}

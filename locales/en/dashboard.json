@@ -1,0 +1,42 @@
+{
+  "active_objectives": "Active Objectives",
+  "active_objectives_subtitle": "Your immediate tasks and daily operations",
+  "active_arc": "Active Story Arc",
+  "system_disruption": "System Disruption",
+  "no_objectives": "No active objectives detected.",
+  "no_objectives_hint": "Initiate a sync with the AI Core to generate new tasks based on your goals and schedule.",
+  "daily_payload": "Daily Payload",
+  "daily_payload_syncing": "Syncing next drop...",
+  "daily_payload_ready": "Encrypted rewards ready",
+  "decrypt": "Decrypt",
+  "quest": {
+    "complete": "Complete",
+    "complete_quest": "Complete Quest",
+    "boss_quest": "BOSS",
+    "weekly_boss": "WEEKLY BOSS",
+    "mystery": "MYSTERY",
+    "timed": "TIMED",
+    "chain": "Chain {{current}}/{{total}}",
+    "xp_reward": "XP",
+    "credit_reward": "Credits",
+    "duration": "{{min}} min",
+    "penalty": "Penalty: {{amount}} {{type}}",
+    "deadline": "Deadline",
+    "deadline_expired": "EXPIRED",
+    "realm": "Realm",
+    "difficulty": "Difficulty",
+    "start_timer": "Start Timer",
+    "topics": "Topics",
+    "no_quests_ai": "Generate with AI",
+    "generate_quests": "Generate Quests",
+    "generating": "Generating..."
+  },
+  "lootbox": {
+    "found_credits": "You found {{amount}} Credits!",
+    "found_xp": "You gained {{amount}} bonus XP!",
+    "found_gems": "You found {{amount}} Gems!",
+    "found_item": "You found: {{item}}!",
+    "already_claimed": "Daily lootbox already claimed.",
+    "streak_bonus": "(includes +{{percent}}% streak bonus)"
+  }
+}

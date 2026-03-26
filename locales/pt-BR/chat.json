@@ -1,0 +1,25 @@
+{
+  "chatbot": "Mentor IA",
+  "chatbot_subtitle": "Seu guia pessoal de IA e conselheiro estratégico",
+  "type_message": "Mensagem ao seu Mentor IA...",
+  "send": "Enviar",
+  "thinking": "Mentor IA está pensando...",
+  "journal_mode": "Modo Diário",
+  "chat_mode": "Modo Chat",
+  "clear_history": "Limpar Histórico",
+  "no_messages": "Inicie uma conversa com seu Mentor IA.",
+  "ai_intro": "Olá, {{name}}. Sou seu Mentor IA, aqui para guiar sua jornada. Como posso ajudá-lo hoje?",
+  "system_log": "Log do Sistema",
+  "story_log": "Diário da Jornada",
+  "no_system_messages": "Nenhum evento do sistema ainda.",
+  "no_story_entries": "Sua história ainda não começou.",
+  "system_messages": {
+    "quests_generated": "Novas missões diárias foram geradas.",
+    "quest_failed": "Missão cronometrada \"{{title}}\" falhou. Penalidade aplicada.",
+    "goal_failed": "Prazo do Objetivo \"{{title}}\" expirou. Penalidade aplicada.",
+    "badge_unlocked": "Conquista Desbloqueada: {{name}}!",
+    "api_key_saved": "Chave de API salva com sucesso.",
+    "calendar_sync_failed": "Sincronização do Google Agenda falhou: {{error}}",
+    "quest_generation_failed": "Falha na Geração de Missões: {{error}}"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "ranks": {
+    "e_rank": "E-Rank Apprentice",
+    "d_rank": "D-Rank Disciplined Learner",
+    "c_rank": "C-Rank Focused Engineer",
+    "b_rank": "B-Rank Builder of Systems",
+    "a_rank": "A-Rank Awakened Creator",
+    "s_rank": "S-Rank Polymath"
+  },
+  "arcs": {
+    "exam_arc": {
+      "title": "Final Siege — Signals Gate",
+      "description": "The final semester exams are imminent. All systems must prioritize academic conquest.",
+      "effects": ["Study XP x1.5", "Non-essential quests reduced", "Legendary Lootbox upon completion"]
+    },
+    "fitness_arc": {
+      "title": "Project Phoenix Body",
+      "description": "A focused sprint to rebuild physical foundations. Body realm quests are prioritized and enhanced.",
+      "effects": ["Body XP x1.5", "Stamina drain reduced", "Increased chance for rare Body-related items"]
+    }
+  },
+  "store_items": {
+    "coffee_reward": {
+      "name": "Coffee Reward",
+      "description": "Permission to buy a fancy coffee from your favorite cafe."
+    },
+    "focus_surge": {
+      "name": "Focus Surge",
+      "description": "Doubles XP gain from all Mind quests for 24 hours."
+    },
+    "body_surge": {
+      "name": "Body Surge",
+      "description": "Doubles XP gain from all Body quests for 24 hours."
+    },
+    "creative_catalyst": {
+      "name": "Creative Catalyst",
+      "description": "Doubles XP gain from all Creation quests for 24 hours."
+    },
+    "spirit_surge": {
+      "name": "Spirit Surge",
+      "description": "Doubles XP gain from all Spirit quests for 24 hours."
+    },
+    "trinity_core_surge": {
+      "name": "Trinity Core Surge",
+      "description": "A discounted bundle that doubles XP gain from Mind, Body, and Creation quests for 24 hours."
+    },
+    "omni_boost": {
+      "name": "Omni-Boost",
+      "description": "Doubles XP gain from ALL quests, regardless of realm, for 24 hours."
+    },
+    "streak_shield": {
+      "name": "Streak Shield",
+      "description": "Automatically protects your daily streak for one missed day."
+    },
+    "quest_reroll": {
+      "name": "Quest Re-roll",
+      "description": "Instantly receive a new set of daily quests from the System."
+    },
+    "instant_streak": {
+      "name": "Instant 3-Day Streak",
+      "description": "Instantly sets your daily streak to 3 days, activating the streak bonus."
+    }
+  },
+  "badges": {
+    "level_10": { "name": "Level 10", "description": "Reached overall level 10." },
+    "level_25": { "name": "Level 25", "description": "Reached overall level 25." },
+    "first_quest": { "name": "First Step", "description": "Completed your first quest." },
+    "ten_quests": { "name": "Quest Novice", "description": "Completed 10 quests." },
+    "fifty_quests": { "name": "Quest Adept", "description": "Completed 50 quests." },
+    "first_boss": { "name": "Boss Slayer", "description": "Completed a Boss Quest." },
+    "mind_adept": { "name": "Mind Adept", "description": "Reached level 5 in a Mind skill." },
+    "body_adept": { "name": "Body Adept", "description": "Reached level 5 in a Body skill." },
+    "creation_adept": { "name": "Creation Adept", "description": "Reached level 5 in a Creation skill." },
+    "spirit_adept": { "name": "Spirit Adept", "description": "Reached level 5 in a Spirit skill." }
+  },
+  "initial_story": {
+    "title": "The Awakening",
+    "narrative": "The System activated. Initial diagnostics are complete. A new User entity has been identified. Primary objective: Level Up. The path to multidisciplinary innovation begins now."
+  },
+  "system_initialized": "System Initialized. Welcome, Awakened."
+}

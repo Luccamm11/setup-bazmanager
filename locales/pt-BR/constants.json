@@ -1,0 +1,81 @@
+{
+  "ranks": {
+    "e_rank": "Aprendiz Rank-E",
+    "d_rank": "Estudante Disciplinado Rank-D",
+    "c_rank": "Engenheiro Focado Rank-C",
+    "b_rank": "Construtor de Sistemas Rank-B",
+    "a_rank": "Criador Desperto Rank-A",
+    "s_rank": "Polímata Rank-S"
+  },
+  "arcs": {
+    "exam_arc": {
+      "title": "Cerco Final — Portão dos Sinais",
+      "description": "As provas finais do semestre estão iminentes. Todos os sistemas devem priorizar a conquista acadêmica.",
+      "effects": ["XP de Estudo x1.5", "Missões não essenciais reduzidas", "Lootbox Lendária ao concluir"]
+    },
+    "fitness_arc": {
+      "title": "Projeto Fênix Corporal",
+      "description": "Um sprint focado para reconstruir as bases físicas. Missões do reino Corpo são priorizadas e aprimoradas.",
+      "effects": ["XP de Corpo x1.5", "Drenagem de stamina reduzida", "Maior chance de itens raros do Corpo"]
+    }
+  },
+  "store_items": {
+    "coffee_reward": {
+      "name": "Recompensa do Café",
+      "description": "Permissão para comprar um café especial no seu café favorito."
+    },
+    "focus_surge": {
+      "name": "Surto de Foco",
+      "description": "Dobra o ganho de XP de todas as missões de Mente por 24 horas."
+    },
+    "body_surge": {
+      "name": "Surto Corporal",
+      "description": "Dobra o ganho de XP de todas as missões de Corpo por 24 horas."
+    },
+    "creative_catalyst": {
+      "name": "Catalisador Criativo",
+      "description": "Dobra o ganho de XP de todas as missões de Criação por 24 horas."
+    },
+    "spirit_surge": {
+      "name": "Surto Espiritual",
+      "description": "Dobra o ganho de XP de todas as missões de Espírito por 24 horas."
+    },
+    "trinity_core_surge": {
+      "name": "Surto do Núcleo Trindade",
+      "description": "Um pacote com desconto que dobra o XP de Mente, Corpo e Criação por 24 horas."
+    },
+    "omni_boost": {
+      "name": "Omni-Impulso",
+      "description": "Dobra o XP de TODAS as missões, independente do reino, por 24 horas."
+    },
+    "streak_shield": {
+      "name": "Escudo de Sequência",
+      "description": "Protege automaticamente sua sequência diária por um dia perdido."
+    },
+    "quest_reroll": {
+      "name": "Re-rolar Missões",
+      "description": "Receba instantaneamente um novo conjunto de missões diárias do Sistema."
+    },
+    "instant_streak": {
+      "name": "Sequência Instantânea de 3 Dias",
+      "description": "Define instantaneamente sua sequência diária para 3 dias, ativando o bônus de sequência."
+    }
+  },
+  "badges": {
+    "level_10": { "name": "Nível 10", "description": "Atingiu o nível 10 geral." },
+    "level_25": { "name": "Nível 25", "description": "Atingiu o nível 25 geral." },
+    "first_quest": { "name": "Primeiro Passo", "description": "Completou sua primeira missão." },
+    "ten_quests": { "name": "Novato em Missões", "description": "Completou 10 missões." },
+    "fifty_quests": { "name": "Adepto em Missões", "description": "Completou 50 missões." },
+    "first_boss": { "name": "Matador de Chefes", "description": "Completou uma Missão de Chefe." },
+    "mind_adept": { "name": "Adepto da Mente", "description": "Atingiu nível 5 em uma habilidade de Mente." },
+    "body_adept": { "name": "Adepto do Corpo", "description": "Atingiu nível 5 em uma habilidade de Corpo." },
+    "creation_adept": { "name": "Adepto da Criação", "description": "Atingiu nível 5 em uma habilidade de Criação." },
+    "spirit_adept": { "name": "Adepto do Espírito", "description": "Atingiu nível 5 em uma habilidade de Espírito." }
+  },
+  "initial_story": {
+    "title": "O Despertar",
+    "narrative": "O Sistema foi ativado. Diagnósticos iniciais completos. Uma nova entidade Usuário foi identificada. Objetivo primário: Subir de Nível. O caminho para a inovação multidisciplinar começa agora."
+  },
+  "system_initialized": "Sistema Inicializado. Bem-vindo, Desperto."
+}

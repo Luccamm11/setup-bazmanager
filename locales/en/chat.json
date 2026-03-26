@@ -1,0 +1,25 @@
+{
+  "chatbot": "AI Mentor",
+  "chatbot_subtitle": "Your personal AI guide and strategy advisor",
+  "type_message": "Message your AI Mentor...",
+  "send": "Send",
+  "thinking": "AI Mentor is thinking...",
+  "journal_mode": "Journal Mode",
+  "chat_mode": "Chat Mode",
+  "clear_history": "Clear History",
+  "no_messages": "Start a conversation with your AI Mentor.",
+  "ai_intro": "Hello, {{name}}. I am your AI Mentor, here to guide your journey. How can I assist you today?",
+  "system_log": "System Log",
+  "story_log": "Story Log",
+  "no_system_messages": "No system events yet.",
+  "no_story_entries": "Your story has not begun yet.",
+  "system_messages": {
+    "quests_generated": "New daily quests have been generated.",
+    "quest_failed": "Time-driven quest \"{{title}}\" failed. Penalty applied.",
+    "goal_failed": "Major Goal \"{{title}}\" deadline missed. Penalty applied.",
+    "badge_unlocked": "Achievement Unlocked: {{name}}!",
+    "api_key_saved": "API Key has been saved.",
+    "calendar_sync_failed": "Google Calendar Sync Failed: {{error}}",
+    "quest_generation_failed": "Quest Generation Failed: {{error}}"
+  }
+}
