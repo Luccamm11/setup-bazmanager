@@ -2,6 +2,7 @@ import React from 'react';
 import { StoreItem } from '../types';
 import { DollarSign, ShoppingCart, Zap, Shield, Gift, RefreshCw, ChevronsUp, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface StoreProps {
   items: StoreItem[];
@@ -22,11 +23,11 @@ const itemIcons: { [key: string]: React.ReactNode } = {
 };
 
 const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem, onEditItem, onDeleteItem }) => {
+  const { t } = useTranslation('store');
+
   const itemsByCategory = items.reduce((acc, item) => {
     const category = item.category || 'Utility';
-    if (!acc[category]) {
-        acc[category] = [];
-    }
+    if (!acc[category]) acc[category] = [];
     acc[category].push(item);
     return acc;
   }, {} as Record<StoreItem['category'], StoreItem[]>);
@@ -51,8 +52,8 @@ const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem,
       animate="visible"
     >
       <div className="text-center group">
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">System Store</h2>
-        <p className="text-text-secondary">Acquire buffs, utilities, and real-world rewards.</p>
+        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">{t('store')}</h2>
+        <p className="text-text-secondary">{t('store_subtitle')}</p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
             <div className="inline-flex items-center space-x-2 bg-accent-green/10 border border-accent-green/20 text-accent-green font-black px-6 py-2.5 rounded-xl shadow-glow-green">
                 <DollarSign className="w-5 h-5" />
@@ -60,7 +61,7 @@ const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem,
             </div>
              <button onClick={onAddItem} className="flex items-center space-x-2 bg-gradient-to-r from-accent-tertiary to-purple-500 hover:from-purple-500 hover:to-accent-tertiary text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-tertiary hover:shadow-glow-primary active:scale-95 border border-white/10">
                 <PlusCircle size={18} />
-                <span>Create with AI</span>
+                <span>{t('add_store_item')}</span>
             </button>
         </div>
       </div>
@@ -72,7 +73,7 @@ const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem,
         return (
             <motion.div variants={itemVariants} key={category} className="bg-white/[0.02] p-6 sm:p-8 rounded-3xl border border-white/5 shadow-glass">
                 <h3 className="text-2xl font-black text-text-primary mb-6 flex items-center gap-4 capitalize">
-                    {category}s
+                    {t(`category.${category}`)}
                     <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -114,7 +115,7 @@ const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem,
                             : 'bg-black/20 text-text-muted border border-white/5 cursor-not-allowed'
                             }`}
                         >
-                            {canAfford ? 'Acquire' : 'Insufficient Credits'}
+                            {canAfford ? t('buy') : t('insufficient_credits')}
                         </button>
                         </motion.div>
                     )
