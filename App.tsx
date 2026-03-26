@@ -223,6 +223,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user.name === "Awakened") {
       setIsNameEntryModalOpen(true);
+    } else {
+      setIsNameEntryModalOpen(false);
     }
   }, [user.name]);
 
