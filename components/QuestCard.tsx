@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Quest, Realm, Difficulty } from '../types';
 import { CheckCircle, Star, DollarSign, Clock, AlertTriangle, Calendar, User as UserIcon, Bot, GitCommit, Cpu, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 interface QuestCardProps {
   quest: Quest;
   onComplete: (questId: string) => void;
@@ -15,6 +16,7 @@ const difficultyColors = {
 };
 
 const Countdown: React.FC<{ deadline: string; onExpire: () => void }> = ({ deadline, onExpire }) => {
+    const { t } = useTranslation('dashboard');
     const [timeLeftMs, setTimeLeftMs] = useState(() => +new Date(deadline) - Date.now());
     const expiredRef = React.useRef(false);
 
@@ -36,7 +38,7 @@ const Countdown: React.FC<{ deadline: string; onExpire: () => void }> = ({ deadl
 
 
     if (timeLeftMs <= 0) {
-        return <span className="font-mono">Expired</span>;
+        return <span className="font-mono">{t('quest.expired')}</span>;
     }
 
     const days = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
@@ -56,6 +58,7 @@ const Countdown: React.FC<{ deadline: string; onExpire: () => void }> = ({ deadl
 };
 
 const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const isBoss = quest.isBossQuest || quest.isWeeklyBoss;
   const [isFailed, setIsFailed] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -84,11 +87,11 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   };
 
   const sourceConfig = {
-    google_calendar: { icon: <Calendar size={16} />, text: 'From Google Calendar', color: 'text-blue-400' },
-    github: { icon: <GitCommit size={16} />, text: 'From GitHub Activity', color: 'text-gray-400' },
-    user: { icon: <UserIcon size={16} />, text: 'Personal Quest', color: 'text-green-400' },
-    ai_chatbot: { icon: <Bot size={16} />, text: 'From AI Chat', color: 'text-purple-400' },
-    ai_system: { icon: <Cpu size={16} />, text: 'System Generated', color: 'text-gray-500' },
+    google_calendar: { icon: <Calendar size={16} />, text: t('quest.sources.google_calendar'), color: 'text-blue-400' },
+    github: { icon: <GitCommit size={16} />, text: t('quest.sources.github'), color: 'text-gray-400' },
+    user: { icon: <UserIcon size={16} />, text: t('quest.sources.user'), color: 'text-green-400' },
+    ai_chatbot: { icon: <Bot size={16} />, text: t('quest.sources.ai_chatbot'), color: 'text-purple-400' },
+    ai_system: { icon: <Cpu size={16} />, text: t('quest.sources.ai_system'), color: 'text-gray-500' },
   };
 
   const sourceInfo = quest.source ? sourceConfig[quest.source] : null;
@@ -142,9 +145,9 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
 
       <div className="flex flex-col h-full relative z-10 w-full">
         <div className="flex items-start justify-between mb-2 sm:mb-3 w-full gap-4">
-           <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
               <h3 className={`text-lg font-black tracking-tight ${isBoss ? 'text-accent-red' : 'text-text-primary'}`}>
-                 {isBoss && <span className="mr-2 inline-block px-1.5 py-0.5 text-[8px] bg-accent-red/10 text-accent-red border border-accent-red/30 rounded uppercase tracking-[0.2em] font-black align-middle">Boss</span>}
+                 {isBoss && <span className="mr-2 inline-block px-1.5 py-0.5 text-[8px] bg-accent-red/10 text-accent-red border border-accent-red/30 rounded uppercase tracking-[0.2em] font-black align-middle">{t('quest.boss')}</span>}
                  {quest.title}
               </h3>
            </div>
@@ -174,7 +177,7 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
                 </div>
                 <div className="flex items-center space-x-1.5">
                     <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-white/[0.02] border border-white/5 ${difficultyColors[quest.difficulty]}`}>
-                        {quest.difficulty}
+                        {t(`common:difficulty.${quest.difficulty}`)}
                     </span>
                 </div>
                 {quest.penalty && (
@@ -200,9 +203,9 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
                       : 'bg-accent-green/10 border border-accent-green/30 text-accent-green hover:bg-accent-green hover:text-white'
                     }
                   `}
-                >
+                 >
                   <CheckCircle className={`w-4 h-4`} />
-                  <span>Complete</span>
+                  <span>{t('common:buttons.complete')}</span>
                 </button>
               </div>
            </div>

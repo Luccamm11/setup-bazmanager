@@ -26,7 +26,13 @@
     "active": "Active",
     "inactive": "Inactive",
     "claimed": "Claimed",
-    "just_now": "Just now"
+    "just_now": "Just now",
+    "no_messages": "No system messages.",
+    "system_updates_here": "Updates from the System will appear here.",
+    "inventory_desc": "Your acquired items and utilities.",
+    "qty": "Qty",
+    "vault_empty": "Vault Empty",
+    "inventory_empty_desc": "Your inventory is currently empty. Visit the System Store to acquire buffs, utilities, and rewards using your credits."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -83,5 +89,36 @@
   "profile_picture_updated": "Profile picture updated.",
   "profile_picture_reset": "Profile picture reset to default.",
   "api_key_saved": "API Key has been saved.",
-  "language": "Language"
+  "language": "Language",
+  "messages": {
+    "quests_generated": "New daily quests have been generated.",
+    "quest_gen_failed": "Quest Generation Failed: {{error}}",
+    "goal_completed": "Major Goal Completed: {{title}}! Rewards granted.",
+    "lootbox_already_claimed": "Daily lootbox already claimed.",
+    "insufficient_credits": "Insufficient credits.",
+    "item_acquired": "Acquired: {{name}}.",
+    "item_activated": "Activated: {{name}}.",
+    "infusion_limit_reached": "Infusion limit reached for this buff at your current level.",
+    "journal_logged": "Journal entry logged for \"{{title}}\". Improvement plan generated.",
+    "journal_failed": "Journaling Failed: {{error}}",
+    "timed_quest_started": "Timed quest started: \"{{title}}\". Estimated time: {{min}} minutes.",
+    "timed_quest_completed": "Timed quest \"{{title}}\" completed in {{min}}m. Reward: +{{xp}} XP, +{{cr}} Credits. {{bonus}}",
+    "arc_activated": "Arc Activated: {{title}}",
+    "arc_deactivated": "Active Arc has been deactivated.",
+    "gcal_sync_failed": "Google Calendar Sync Failed: {{error}}",
+    "backup_downloaded": "User data backup downloaded.",
+    "restore_success": "Data successfully restored.",
+    "restore_failed": "Failed to read the backup file.",
+    "recs_added": "AI recommendations have been added to your skill tree.",
+    "topic_deleted": "Knowledge topic \"{{name}}\" was deleted.",
+    "skill_deleted": "Skill \"{{name}}\" and its {{count}} topics were deleted.",
+    "related_quests_removed": "{{count}} related quest(s) were removed.",
+    "anomaly_induced": "Anomaly induced: Negative item quantity."
+  },
+  "time": {
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds"
+  }
 }

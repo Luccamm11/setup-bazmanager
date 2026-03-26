@@ -1,5 +1,6 @@
 import React from 'react';
 import { SystemMessage } from '../types';
+import { useTranslation } from 'react-i18next';
 import { Info, AlertTriangle, Terminal, Gift } from 'lucide-react';
 
 interface SystemLogProps {
@@ -14,9 +15,10 @@ const typeConfig = {
 }
 
 const SystemLog: React.FC<SystemLogProps> = ({ messages }) => {
+  const { t } = useTranslation(['common']);
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6">System Log</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6">{t('nav.system_log')}</h2>
       <div className="max-w-3xl mx-auto bg-primary p-4 sm:p-6 rounded-lg border border-border-color">
         <div className="space-y-4">
           {messages.map((msg) => {
@@ -37,8 +39,8 @@ const SystemLog: React.FC<SystemLogProps> = ({ messages }) => {
            {messages.length === 0 && (
              <div className="text-center py-10 px-4">
                 <Terminal className="w-12 h-12 mx-auto text-text-muted mb-4" />
-                <p className="text-text-secondary">No system messages.</p>
-                <p className="text-text-muted mt-2">Updates from the System will appear here.</p>
+                <p className="text-text-secondary">{t('common:states.no_messages')}</p>
+                <p className="text-text-muted mt-2">{t('common:states.system_updates_here')}</p>
             </div>
         )}
         </div>

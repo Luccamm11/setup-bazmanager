@@ -29,7 +29,16 @@
     "topics": "Tópicos",
     "no_quests_ai": "Gerar com IA",
     "generate_quests": "Gerar Missões",
-    "generating": "Gerando..."
+    "generating": "Gerando...",
+    "expired": "Expirado",
+    "boss": "Chefe",
+    "sources": {
+      "google_calendar": "Do Google Agenda",
+      "github": "Da Atividade no GitHub",
+      "user": "Missão Pessoal",
+      "ai_chatbot": "Do Chatbot IA",
+      "ai_system": "Gerado pelo Sistema"
+    }
   },
   "lootbox": {
     "found_credits": "Você encontrou {{amount}} Créditos!",

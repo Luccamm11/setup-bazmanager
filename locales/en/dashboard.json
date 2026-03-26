@@ -29,7 +29,16 @@
     "topics": "Topics",
     "no_quests_ai": "Generate with AI",
     "generate_quests": "Generate Quests",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "expired": "Expired",
+    "boss": "Boss",
+    "sources": {
+      "google_calendar": "From Google Calendar",
+      "github": "From GitHub Activity",
+      "user": "Personal Quest",
+      "ai_chatbot": "From AI Chat",
+      "ai_system": "System Generated"
+    }
   },
   "lootbox": {
     "found_credits": "You found {{amount}} Credits!",

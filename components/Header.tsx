@@ -126,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] sm:text-sm text-accent-primary/90 font-bold uppercase tracking-widest mt-0.5 truncate">{user.rank}</p>
+                <p className="text-[10px] sm:text-sm text-accent-primary/90 font-bold uppercase tracking-widest mt-0.5 truncate">{t(`constants:ranks.${user.rank}`)}</p>
               </div>
             </div>
             

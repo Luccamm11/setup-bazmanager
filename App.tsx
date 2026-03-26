@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 // FIX: Imported MajorGoal type to resolve definition errors.
 import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest } from './types';
 // FIX: Imported INITIAL_MAJOR_GOALS constant to resolve definition errors.
@@ -83,10 +84,10 @@ const loadUser = (userId: string) => {
 };
 
 const getRankForLevel = (level: number): string => {
-  let currentRank = RANKS[0].title;
+  let currentRank = RANKS[0].key;
   for (const rank of RANKS) {
     if (level >= rank.level) {
-      currentRank = rank.title;
+      currentRank = rank.key;
     } else {
       break;
     }
@@ -188,6 +189,7 @@ const recalculateSkillTree = (
 
 
 const App: React.FC = () => {
+  const { t } = useTranslation(['common', 'constants']);
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
@@ -329,7 +331,7 @@ const App: React.FC = () => {
     localStorage.setItem('googleAiApiKey', newKey);
     setApiKey(newKey);
     setIsApiKeyModalOpen(false);
-    setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: 'API Key has been saved.', timestamp: 'Just now', type: 'system' }, ...prev]);
+    setSystemMessages(prev => [{ id: `apikey-saved-${Date.now()}`, text: t('common:api_key_saved'), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
   }, []);
 
   const handleProfilePictureChange = useCallback((dataUrl: string | null) => {
@@ -647,12 +649,12 @@ const App: React.FC = () => {
       }
       
       setQuests(newQuests);
-      setSystemMessages(prev => [{id: `quests-gen-${Date.now()}`, text: 'New daily quests have been generated.', timestamp: 'Just now', type: 'system'}, ...prev]);
+      setSystemMessages(prev => [{id: `quests-gen-${Date.now()}`, text: t('common:messages.quests_generated'), timestamp: t('common:states.just_now'), type: 'system'}, ...prev]);
 
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+      const errorMessage = e instanceof Error ? e.message : t('common:error_unknown');
       setError(errorMessage);
-      setSystemMessages(prev => [{id: `quests-err-${Date.now()}`, text: `Quest Generation Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+      setSystemMessages(prev => [{id: `quests-err-${Date.now()}`, text: t('common:messages.quest_gen_failed', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
     } finally {
       setIsLoadingQuests(false);
     }
@@ -762,13 +764,13 @@ const handleCompleteMajorGoal = useCallback((goal: MajorGoal) => {
     handleGrantReward(goal.xp_reward, goal.credit_reward, realm, goal.id, goalCompleter);
 
     setMajorGoals(prev => prev.filter(g => g.id !== goal.id));
-    setSystemMessages(prev => [{ id: `goal-complete-${Date.now()}`, text: `Major Goal Completed: ${goal.title}! Rewards granted.`, timestamp: 'Just now', type: 'reward'}, ...prev]);
+    setSystemMessages(prev => [{ id: `major-goal-res-${Date.now()}`, text: t('common:messages.goal_completed', { title: goal.title }), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
 }, [user.skill_tree, handleGrantReward]);
 
 const handleOpenLootbox = useCallback(() => {
     const today = getCurrentDate().toISOString().split('T')[0];
     if (lastLootboxClaim === today) {
-        setSystemMessages(prev => [{id: `loot-claimed-${Date.now()}`, text: 'Daily lootbox already claimed.', timestamp: 'Just now', type: 'info'}, ...prev]);
+        setSystemMessages(prev => [{id: `loot-claimed-${Date.now()}`, text: t('common:messages.lootbox_already_claimed'), timestamp: t('common:states.just_now'), type: 'info'}, ...prev]);
         return;
     }
 
@@ -889,7 +891,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
   const handleBuyItem = useCallback((item: StoreItem) => {
       if (user.wallet.credits < item.cost) {
-          setSystemMessages(prev => [{id: `buy-fail-${Date.now()}`, text: 'Insufficient credits.', timestamp: 'Just now', type: 'warning'}, ...prev]);
+          setSystemMessages(prev => [{id: `buy-fail-${Date.now()}`, text: t('common:messages.insufficient_credits'), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
           return;
       }
       setUser(prev => {
@@ -906,7 +908,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
           inventory: newInventory
         }
       });
-      setSystemMessages(prev => [{id: `buy-ok-${Date.now()}`, text: `Acquired: ${item.name}.`, timestamp: 'Just now', type: 'info'}, ...prev]);
+      setSystemMessages(prev => [{id: `buy-success-${Date.now()}`, text: t('common:messages.item_acquired', { name: item.name }), timestamp: t('common:states.just_now'), type: 'system'}, ...prev]);
   }, [user.wallet.credits, setUser]);
 
   const handleUseItem = useCallback((itemId: string) => {
@@ -953,7 +955,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
           }).filter(i => i.quantity > 0);
           return { ...prev, inventory: newInventory };
         });
-        setSystemMessages(prev => [{id: `use-item-${Date.now()}`, text: `Activated: ${itemToUse.name}.`, timestamp: 'Just now', type: 'info'}, ...prev]);
+        setSystemMessages(prev => [{id: `item-use-${Date.now()}`, text: t('common:messages.item_activated', { name: itemToUse.name }), timestamp: t('common:states.just_now'), type: 'system'}, ...prev]);
     }
   }, [storeItems, user.inventory, setUser, handleGenerateQuests]);
 
@@ -994,7 +996,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         const currentStakedCount = prev.stakedBuffs[itemId] || 0;
         const buffStakingLimit = Math.floor(prev.level_overall / 10) + 1;
         if (currentStakedCount >= buffStakingLimit) {
-            setSystemMessages(p => [{id: `stake-limit-${Date.now()}`, text: 'Infusion limit reached for this buff at your current level.', timestamp: 'Just now', type: 'warning'}, ...p]);
+            setSystemMessages(p => [{id: `stake-limit-${Date.now()}`, text: t('common:messages.infusion_limit_reached'), timestamp: t('common:states.just_now'), type: 'warning'}, ...p]);
             return prev;
         }
 
@@ -1137,11 +1139,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       // 4. Update state
       setQuests(prev => [...prev, ...newQuests]);
       setJournalEntries(prev => [...prev, newJournalEntry]);
-      setSystemMessages(prev => [{id: `journal-ok-${Date.now()}`, text: `Journal entry logged for "${goal.title}". Improvement plan generated.`, timestamp: 'Just now', type: 'system'}, ...prev]);
+      setSystemMessages(prev => [{ id: `journal-ok-${Date.now()}`, text: t('common:messages.journal_logged', { title: goal.title }), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
 
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-      setSystemMessages(prev => [{id: `journal-err-${Date.now()}`, text: `Journaling Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+    } catch (err: any) {
+      const errorMessage = err.message || t('common:error_unknown');
+      setSystemMessages(prev => [{ id: `journal-err-${Date.now()}`, text: t('common:messages.journal_failed', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning' }, ...prev]);
     } finally {
       setIsChatbotLoading(false);
     }
@@ -1156,12 +1158,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     };
     setUser(prev => ({ ...prev, activeTimedQuest: newTimedQuest }));
     setView('timer');
-    setSystemMessages(prev => [{
-        id: `timer-start-${Date.now()}`,
-        text: `Timed quest started: "${title}". Estimated time: ${estimatedMinutes} minutes.`,
-        timestamp: 'Just now',
-        type: 'info'
-    }, ...prev]);
+    setSystemMessages(prev => [{id: `timer-start-${Date.now()}`, text: t('common:messages.timed_quest_started', { title, min: estimatedMinutes }), timestamp: t('common:states.just_now'), type: 'info'}, ...prev]);
   }, [setUser]);
 
   const handleCompleteTimedQuest = useCallback(() => {
@@ -1190,12 +1187,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     
     handleGrantReward(baseXp + bonusXp, baseCredits + bonusCredits, activeQuest.realm, 'timed-quest');
 
-    setSystemMessages(prev => [{
-        id: `timer-complete-${Date.now()}`,
-        text: `Timed quest "${activeQuest.title}" completed in ${Math.round(elapsedMinutes)}m. Reward: +${baseXp + bonusXp} XP, +${baseCredits + bonusCredits} Credits.${bonusMessage}`,
-        timestamp: 'Just now',
-        type: 'reward'
-    }, ...prev]);
+    setSystemMessages(prev => [{id: `timer-end-${Date.now()}`, text: t('common:messages.timed_quest_completed', { title: activeQuest.title, min: Math.round(elapsedMinutes), xp: baseXp + bonusXp, cr: baseCredits + bonusCredits, bonus: bonusMessage }), timestamp: t('common:states.just_now'), type: 'reward'}, ...prev]);
     
     setUser(prev => ({ ...prev, activeTimedQuest: null }));
     setView('dashboard');
@@ -1210,10 +1202,13 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setActiveArcId(id);
     const activeArc = allArcs.find(arc => arc.id === id);
     setUser(prev => ({...prev, activeArc: activeArc || null}));
-    if (activeArc) {
-        setSystemMessages(prev => [{id: `arc-set-${Date.now()}`, text: `Arc Activated: ${activeArc.title}`, timestamp: 'Just now', type: 'system'}, ...prev]);
+    if (id) {
+        const activeArc = allArcs.find(a => a.id === id);
+        if (activeArc) {
+            setSystemMessages(prev => [{id: `arc-act-${Date.now()}`, text: t('common:messages.arc_activated', { title: activeArc.title }), timestamp: t('common:states.just_now'), type: 'info'}, ...prev]);
+        }
     } else {
-        setSystemMessages(prev => [{id: `arc-clear-${Date.now()}`, text: `Active Arc has been deactivated.`, timestamp: 'Just now', type: 'system'}, ...prev]);
+        setSystemMessages(prev => [{id: `arc-deact-${Date.now()}`, text: t('common:messages.arc_deactivated'), timestamp: t('common:states.just_now'), type: 'info'}, ...prev]);
     }
   }, [allArcs, setUser]);
 
@@ -1405,7 +1400,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     a.download = `levelup-awakening-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: 'User data backup downloaded.', timestamp: 'Just now', type: 'system' }, ...prev]);
+    setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: t('common:messages.backup_downloaded'), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
   }, [user, quests, storyLog, weeklyProgress, activityLog, systemMessages, integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals, lastLootboxClaim, chatHistory, journalEntries]);
 
   const handleUploadBackup = useCallback((file: File) => {
@@ -1426,7 +1421,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         
         setStateFromData(migratedData);
         
-        setSystemMessages(prev => [{ id: `restore-${Date.now()}`, text: 'Data successfully restored from backup.', timestamp: 'Just now', type: 'system' }, ...prev]);
+        setSystemMessages(prev => [{ id: `restore-${Date.now()}`, text: t('common:messages.restore_success'), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
       } catch (err) {
         console.error("Failed to parse backup file:", err);
         const errorMessage = err instanceof Error ? err.message : "Unknown error.";
@@ -1436,7 +1431,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
     reader.onerror = () => {
       console.error("Failed to read backup file.");
-      setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: 'Failed to read the backup file.', timestamp: 'Just now', type: 'warning' }, ...prev]);
+      setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: t('common:messages.restore_failed'), timestamp: t('common:states.just_now'), type: 'warning' }, ...prev]);
     };
 
     reader.readAsText(file);
@@ -1454,7 +1449,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             const parsedData = JSON.parse(content);
             const migratedData = migrateLoadedState(parsedData);
             setStateFromData(migratedData);
-            setSystemMessages(prev => [{ id: `restore-login-${Date.now()}`, text: 'Data successfully loaded from file.', timestamp: 'Just now', type: 'system' }, ...prev]);
+            setSystemMessages(prev => [{ id: `restore-login-${Date.now()}`, text: t('common:messages.restore_success'), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
 
         } catch (err) {
              const errorMessage = err instanceof Error ? err.message : "Unknown error.";
@@ -1488,7 +1483,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       selectedSkills.forEach(skill => handleSaveSkill(skill));
       selectedTopics.forEach(topic => handleSaveTopic({ ...topic, difficulty: TopicDifficulty.Easy }));
       setIsRecommendationsModalOpen(false);
-      setSystemMessages(prev => [{id: `recs-add-${Date.now()}`, text: 'AI recommendations have been added to your skill tree.', timestamp: 'Just now', type: 'info'}, ...prev]);
+      setSystemMessages(prev => [{id: `recs-add-${Date.now()}`, text: t('common:messages.recs_added'), timestamp: t('common:states.just_now'), type: 'info'}, ...prev]);
   }, [handleSaveSkill, handleSaveTopic]);
 
   const handleToggleSkillActive = useCallback((skillId: string) => {
@@ -1541,11 +1536,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         skill_tree: newSkillTree,
     }));
     
-    let message = `Knowledge topic "${topicToDelete.name}" was deleted.`;
+    let message = t('common:messages.topic_deleted', { name: topicToDelete.name });
     if (questsToRemoveIds.size > 0) {
-        message += ` ${questsToRemoveIds.size} related quest(s) were removed.`;
+        message += ` ${t('common:messages.related_quests_removed', { count: questsToRemoveIds.size })}`;
     }
-    setSystemMessages(prev => [{ id: `delete-topic-${Date.now()}`, text: message, timestamp: 'Just now', type: 'info' }, ...prev]);
+    setSystemMessages(prev => [{ id: `delete-topic-${Date.now()}`, text: message, timestamp: t('common:states.just_now'), type: 'info' }, ...prev]);
   }, [user.knowledgeBase, user.skill_tree, quests, setUser]);
 
   const handleDeleteSkill = useCallback((skillId: string) => {
@@ -1582,11 +1577,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         knowledgeBase: newKnowledgeBase,
     }));
     
-    let message = `Skill "${skillToDelete.name}" and its ${topicsToDeleteIds.length} topics were deleted.`;
+    let message = t('common:messages.skill_deleted', { name: skillToDelete.name, count: topicsToDeleteIds.length });
     if (questsToRemoveIds.size > 0) {
-        message += ` ${questsToRemoveIds.size} related quest(s) were removed.`;
+        message += ` ${t('common:messages.related_quests_removed', { count: questsToRemoveIds.size })}`;
     }
-    setSystemMessages(prev => [{ id: `delete-skill-${Date.now()}`, text: message, timestamp: 'Just now', type: 'info' }, ...prev]);
+    setSystemMessages(prev => [{ id: `delete-skill-${Date.now()}`, text: message, timestamp: t('common:states.just_now'), type: 'info' }, ...prev]);
   }, [user.skill_tree, user.knowledgeBase, quests, setUser]);
 
   // --- START: HANDLERS FOR TESTING PANEL ---
@@ -1695,7 +1690,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const randomItem = storeItems[Math.floor(Math.random() * storeItems.length)];
     if (!randomItem) return;
     setUser(prev => ({ ...prev, inventory: [...prev.inventory, { itemId: randomItem.id, quantity: -1 }] }));
-    setSystemMessages(prev => [{ id: `anomaly-${Date.now()}`, text: 'Anomaly induced: Negative item quantity.', timestamp: 'Just now', type: 'warning'}, ...prev]);
+    setSystemMessages(prev => [{ id: `anomaly-${Date.now()}`, text: t('common:messages.anomaly_induced'), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
   };
   // --- END: HANDLERS FOR TESTING PANEL ---
 
@@ -1736,11 +1731,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   };
   
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
-      { view: 'dashboard', label: 'Quests', icon: LayoutDashboard },
-      { view: 'skill_tree', label: 'Skills', icon: TreeDeciduous },
-      { view: 'system_mechanics', label: 'System', icon: Dna },
-      { view: 'inventory', label: 'Inventory', icon: Package },
-      { view: 'more', label: 'More', icon: MoreHorizontal },
+      { view: 'dashboard', label: t('common:nav.dashboard'), icon: LayoutDashboard },
+      { view: 'skill_tree', label: t('common:nav.skill_tree'), icon: TreeDeciduous },
+      { view: 'system_mechanics', label: t('common:nav.system_mechanics'), icon: Dna },
+      { view: 'inventory', label: t('common:nav.inventory'), icon: Package },
+      { view: 'more', label: t('common:nav.more'), icon: MoreHorizontal },
   ];
   
   if (isApiKeyModalOpen) {

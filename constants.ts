@@ -78,12 +78,12 @@ const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {
 };
 
 export const RANKS = [
-    { level: 1, title: "E-Rank Apprentice" },
-    { level: 6, title: "D-Rank Disciplined Learner" },
-    { level: 11, title: "C-Rank Focused Engineer" },
-    { level: 21, title: "B-Rank Builder of Systems" },
-    { level: 31, title: "A-Rank Awakened Creator" },
-    { level: 41, title: "S-Rank Polymath" },
+    { level: 1,  key: "e_rank", title: "E-Rank Apprentice" },
+    { level: 6,  key: "d_rank", title: "D-Rank Disciplined Learner" },
+    { level: 11, key: "c_rank", title: "C-Rank Focused Engineer" },
+    { level: 21, key: "b_rank", title: "B-Rank Builder of Systems" },
+    { level: 31, key: "a_rank", title: "A-Rank Awakened Creator" },
+    { level: 41, key: "s_rank", title: "S-Rank Polymath" },
 ];
 
 export const EXAM_ARC: Arc = {
@@ -107,7 +107,7 @@ export const ALL_ARCS: Arc[] = [EXAM_ARC, FITNESS_ARC];
 
 export const INITIAL_USER: User = {
   name: "Awakened",
-  rank: RANKS[0].title,
+  rank: RANKS[0].key,
   level_overall: 1,
   xp_total: 0,
   xpToNextLevel: 130,

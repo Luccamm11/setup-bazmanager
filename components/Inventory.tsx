@@ -1,5 +1,6 @@
 import React from 'react';
 import { InventoryItem, StoreItem } from '../types';
+import { useTranslation } from 'react-i18next';
 import { ShoppingCart, Zap, Shield, Briefcase, RefreshCw, ChevronsUp, Gift, PlayCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +20,7 @@ const itemIcons: { [key: string]: React.ReactNode } = {
 };
 
 const Inventory: React.FC<InventoryProps> = ({ inventory, storeItems, onUseItem }) => {
+  const { t } = useTranslation(['common', 'constants']);
   const storeItemsMap = new Map<string, StoreItem>(storeItems.map(item => [item.id, item]));
 
   const populatedInventory = inventory.reduce(
@@ -50,8 +52,8 @@ const Inventory: React.FC<InventoryProps> = ({ inventory, storeItems, onUseItem 
       animate="visible"
     >
       <div className="text-center group">
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">Inventory</h2>
-        <p className="text-text-secondary">Your acquired items and utilities.</p>
+        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">{t('nav.inventory')}</h2>
+        <p className="text-text-secondary">{t('common:states.inventory_desc')}</p>
       </div>
 
       <AnimatePresence>
@@ -70,20 +72,20 @@ const Inventory: React.FC<InventoryProps> = ({ inventory, storeItems, onUseItem 
                   {itemIcons[item.effect.type] || itemIcons['DEFAULT']}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-text-primary tracking-tight">{item.name}</h3>
+                  <h3 className="text-xl font-bold text-text-primary tracking-tight">{t(`constants:store_items.${item.id}.name`)}</h3>
                   <div className="flex items-center text-xs font-bold uppercase tracking-widest text-text-secondary bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 mt-2 w-fit">
-                    Qty <span className="ml-2 text-white text-sm">{item.quantity}</span>
+                    {t('common:states.qty')} <span className="ml-2 text-white text-sm">{item.quantity}</span>
                   </div>
                 </div>
               </div>
-              <p className="text-text-secondary mt-5 text-sm flex-grow leading-relaxed">{item.description}</p>
+              <p className="text-text-secondary mt-5 text-sm flex-grow leading-relaxed">{t(`constants:store_items.${item.id}.description`)}</p>
               {(item.category === 'Buff' || item.category === 'Utility') && (
                  <button 
                     onClick={() => onUseItem(item.id)}
                     className="w-full mt-6 flex items-center justify-center space-x-2 bg-gradient-to-r from-accent-primary to-blue-500 hover:from-blue-500 hover:to-accent-primary text-white font-black tracking-wide py-3 px-4 rounded-xl transition-all shadow-glow-primary hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] border border-white/10 active:scale-95"
                   >
                     <PlayCircle className="w-5 h-5" />
-                    <span>Activate Sequence</span>
+                    <span>{t('common:buttons.activate')}</span>
                   </button>
               )}
             </motion.div>
@@ -99,8 +101,8 @@ const Inventory: React.FC<InventoryProps> = ({ inventory, storeItems, onUseItem 
             <div className="absolute inset-0 bg-accent-tertiary/20 blur-xl rounded-full"></div>
             <Briefcase className="w-20 h-20 text-text-muted relative z-10" />
           </div>
-          <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Vault Empty</h3>
-          <p className="text-text-secondary max-w-sm mx-auto leading-relaxed">Your inventory is currently empty. Visit the System Store to acquire buffs, utilities, and rewards using your credits.</p>
+          <h3 className="text-2xl font-black text-white mb-2 tracking-tight">{t('common:states.vault_empty')}</h3>
+          <p className="text-text-secondary max-w-sm mx-auto leading-relaxed">{t('common:states.inventory_empty_desc')}</p>
         </motion.div>
       )}
       </AnimatePresence>

@@ -26,7 +26,13 @@
     "active": "Ativo",
     "inactive": "Inativo",
     "claimed": "Coletado",
-    "just_now": "Agora mesmo"
+    "just_now": "Agora mesmo",
+    "no_messages": "Nenhuma mensagem do sistema.",
+    "system_updates_here": "As atualizações do Sistema aparecerão aqui.",
+    "inventory_desc": "Seus itens e utilitários adquiridos.",
+    "qty": "Qtd",
+    "vault_empty": "Cofre Vazio",
+    "inventory_empty_desc": "Seu inventário está vazio no momento. Visite a Loja para adquirir buffs, utilitários e recompensas usando seus créditos."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -83,5 +89,36 @@
   "profile_picture_updated": "Foto de perfil atualizada.",
   "profile_picture_reset": "Foto de perfil redefinida para o padrão.",
   "api_key_saved": "Chave de API salva com sucesso.",
-  "language": "Idioma"
+  "language": "Idioma",
+  "messages": {
+    "quests_generated": "Novas quests diárias foram geradas.",
+    "quest_gen_failed": "Falha na geração das quests: {{error}}",
+    "goal_completed": "Meta Completada: {{title}}! Recompensas concedidas.",
+    "lootbox_already_claimed": "Lootbox diária já resgatada.",
+    "insufficient_credits": "Créditos insuficientes.",
+    "item_acquired": "Adquirido: {{name}}.",
+    "item_activated": "Ativado: {{name}}.",
+    "infusion_limit_reached": "Limite de infusão atingido para este buff no seu nível atual.",
+    "journal_logged": "Diário registrado para \"{{title}}\". Plano de melhoria gerado.",
+    "journal_failed": "Falha no registro do diário: {{error}}",
+    "timed_quest_started": "Quest cronometrada iniciada: \"{{title}}\". Tempo estimado: {{min}} minutos.",
+    "timed_quest_completed": "Quest cronometrada \"{{title}}\" completada em {{min}}m. Recompensa: +{{xp}} XP, +{{cr}} Créditos. {{bonus}}",
+    "arc_activated": "Arco Ativado: {{title}}",
+    "arc_deactivated": "O Arco ativo foi desativado.",
+    "gcal_sync_failed": "Falha na sincronização do Google Calendar: {{error}}",
+    "backup_downloaded": "Backup dos dados do usuário baixado.",
+    "restore_success": "Dados restaurados com sucesso.",
+    "restore_failed": "Falha ao ler o arquivo de backup.",
+    "recs_added": "As recomendações da IA foram adicionadas à sua árvore de habilidades.",
+    "topic_deleted": "O tópico de conhecimento \"{{name}}\" foi excluído.",
+    "skill_deleted": "A habilidade \"{{name}}\" e seus {{count}} tópicos foram excluídos.",
+    "related_quests_removed": "{{count}} quest(s) relacionada(s) foram removida(s).",
+    "anomaly_induced": "Anomalia induzida: Quantidade de item negativa."
+  },
+  "time": {
+    "days": "Dias",
+    "hours": "Horas",
+    "minutes": "Minutos",
+    "seconds": "Segundos"
+  }
 }
