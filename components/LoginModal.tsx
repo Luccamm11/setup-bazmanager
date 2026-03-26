@@ -1,30 +1,42 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Upload, Sparkles, Shield, LogIn, Database } from 'lucide-react';
-import { renderSignInButton } from '../auth/googleAuth';
+import React, { useState } from 'react';
+import { Lock, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LoginModalProps {
-  onRestoreFromFile: (file: File) => void;
-  error?: string | null;
+  onLoginSuccess: (username: string) => void;
+  isLoading: boolean;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ onRestoreFromFile, error }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [mounted, setMounted] = useState(false);
+const VALID_USERS = ['Jonas', 'Gustavo', 'Lucca', 'Enzo', 'Guilherme', 'Anexo', 'Clarice'];
 
-  useEffect(() => {
-    setMounted(true);
-    renderSignInButton('google-signin-button');
-  }, []);
+const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {
+  const { t } = useTranslation('common');
+  const [selectedUser, setSelectedUser] = useState<string>(VALID_USERS[0]);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-          onRestoreFromFile(file);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: selectedUser, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onLoginSuccess(selectedUser);
+      } else {
+        setError(data.message || 'Senha incorreta.');
       }
-  };
-
-  const handleUploadClick = () => {
-      fileInputRef.current?.click();
+    } catch (err) {
+      console.error(err);
+      setError('Erro de conexão ao servidor.');
+    }
   };
 
   return (
@@ -34,58 +46,70 @@ const LoginModal: React.FC<LoginModalProps> = ({ onRestoreFromFile, error }) => 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-primary/20 rounded-full blur-[100px]"></div>
       </div>
 
-      <div className={`relative z-10 w-full max-w-md bg-primary/90 backdrop-blur-xl border border-border-color rounded-2xl shadow-2xl p-8 text-center transition-all duration-700 transform ${mounted ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-8 opacity-0 scale-95'}`}>
+      <div className="relative z-10 w-full max-w-md bg-primary/90 backdrop-blur-xl border border-border-color rounded-2xl shadow-2xl p-8 text-center">
         
         <div className="flex justify-center mb-6">
           <div className="p-3 bg-accent-primary/10 rounded-2xl border border-accent-primary/20">
-            <Sparkles className="w-10 h-10 text-accent-primary" />
+            <Lock className="w-10 h-10 text-accent-primary" />
           </div>
         </div>
         
-        <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">Welcome Back</h1>
-        <p className="text-text-secondary mb-8">Sign in with your Google account to continue your journey.</p>
+        <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">System Login</h1>
+        <p className="text-text-secondary mb-8">Access restricted. Authenticate to sync state.</p>
         
-        {error && (
-          <div className="bg-accent-red/10 border border-accent-red/30 text-accent-red px-4 py-3 rounded-xl mb-6 flex items-start text-left">
-            <Shield className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-            <div>
-              <strong className="font-semibold block text-sm">Sign-in Error</strong>
-              <span className="text-sm opacity-90">{error}</span>
+        <form onSubmit={handleLogin} className="space-y-6 text-left">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block">
+              User ID
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <User className="h-5 w-5 text-text-secondary" />
+              </div>
+              <select
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                disabled={isLoading}
+                className="w-full bg-border-color/30 border border-border-color rounded-lg pl-10 pr-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-all appearance-none"
+              >
+                {VALID_USERS.map(user => (
+                  <option key={user} value={user} className="bg-primary">{user}</option>
+                ))}
+              </select>
             </div>
           </div>
-        )}
 
-        <div className="space-y-5">
-            {/* Google Identity Services Container */}
-            <div className="flex justify-center bg-white/5 py-3 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
-              <div id="google-signin-button" className="min-h-[44px]"></div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block">
+              Passcode
+            </label>
+            <div className="relative">
+              <input
+                type="password"
+                placeholder="••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                className="w-full bg-border-color/30 border border-border-color rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-all font-mono"
+              />
             </div>
+            {error && (
+              <p className="text-accent-red text-xs mt-2 animate-pulse">{error}</p>
+            )}
+          </div>
 
-            <div className="relative flex py-3 items-center">
-                <div className="flex-grow border-t border-border-color"></div>
-                <span className="flex-shrink mx-4 text-text-muted text-xs font-semibold uppercase tracking-wider">Or</span>
-                <div className="flex-grow border-t border-border-color"></div>
-            </div>
-
-            <button
-                onClick={handleUploadClick}
-                className="w-full bg-border-color/30 text-text-primary font-medium py-3.5 px-4 rounded-xl flex items-center justify-center space-x-3 transition-all hover:bg-border-color/60 hover:shadow-md border border-border-color group"
-            >
-                <Database className="w-5 h-5 text-text-secondary group-hover:text-accent-secondary transition-colors" />
-                <span>Load from Local Save</span>
-            </button>
-            <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".json,application/json"
-                onChange={handleFileChange}
-            />
-        </div>
-        
-        <p className="text-xs text-text-muted mt-8">
-            By signing in, you are granting access to sync your progress securely.
-        </p>
+          <button
+            type="submit"
+            disabled={isLoading || !password}
+            className="w-full bg-accent-primary hover:bg-accent-primary-hover text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm mt-4 shadow-lg shadow-accent-primary/20"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <span>Authenticate</span>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

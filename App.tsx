@@ -15,6 +15,7 @@ import Staking from './components/Staking';
 import Inventory from './components/Inventory';
 import SettingsModal from './components/SettingsModal';
 import MyState from './components/MyState';
+import LoginModal from './components/LoginModal';
 
 import LevelUpAnimation from './components/LevelUpAnimation';
 import Chatbot from './components/Chatbot';
@@ -190,6 +191,10 @@ const recalculateSkillTree = (
 
 const App: React.FC = () => {
   const { t } = useTranslation(['common', 'constants']);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+
+  // User picture is kept in local state for now, but could be migrated
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
@@ -197,62 +202,23 @@ const App: React.FC = () => {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(!localStorage.getItem('googleAiApiKey'));
   const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
-  const [user, _setUser] = useState<User>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.user || INITIAL_USER;
-  });
-  const [quests, setQuests] = useState<Quest[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.quests || INITIAL_QUESTS;
-  });
-  const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.storyLog || INITIAL_STORY_LOG;
-  });
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.journalEntries || INITIAL_JOURNAL_ENTRIES;
-  });
-  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.weeklyProgress || INITIAL_WEEKLY_PROGRESS;
-  });
-  const [activityLog, setActivityLog] = useState<ActivityData[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.activityLog || INITIAL_ACTIVITY_DATA;
-  });
-  const [systemMessages, setSystemMessages] = useState<SystemMessage[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.systemMessages || INITIAL_SYSTEM_MESSAGES;
-  });
-  const [integrations, setIntegrations] = useState<Integration[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.integrations || INITIAL_INTEGRATIONS;
-  });
-  const [storeItems, setStoreItems] = useState<StoreItem[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.storeItems || STORE_ITEMS;
-  });
-  const [allArcs, setAllArcs] = useState<Arc[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.allArcs || ALL_ARCS;
-  });
-  const [activeArcId, setActiveArcId] = useState<string | null>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.activeArcId || INITIAL_USER.activeArc?.id || null;
-  });
-  const [allBadges, setAllBadges] = useState<Badge[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.allBadges || BADGE_DEFINITIONS;
-  });
+  const [user, _setUser] = useState<User>(INITIAL_USER);
+  const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
+  const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(INITIAL_STORY_LOG);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(INITIAL_WEEKLY_PROGRESS);
+  const [activityLog, setActivityLog] = useState<ActivityData[]>(INITIAL_ACTIVITY_DATA);
+  const [systemMessages, setSystemMessages] = useState<SystemMessage[]>(INITIAL_SYSTEM_MESSAGES);
+  const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
+  const [storeItems, setStoreItems] = useState<StoreItem[]>(STORE_ITEMS);
+  const [allArcs, setAllArcs] = useState<Arc[]>(ALL_ARCS);
+  const [activeArcId, setActiveArcId] = useState<string | null>(INITIAL_USER.activeArc?.id || null);
+  const [allBadges, setAllBadges] = useState<Badge[]>(BADGE_DEFINITIONS);
   const [view, setView] = useState<View>('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingQuests, setIsLoadingQuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.lastLootboxClaim || null;
-  });
+  const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(null);
 
   useEffect(() => {
     if (user.name === "Awakened") {
@@ -266,10 +232,7 @@ const App: React.FC = () => {
   };
   const [levelUpData, setLevelUpData] = useState<{ level: number, rank: string } | null>(null);
   const previousLevel = useRef<number>(user.level_overall);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.chatHistory || [];
-  });
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatbotLoading, setIsChatbotLoading] = useState(false);
   const [isAddQuestModalOpen, setIsAddQuestModalOpen] = useState(false);
 
@@ -281,10 +244,7 @@ const App: React.FC = () => {
   const [isBulkAddModalOpen, setIsBulkAddModalOpen] = useState(false);
   const [skillForBulkAdd, setSkillForBulkAdd] = useState<Skill | null>(null);
 
-  const [majorGoals, setMajorGoals] = useState<MajorGoal[]>(() => {
-    const localData = loadUser(LOCAL_USER_ID);
-    return localData?.majorGoals || INITIAL_MAJOR_GOALS;
-  });
+  const [majorGoals, setMajorGoals] = useState<MajorGoal[]>(INITIAL_MAJOR_GOALS);
   const [isMajorGoalModalOpen, setIsMajorGoalModalOpen] = useState(false);
   const [editingMajorGoal, setEditingMajorGoal] = useState<MajorGoal | null>(null);
   const [isBulkGoalModalOpen, setIsBulkGoalModalOpen] = useState(false);
@@ -344,8 +304,10 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
   }, [setSystemMessages]);
 
-  // Autosave to localStorage on state change
+  // Autosave to Vercel KV on state change
   useEffect(() => {
+    if (!currentUser) return;
+
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
         integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
@@ -355,19 +317,27 @@ const App: React.FC = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = window.setTimeout(() => {
         setSyncStatus('syncing');
-        try {
-            const serializedState = JSON.stringify(stateToSave);
-            localStorage.setItem(`${SAVE_DATA_PREFIX}${LOCAL_USER_ID}`, serializedState);
-            setSyncStatus('synced');
-            setTimeout(() => setSyncStatus('idle'), 1500);
-        } catch (err) {
-            console.error("Could not save state to localStorage", err);
-            setSyncStatus('error');
-        }
+        fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUser, data: stateToSave })
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) {
+                  setSyncStatus('synced');
+                  setTimeout(() => setSyncStatus('idle'), 1500);
+              } else {
+                  throw new Error(data.error);
+              }
+          })
+          .catch(err => {
+              console.error("Could not save state to Vercel KV", err);
+              setSyncStatus('error');
+          });
     }, 1000);
 
   }, [
-    user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory, journalEntries
   ]);
@@ -1738,6 +1708,28 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       { view: 'more', label: t('common:nav.more'), icon: MoreHorizontal },
   ];
   
+  if (!currentUser) {
+    return (
+      <LoginModal 
+        onLoginSuccess={(username) => {
+          setCurrentUser(username);
+          setIsInitialLoading(true);
+          fetch(`/api/load?username=${username}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.data) {
+                const migratedData = migrateLoadedState(data.data);
+                setStateFromData(migratedData);
+              }
+            })
+            .catch(err => console.error('Failed to load user state from server:', err))
+            .finally(() => setIsInitialLoading(false));
+        }} 
+        isLoading={isInitialLoading} 
+      />
+    );
+  }
+
   if (isApiKeyModalOpen) {
     return <EnterApiKeyModal onSave={handleSaveApiKey} />;
   }
