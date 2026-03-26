@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Lock, User } from 'lucide-react';
+import { Lock, User as UserIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LoginModalProps {
   onLoginSuccess: (username: string) => void;
@@ -31,57 +32,89 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
       if (data.success) {
         onLoginSuccess(selectedUser);
       } else {
-        setError(data.message || 'Senha incorreta.');
+        setError(data.message || t('incorrectPassword'));
       }
     } catch (err) {
       console.error(err);
-      setError('Erro de conexão ao servidor.');
+      setError(t('serverConnectionError'));
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-      {/* Decorative background glow */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-primary/20 rounded-full blur-[100px]"></div>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-hidden">
+      {/* Animated Background Gradients */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center opacity-40">
+        <motion.div 
+            animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 90, 0],
+                opacity: [0.3, 0.6, 0.3]
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+            className="absolute w-[600px] h-[600px] bg-yellow-500/20 rounded-full blur-[120px]" 
+        />
+        <motion.div 
+            animate={{ 
+                scale: [1.2, 1, 1.2],
+                rotate: [90, 0, 90],
+                opacity: [0.4, 0.2, 0.4]
+            }}
+            transition={{ duration: 15, repeat: Infinity }}
+            className="absolute w-[800px] h-[800px] bg-sky-500/10 rounded-full blur-[150px]" 
+        />
       </div>
 
-      <div className="relative z-10 w-full max-w-md bg-primary/90 backdrop-blur-xl border border-border-color rounded-2xl shadow-2xl p-8 text-center">
-        
-        <div className="flex justify-center mb-6">
-          <div className="p-3 bg-accent-primary/10 rounded-2xl border border-accent-primary/20">
-            <Lock className="w-10 h-10 text-accent-primary" />
-          </div>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative z-10 w-full max-w-md bg-zinc-950/40 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-10 overflow-hidden"
+      >
+        {/* Top Glow Bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+
+        <div className="flex justify-center mb-8">
+          <motion.div 
+            whileHover={{ rotate: [0, -10, 10, 0] }}
+            className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.1)]"
+          >
+            <Lock className="w-10 h-10 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
+          </motion.div>
         </div>
         
-        <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">System Login</h1>
-        <p className="text-text-secondary mb-8">Access restricted. Authenticate to sync state.</p>
+        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight text-center">{t('systemLogin')}</h1>
+        <p className="text-zinc-400 mb-10 text-center text-balance">{t('accessRestricted')}</p>
         
-        <form onSubmit={handleLogin} className="space-y-6 text-left">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block">
-              User ID
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+              {t('user')}
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-text-secondary" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-yellow-500 transition-colors">
+                <UserIcon className="h-5 w-5 text-zinc-500 transition-colors" />
               </div>
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 disabled={isLoading}
-                className="w-full bg-border-color/30 border border-border-color rounded-lg pl-10 pr-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-all appearance-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all appearance-none cursor-pointer font-medium hover:bg-white/10"
               >
                 {VALID_USERS.map(user => (
-                  <option key={user} value={user} className="bg-primary">{user}</option>
+                  <option key={user} value={user} className="bg-zinc-900 border-none">{user}</option>
                 ))}
               </select>
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-zinc-500">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block">
-              Passcode
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+              {t('enterPasscode')}
             </label>
             <div className="relative">
               <input
@@ -90,27 +123,69 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
-                className="w-full bg-border-color/30 border border-border-color rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-all font-mono"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all font-mono tracking-widest text-center text-lg hover:bg-white/10 placeholder:text-white/10"
               />
             </div>
-            {error && (
-              <p className="text-accent-red text-xs mt-2 animate-pulse">{error}</p>
-            )}
+            
+            <AnimatePresence mode="wait">
+                {error && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-xl mt-3"
+                >
+                    <div className="w-1 h-1 rounded-full bg-red-400 animate-pulse" />
+                    <p className="text-red-400 text-[11px] font-medium leading-none">{error}</p>
+                </motion.div>
+                )}
+            </AnimatePresence>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading || !password}
-            className="w-full bg-accent-primary hover:bg-accent-primary-hover text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm mt-4 shadow-lg shadow-accent-primary/20"
+            className="w-full relative group mt-4"
           >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <span>Authenticate</span>
-            )}
-          </button>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
+            <div className="relative w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 px-6 rounded-2xl transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed tracking-tight text-base shadow-xl uppercase">
+                {isLoading ? (
+                <div className="w-6 h-6 border-3 border-black/20 border-t-black rounded-full animate-spin"></div>
+                ) : (
+                <>
+                    <span>{t('authenticate')}</span>
+                    <motion.svg 
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                        className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </motion.svg>
+                </>
+                )}
+            </div>
+          </motion.button>
         </form>
-      </div>
+
+        <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
+            <div className="flex -space-x-3">
+                {VALID_USERS.map((user, idx) => (
+                    <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 * idx }}
+                        key={user} 
+                        className="w-8 h-8 rounded-full border-2 border-zinc-950 bg-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-500 cursor-help"
+                        title={user}
+                    >
+                        {user[0]}
+                    </motion.div>
+                ))}
+            </div>
+            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: VALID_USERS.length }) || '7 AUTHORIZED MEMBERS'}</p>
+        </div>
+      </motion.div>
     </div>
   );
 };

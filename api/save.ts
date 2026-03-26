@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { kv } from '@vercel/kv';
+import redis from './_lib/redis';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -13,11 +13,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Save user data to KV, overriding whatever was there
-    await kv.set(`levelup_user_${username}`, data);
+    await redis.set(`levelup_user_${username}`, JSON.stringify(data));
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error saving data to KV:', error);
+    console.error('Error saving data to Redis:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
