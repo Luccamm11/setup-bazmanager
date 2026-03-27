@@ -39,16 +39,9 @@ export const getTotalXpForSkill = (skill: Skill): number => {
 };
 
 export const SKILL_DEFINITIONS: Omit<Skill, 'level' | 'xp' | 'xpToNextLevel'>[] = [
-  { id: 'circuit_design', name: 'Circuit Design', realm: Realm.Creation, priority: 3, isActive: true, xpScale: 1.5 },
-  { id: 'embedded_systems', name: 'Embedded Systems', realm: Realm.Creation, priority: 3, isActive: true, xpScale: 1.8 },
-  { id: 'microprocessor', name: 'Microprocessors', realm: Realm.Creation, priority: 5, isActive: true, xpScale: 2.0 },
-  { id: 'ethical_hacking', name: 'Ethical Hacking', realm: Realm.Mind, priority: 2, isActive: true, xpScale: 2.2 },
-  { id: 'ml', name: 'Machine Learning', realm: Realm.Mind, priority: 4, isActive: true, xpScale: 2.5 },
-  { id: 'signal_mastery', name: 'Signal Mastery', realm: Realm.Mind, priority: 4, isActive: true, xpScale: 2.0 },
-  { id: 'iot_connectivity', name: 'IoT & Connectivity', realm: Realm.Creation, priority: 3, isActive: true, xpScale: 1.6 },
-  { id: 'mobility', name: 'Mobility', realm: Realm.Body, priority: 3, isActive: true, xpScale: 1.0 },
-  { id: 'vitality', name: 'Vitality', realm: Realm.Body, priority: 3, isActive: true, xpScale: 1.2 },
-  { id: 'journaling', name: 'Journaling', realm: Realm.Spirit, priority: 2, isActive: true, xpScale: 1.0 },
+  { id: 'focus_mastery', name: 'Focus Mastery', realm: Realm.Mind, priority: 5, isActive: true, xpScale: 1.0 },
+  { id: 'physical_conditioning', name: 'Physical Conditioning', realm: Realm.Body, priority: 3, isActive: true, xpScale: 1.0 },
+  { id: 'creative_output', name: 'Creative Output', realm: Realm.Creation, priority: 3, isActive: true, xpScale: 1.0 },
 ];
 
 const initialSkillTree: { [skill_id: string]: Skill } = {};
@@ -62,19 +55,9 @@ SKILL_DEFINITIONS.forEach(skillDef => {
 });
 
 const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {
-    'iot_1': { id: 'iot_1', name: 'MQTT Protocol Basics', skillId: 'iot_connectivity', difficulty: TopicDifficulty.Easy },
-    'iot_2': { id: 'iot_2', name: 'HTTP/CoAP for Devices', skillId: 'iot_connectivity', difficulty: TopicDifficulty.Easy },
-    'mp_1': { id: 'mp_1', name: '8085 Architecture', skillId: 'microprocessor', difficulty: TopicDifficulty.Easy },
-    'mp_2': { id: 'mp_2', name: 'Memory Interfacing', skillId: 'microprocessor', difficulty: TopicDifficulty.Easy },
-    'ml_1': { id: 'ml_1', name: 'Convolutional Neural Networks', skillId: 'ml', difficulty: TopicDifficulty.Medium },
-    'ml_2': { id: 'ml_2', name: 'Recurrent Neural Networks', skillId: 'ml', difficulty: TopicDifficulty.Easy },
-    'sm_1': { id: 'sm_1', name: 'Convolution and Filters', skillId: 'signal_mastery', difficulty: TopicDifficulty.Easy },
-    'mob_1': { id: 'mob_1', name: 'Stretching Routine', skillId: 'mobility', difficulty: TopicDifficulty.Easy },
-    'vit_1': { id: 'vit_1', name: 'Hydration Basics', skillId: 'vitality', difficulty: TopicDifficulty.Easy },
-    'cd_1': { id: 'cd_1', name: 'Ohm\'s Law & KVL/KCL', skillId: 'circuit_design', difficulty: TopicDifficulty.Easy },
-    'es_1': { id: 'es_1', name: 'Microcontroller Basics', skillId: 'embedded_systems', difficulty: TopicDifficulty.Easy },
-    'eh_1': { id: 'eh_1', name: 'Network Scanning', skillId: 'ethical_hacking', difficulty: TopicDifficulty.Easy },
-    'j_1': { id: 'j_1', name: 'Reflection Techniques', skillId: 'journaling', difficulty: TopicDifficulty.Easy },
+    'fm_1': { id: 'fm_1', name: 'Deep Work Session', skillId: 'focus_mastery', difficulty: TopicDifficulty.Easy },
+    'pc_1': { id: 'pc_1', name: 'Daily Exercise', skillId: 'physical_conditioning', difficulty: TopicDifficulty.Easy },
+    'co_1': { id: 'co_1', name: 'Project Milestone', skillId: 'creative_output', difficulty: TopicDifficulty.Easy },
 };
 
 export const RANKS = [
@@ -143,11 +126,11 @@ export const INITIAL_USER: User = {
   completedMajorGoals: [],
   activeTimedQuest: null,
   state: {
-    coreMission: `To become a multidisciplinary innovator — merging Electronics, AI, and IoT to build intelligent systems that improve lives. I aim to master embedded systems, machine learning, and ethical hacking, and use them to design smart wearable and connected devices.`,
-    longTermGoals: 'Master advanced concepts in Transformer models. Contribute to an open-source ML project.',
-    shortTermGoals: 'Ace the final exams for Microprocessors and AI/ML. Complete the IoT weather station project.',
-    emergencyGoals: 'Prepare a backup study plan in case of unexpected schedule changes.',
-    sideQuests: 'Explore creative coding with p5.js. Read one non-fiction book a month.'
+    coreMission: 'To achieve balance and mastery across the core realms of existence.',
+    longTermGoals: 'Attain peak performance in Mind, Body, and Creation.',
+    shortTermGoals: 'Establish a consistent daily routine and complete initial quests.',
+    emergencyGoals: 'Maintain basic routines during high-stress periods.',
+    sideQuests: 'Explore new interests and develop auxiliary skills.'
   }
 };
 
@@ -165,60 +148,33 @@ const getFutureDateString = (days: number, hours?: number) => {
 // FIX: Renamed from INITIAL_BOSS_CHALLENGES and updated type and properties for consistency.
 export const INITIAL_MAJOR_GOALS: MajorGoal[] = [
     {
-        id: 'dev-event-1',
-        title: "The Siege of 8085 Citadel",
-        description: "Vanquish the final exam for the Microprocessors course.",
-        type: 'Siege',
-        deadline: getFutureDateString(2),
+        id: 'goal-1',
+        title: "Foundation Blueprint",
+        description: "Establish your core objectives and initialize the system.",
+        type: 'Forge',
+        deadline: getFutureDateString(7),
         xp_reward: 500,
         credit_reward: 100,
-        skillId: 'microprocessor',
-        syllabus: '8085 architecture, PIN diagram, memory interfacing, I/O ports, interrupts, instruction set, timing diagrams.',
-        penalty: { type: 'xp', amount: 125 },
-    },
-    {
-        id: 'dev-event-2',
-        title: "The Neural Gauntlet",
-        description: "Survive the AI/ML final exam. Weaknesses: CNNs, RNNs, and Transformer models.",
-        type: 'Siege',
-        deadline: getFutureDateString(12),
-        xp_reward: 750,
-        credit_reward: 150,
-        skillId: 'ml',
-        syllabus: 'Convolutional Neural Networks (CNNs), Recurrent Neural Networks (RNNs), Long Short-Term Memory (LSTM), Attention mechanisms, Transformer models, Transfer Learning.',
-        penalty: { type: 'xp', amount: 188 },
+        skillId: 'creative_output',
+        syllabus: 'Define vision, set milestones, allocate resources, and begin execution.',
+        penalty: { type: 'xp', amount: 100 },
     },
 ];
 
 export const INITIAL_QUESTS: Quest[] = [
   {
     id: 'q1',
-    title: "Signals Research",
-    description: "Read and write summary notes on convolution and filters (2 Pomodoros). This is the first step.",
+    title: "System Initialization",
+    description: "Review current goals and organize your workspace.",
     realm: Realm.Mind,
-    knowledgeTopics: ["sm_1"],
-    xp_reward: 45,
-    credit_reward: 5,
-    difficulty: Difficulty.Medium,
-    duration_est_min: 50,
-    status: QuestStatus.Pending,
-    chain: { current: 1, total: 2 },
-    deadline: getFutureDateString(0, 24),
-    penalty: { type: 'xp', amount: 11 },
-  },
-  {
-    id: 'q2',
-    title: "Morning Mobility",
-    description: "15 minutes mobility/stretch + drink 500ml water.",
-    realm: Realm.Body,
-    knowledgeTopics: ["mob_1", "vit_1"],
-    xp_reward: 10,
-    credit_reward: 3,
+    knowledgeTopics: ["fm_1"],
+    xp_reward: 50,
+    credit_reward: 10,
     difficulty: Difficulty.Easy,
-    duration_est_min: 20,
+    duration_est_min: 30,
     status: QuestStatus.Pending,
     deadline: getFutureDateString(0, 24),
-    penalty: { type: 'xp', amount: 3 },
+    penalty: { type: 'xp', amount: 5 },
   },
 ];
 
