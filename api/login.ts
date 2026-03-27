@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const TECHNICIANS = ['Jonas', 'Gustavo'];
+
 export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -13,7 +15,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (password === '021083') {
-    return res.status(200).json({ success: true, username });
+    const role = TECHNICIANS.includes(username) ? 'technician' : 'member';
+    return res.status(200).json({ success: true, username, role });
   }
 
   return res.status(401).json({ success: false, message: 'Senha incorreta.' });

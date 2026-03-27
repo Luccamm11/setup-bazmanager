@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Lock, User as UserIcon } from 'lucide-react';
+import { Lock, User as UserIcon, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UserRole } from '../types';
+
+const TECHNICIANS = ['Jonas', 'Gustavo'];
 
 interface LoginModalProps {
-  onLoginSuccess: (username: string) => void;
+  onLoginSuccess: (username: string, role: UserRole) => void;
   isLoading: boolean;
 }
 
@@ -30,7 +33,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
       const data = await response.json();
 
       if (data.success) {
-        onLoginSuccess(selectedUser);
+        onLoginSuccess(selectedUser, data.role || 'member');
       } else {
         setError(data.message || t('incorrectPassword'));
       }
@@ -171,16 +174,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
         <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-5">
             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{t('authorizedTeam')}</h3>
             <div className="flex flex-wrap justify-center gap-3">
-                {VALID_USERS.map((user, idx) => (
+                {VALID_USERS.map((user, idx) => {
+                    const isTech = TECHNICIANS.includes(user);
+                    return (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.05 * idx }}
                         whileHover="hover"
                         key={user} 
-                        className="h-9 rounded-xl border border-white/10 bg-white/5 flex items-center px-3 cursor-help hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all shrink-0 shadow-lg overflow-hidden whitespace-nowrap"
+                        className={`h-9 rounded-xl border flex items-center px-3 cursor-help transition-all shrink-0 shadow-lg overflow-hidden whitespace-nowrap ${
+                            isTech
+                                ? 'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/15 hover:border-orange-500/40'
+                                : 'border-white/10 bg-white/5 hover:bg-yellow-500/10 hover:border-yellow-500/30'
+                        }`}
                     >
-                        <span className="shrink-0 text-xs font-black text-yellow-500/80">{user[0]}</span>
+                        {isTech && <Shield className="w-3 h-3 text-orange-400 mr-1.5 shrink-0" />}
+                        <span className={`shrink-0 text-xs font-black ${isTech ? 'text-orange-400' : 'text-yellow-500/80'}`}>{user[0]}</span>
                         <motion.span 
                             variants={{
                                 hover: { width: 'auto', opacity: 1, marginLeft: 8 }
@@ -192,7 +202,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                             {user.substring(1)}
                         </motion.span>
                     </motion.div>
-                ))}
+                    );
+                })}
             </div>
             <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: VALID_USERS.length })}</p>
         </div>

@@ -1,5 +1,28 @@
 import React from 'react';
 
+// --- Role & Team Mission Types ---
+export type UserRole = 'member' | 'technician';
+
+export interface RealmXpReward {
+  realm: Realm;
+  xp: number;
+}
+
+export interface TeamMission {
+  id: string;
+  title: string;
+  description: string;
+  realmRewards: RealmXpReward[];
+  credit_reward: number;
+  difficulty: Difficulty;
+  duration_est_min: number;
+  deadline: string;
+  createdBy: string;
+  assignedTo: string[];   // empty = all members
+  completedBy: string[];
+  createdAt: string;
+}
+
 export enum Realm {
   Mind = "Mind",
   Body = "Body",
@@ -61,6 +84,7 @@ export interface Quest {
   isBossQuest?: boolean;
   isWeeklyBoss?: boolean;
   source?: 'google_calendar' | 'github' | 'user' | 'ai_chatbot' | 'ai_system';
+  realmRewards?: RealmXpReward[];  // Multi-realm XP distribution
 }
 
 export interface Skill {

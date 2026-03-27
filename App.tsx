@@ -1,10 +1,8 @@
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-// FIX: Imported MajorGoal type to resolve definition errors.
-import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest } from './types';
-// FIX: Imported INITIAL_MAJOR_GOALS constant to resolve definition errors.
-import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill, INITIAL_JOURNAL_ENTRIES } from './constants';
+import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest, UserRole, TeamMission } from './types';
+import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill, INITIAL_JOURNAL_ENTRIES, TECHNICIANS } from './constants';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SkillTree from './components/SkillTree';
@@ -39,13 +37,16 @@ import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
 import EnterApiKeyModal from './components/EnterApiKeyModal';
 import NameEntryModal from './components/NameEntryModal';
+import TechDashboard from './components/TechDashboard';
+import TeamMissions from './components/TeamMissions';
+import CreateTeamMissionModal from './components/CreateTeamMissionModal';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics';
+type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -192,7 +193,13 @@ const recalculateSkillTree = (
 const App: React.FC = () => {
   const { t } = useTranslation(['common', 'constants']);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
+
+  // Team missions state
+  const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
+  const [isTeamMissionsLoading, setIsTeamMissionsLoading] = useState(false);
+  const [isCreateMissionModalOpen, setIsCreateMissionModalOpen] = useState(false);
 
   // User picture is kept in local state for now, but could be migrated
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
@@ -270,6 +277,59 @@ const App: React.FC = () => {
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
 
   const [timeOffsetInHours, setTimeOffsetInHours] = useState(0);
+
+  // --- Team Missions Handlers ---
+  const fetchTeamMissions = useCallback(async (memberName?: string) => {
+    setIsTeamMissionsLoading(true);
+    try {
+      const url = memberName ? `/api/team-missions?member=${memberName}` : '/api/team-missions';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setTeamMissions(data.missions);
+      }
+    } catch (err) {
+      console.error('Failed to fetch team missions:', err);
+    } finally {
+      setIsTeamMissionsLoading(false);
+    }
+  }, []);
+
+  const handleCreateTeamMission = useCallback(async (missionData: Omit<TeamMission, 'id' | 'createdBy' | 'completedBy' | 'createdAt'>) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/team-missions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, mission: missionData }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeamMissions(prev => [...prev, data.mission]);
+        setSystemMessages(prev => [{ id: `tm-create-${Date.now()}`, text: `Missão da equipe "${data.mission.title}" criada com sucesso!`, timestamp: 'Just now', type: 'system' }, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to create team mission:', err);
+    }
+  }, [currentUser]);
+
+  const handleDeleteTeamMission = useCallback(async (missionId: string) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/team-missions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, missionId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeamMissions(prev => prev.filter(m => m.id !== missionId));
+        setSystemMessages(prev => [{ id: `tm-delete-${Date.now()}`, text: 'Missão da equipe removida.', timestamp: 'Just now', type: 'info' }, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to delete team mission:', err);
+    }
+  }, [currentUser]);
 
   const setStateFromData = useCallback((data: any) => {
     _setUser(data.user || INITIAL_USER);
@@ -699,6 +759,36 @@ const App: React.FC = () => {
         return updatedUser;
     });
 }, [getCurrentDate]);
+
+ const handleCompleteTeamMission = useCallback(async (missionId: string) => {
+    if (!currentUser) return;
+    const mission = teamMissions.find(m => m.id === missionId);
+    if (!mission || mission.completedBy.includes(currentUser)) return;
+
+    try {
+      const res = await fetch('/api/team-missions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete', missionId, username: currentUser }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeamMissions(prev => prev.map(m => m.id === missionId ? { ...m, completedBy: [...m.completedBy, currentUser] } : m));
+
+        mission.realmRewards.forEach(rr => {
+          handleGrantReward(rr.xp, 0, rr.realm, `team-mission-${missionId}-${rr.realm}`);
+        });
+        if (mission.credit_reward > 0) {
+          handleGrantReward(0, mission.credit_reward, Realm.Meta, `team-mission-credits-${missionId}`);
+        }
+
+        setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: `Missão da equipe "${mission.title}" completada!`, timestamp: 'Just now', type: 'reward' }, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to complete team mission:', err);
+    }
+  }, [currentUser, teamMissions, handleGrantReward]);
+
 
 const handleCompleteQuest = useCallback((questId: string) => {
     const quest = quests.find(q => q.id === questId);
@@ -1691,8 +1781,10 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'timer': return <Timer activeQuest={user.activeTimedQuest || null} onStartQuest={handleStartTimedQuest} onCompleteQuest={handleCompleteTimedQuest} apiKey={apiKey} />;
       case 'badges': return <Badges user={user} allBadges={allBadges} onAddBadge={() => setIsBadgeModalOpen(true)} onEditBadge={(badge) => { setEditingBadge(badge); setIsBadgeModalOpen(true); }} onDeleteBadge={handleDeleteBadge} />;
       case 'system_mechanics': return <SystemMechanics />;
-      case 'more': return <Menu onNavigate={setView} />;
-      default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
+      case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
+      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
+      default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }
   };
 
@@ -1713,27 +1805,32 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   if (!currentUser) {
     return (
       <LoginModal 
-        onLoginSuccess={(username) => {
+        onLoginSuccess={(username, role) => {
           setCurrentUser(username);
+          setUserRole(role);
           setIsInitialLoading(true);
-          fetch(`/api/load?username=${username}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data.success && data.data) {
-                const migratedData = migrateLoadedState(data.data);
-                // If the loaded user still has the default name, update it to the member name
+          
+          // Load user data and team missions in parallel
+          Promise.all([
+            fetch(`/api/load?username=${username}`).then(res => res.json()),
+            fetch(`/api/team-missions?member=${username}`).then(res => res.json()),
+          ])
+            .then(([userData, missionsData]) => {
+              if (userData.success && userData.data) {
+                const migratedData = migrateLoadedState(userData.data);
                 if (!migratedData.user.name || migratedData.user.name === "Awakened") {
                   migratedData.user.name = username;
                 }
                 setStateFromData(migratedData);
               } else {
-                // New user logic: set the name from the selected member
                 setUser(prev => ({ ...prev, name: username }));
+              }
+              if (missionsData.success) {
+                setTeamMissions(missionsData.missions);
               }
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
-              // Fallback for offline/error: still set the name to the selected member
               setUser(prev => ({ ...prev, name: username }));
             })
             .finally(() => setIsInitialLoading(false));
@@ -1820,6 +1917,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {isBadgeModalOpen && <AddEditBadgeModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} onSave={handleSaveBadge} badgeToEdit={editingBadge} onGenerateBadge={(prompt) => generateBadge(apiKey, prompt)} />}
       {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} apiKey={apiKey} />}
       {isRecommendationsModalOpen && <RecommendationsModal isOpen={isRecommendationsModalOpen} onClose={() => setIsRecommendationsModalOpen(false)} recommendations={aiRecommendations} onSave={handleSaveRecommendations} isLoading={isGeneratingRecommendations} userSkills={user.skill_tree} />}
+      {isCreateMissionModalOpen && <CreateTeamMissionModal isOpen={isCreateMissionModalOpen} onClose={() => setIsCreateMissionModalOpen(false)} onSave={handleCreateTeamMission} />}
 
       {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} onClose={() => setLevelUpData(null)} />}
       <RewardToast notifications={rewardNotifications} onRemove={(id) => setRewardNotifications(prev => prev.filter(n => n.id !== id))} />
