@@ -38,11 +38,7 @@ export const getTotalXpForSkill = (skill: Skill): number => {
     return total;
 };
 
-export const SKILL_DEFINITIONS: Omit<Skill, 'level' | 'xp' | 'xpToNextLevel'>[] = [
-  { id: 'focus_mastery', name: 'Focus Mastery', realm: Realm.Mind, priority: 5, isActive: true, xpScale: 1.0 },
-  { id: 'physical_conditioning', name: 'Physical Conditioning', realm: Realm.Body, priority: 3, isActive: true, xpScale: 1.0 },
-  { id: 'creative_output', name: 'Creative Output', realm: Realm.Creation, priority: 3, isActive: true, xpScale: 1.0 },
-];
+export const SKILL_DEFINITIONS: Omit<Skill, 'level' | 'xp' | 'xpToNextLevel'>[] = [];
 
 const initialSkillTree: { [skill_id: string]: Skill } = {};
 SKILL_DEFINITIONS.forEach(skillDef => {
@@ -54,11 +50,7 @@ SKILL_DEFINITIONS.forEach(skillDef => {
   };
 });
 
-const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {
-    'fm_1': { id: 'fm_1', name: 'Deep Work Session', skillId: 'focus_mastery', difficulty: TopicDifficulty.Easy },
-    'pc_1': { id: 'pc_1', name: 'Daily Exercise', skillId: 'physical_conditioning', difficulty: TopicDifficulty.Easy },
-    'co_1': { id: 'co_1', name: 'Project Milestone', skillId: 'creative_output', difficulty: TopicDifficulty.Easy },
-};
+const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {};
 
 export const RANKS = [
     { level: 1,  key: "e_rank", title: "E-Rank Apprentice" },
@@ -126,11 +118,11 @@ export const INITIAL_USER: User = {
   completedMajorGoals: [],
   activeTimedQuest: null,
   state: {
-    coreMission: 'To achieve balance and mastery across the core realms of existence.',
-    longTermGoals: 'Attain peak performance in Mind, Body, and Creation.',
-    shortTermGoals: 'Establish a consistent daily routine and complete initial quests.',
-    emergencyGoals: 'Maintain basic routines during high-stress periods.',
-    sideQuests: 'Explore new interests and develop auxiliary skills.'
+    coreMission: '',
+    longTermGoals: '',
+    shortTermGoals: '',
+    emergencyGoals: '',
+    sideQuests: ''
   }
 };
 
@@ -146,37 +138,9 @@ const getFutureDateString = (days: number, hours?: number) => {
 }
 
 // FIX: Renamed from INITIAL_BOSS_CHALLENGES and updated type and properties for consistency.
-export const INITIAL_MAJOR_GOALS: MajorGoal[] = [
-    {
-        id: 'goal-1',
-        title: "Foundation Blueprint",
-        description: "Establish your core objectives and initialize the system.",
-        type: 'Forge',
-        deadline: getFutureDateString(7),
-        xp_reward: 500,
-        credit_reward: 100,
-        skillId: 'creative_output',
-        syllabus: 'Define vision, set milestones, allocate resources, and begin execution.',
-        penalty: { type: 'xp', amount: 100 },
-    },
-];
+export const INITIAL_MAJOR_GOALS: MajorGoal[] = [];
 
-export const INITIAL_QUESTS: Quest[] = [
-  {
-    id: 'q1',
-    title: "System Initialization",
-    description: "Review current goals and organize your workspace.",
-    realm: Realm.Mind,
-    knowledgeTopics: ["fm_1"],
-    xp_reward: 50,
-    credit_reward: 10,
-    difficulty: Difficulty.Easy,
-    duration_est_min: 30,
-    status: QuestStatus.Pending,
-    deadline: getFutureDateString(0, 24),
-    penalty: { type: 'xp', amount: 5 },
-  },
-];
+export const INITIAL_QUESTS: Quest[] = [];
 
 export const INITIAL_STORY_LOG: StoryLogEntry[] = [
   {
@@ -187,24 +151,9 @@ export const INITIAL_STORY_LOG: StoryLogEntry[] = [
   }
 ];
 
-export const INITIAL_INTEGRATIONS: Integration[] = [
-    {
-        id: 'google_calendar',
-        name: 'Google Calendar',
-        connected: false,
-        description: 'Sync your calendar to generate quests based on your schedule.'
-    },
-    {
-        id: 'github',
-        name: 'GitHub',
-        connected: false,
-        description: 'Track coding activity and generate quests for your repositories.'
-    }
-];
+export const INITIAL_INTEGRATIONS: Integration[] = [];
 
-export const INITIAL_SYSTEM_MESSAGES: SystemMessage[] = [
-    { id: 'sys1', text: 'System Initialized. Welcome, Awakened.', timestamp: 'Just now', type: 'system' }
-];
+export const INITIAL_SYSTEM_MESSAGES: SystemMessage[] = [];
 
 export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [];
 
