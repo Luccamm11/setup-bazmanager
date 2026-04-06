@@ -1,23 +1,34 @@
 import React, { useState } from 'react';
-import { Lock, User as UserIcon, Shield } from 'lucide-react';
+import { Lock, User as UserIcon, Shield, Award } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserRole } from '../types';
-
-const TECHNICIANS = ['Jonas', 'Gustavo'];
+import { ALL_MEMBERS, TECHNICIAN_USERNAMES, getMemberByUsername } from '../data/members';
 
 interface LoginModalProps {
   onLoginSuccess: (username: string, role: UserRole) => void;
   isLoading: boolean;
 }
 
-const VALID_USERS = ['Jonas', 'Gustavo', 'Lucca', 'Enzo', 'Guilherme', 'Anexo', 'Clarice'];
+const VALID_USERS = ALL_MEMBERS.map(m => m.username);
+
+// Award focus labels for display
+const AWARD_LABELS: Record<string, string> = {
+  Sustentabilidade: '🌱 Sustentabilidade',
+  PensamentoCriativo: '💡 Pensamento Criativo',
+  Conexao: '🤝 Conexão',
+  Alcance: '📢 Alcance',
+  Controle: '🤖 Controle',
+  DesignInovacao: '🔧 Design e Inovação',
+};
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {
   const { t } = useTranslation('common');
-  const [selectedUser, setSelectedUser] = useState<string>(VALID_USERS[0]);
+  const [selectedUser, setSelectedUser] = useState<string>(VALID_USERS[2]); // Default to first non-technician
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const selectedMember = getMemberByUsername(selectedUser);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +87,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
         {/* Top Glow Bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-4">
           <motion.div 
             whileHover={{ rotate: [0, -10, 10, 0] }}
             className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.1)]"
@@ -84,11 +95,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
             <Lock className="w-10 h-10 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
           </motion.div>
         </div>
+
+        {/* Title with team branding */}
+        <h1 className="text-3xl font-bold text-white mb-1 tracking-tight text-center">Bazinga! 73</h1>
+        <p className="text-yellow-500/70 text-xs font-bold text-center uppercase tracking-[0.2em] mb-1">BazManager</p>
+        <p className="text-zinc-400 mb-8 text-center text-balance text-sm">{t('accessRestricted')}</p>
         
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight text-center">{t('systemLogin')}</h1>
-        <p className="text-zinc-400 mb-10 text-center text-balance">{t('accessRestricted')}</p>
-        
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-2.5">
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
               {t('user')}
@@ -103,9 +116,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 disabled={isLoading}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all appearance-none cursor-pointer font-medium hover:bg-white/10"
               >
-                {VALID_USERS.map(user => (
-                  <option key={user} value={user} className="bg-zinc-900 border-none">{user}</option>
-                ))}
+                {/* Technicians group */}
+                <optgroup label="Técnicos">
+                  {ALL_MEMBERS.filter(m => m.role === 'technician').map(m => (
+                    <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
+                      🛡️ {m.displayName}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Members group */}
+                <optgroup label="Membros">
+                  {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
+                    <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
+                      {m.displayName} — {m.awardFocus ? AWARD_LABELS[m.awardFocus] || m.awardFocus : ''}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-zinc-500">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,6 +139,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 </svg>
               </div>
             </div>
+
+            {/* Award focus badge for selected user */}
+            {selectedMember?.awardFocus && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={selectedMember.username}
+                className="flex items-center gap-2 px-3 py-2 bg-yellow-500/5 border border-yellow-500/10 rounded-xl"
+              >
+                <Award className="w-3.5 h-3.5 text-yellow-500/70" />
+                <span className="text-[11px] font-bold text-yellow-500/80">
+                  {AWARD_LABELS[selectedMember.awardFocus]}
+                </span>
+              </motion.div>
+            )}
           </div>
 
           <div className="space-y-2.5">
@@ -173,39 +214,40 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
 
         <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-5">
             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{t('authorizedTeam')}</h3>
-            <div className="flex flex-wrap justify-center gap-3">
-                {VALID_USERS.map((user, idx) => {
-                    const isTech = TECHNICIANS.includes(user);
+            <div className="flex flex-wrap justify-center gap-2">
+                {ALL_MEMBERS.map((member, idx) => {
+                    const isTech = member.role === 'technician';
                     return (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.05 * idx }}
+                        transition={{ delay: 0.03 * idx }}
                         whileHover="hover"
-                        key={user} 
-                        className={`h-9 rounded-xl border flex items-center px-3 cursor-help transition-all shrink-0 shadow-lg overflow-hidden whitespace-nowrap ${
+                        key={member.username} 
+                        className={`h-8 rounded-xl border flex items-center px-2.5 cursor-help transition-all shrink-0 shadow-lg overflow-hidden whitespace-nowrap ${
                             isTech
                                 ? 'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/15 hover:border-orange-500/40'
                                 : 'border-white/10 bg-white/5 hover:bg-yellow-500/10 hover:border-yellow-500/30'
                         }`}
+                        title={member.awardFocus ? AWARD_LABELS[member.awardFocus] : 'Técnico'}
                     >
                         {isTech && <Shield className="w-3 h-3 text-orange-400 mr-1.5 shrink-0" />}
-                        <span className={`shrink-0 text-xs font-black ${isTech ? 'text-orange-400' : 'text-yellow-500/80'}`}>{user[0]}</span>
+                        <span className={`shrink-0 text-xs font-black ${isTech ? 'text-orange-400' : 'text-yellow-500/80'}`}>{member.displayName[0]}</span>
                         <motion.span 
                             variants={{
-                                hover: { width: 'auto', opacity: 1, marginLeft: 8 }
+                                hover: { width: 'auto', opacity: 1, marginLeft: 6 }
                             }}
                             initial={{ width: 0, opacity: 0, marginLeft: 0 }}
                             transition={{ type: "spring", damping: 20, stiffness: 300 }}
                             className="text-[10px] uppercase tracking-wider font-bold text-white/70"
                         >
-                            {user.substring(1)}
+                            {member.displayName.substring(1)}
                         </motion.span>
                     </motion.div>
                     );
                 })}
             </div>
-            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: VALID_USERS.length })}</p>
+            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: ALL_MEMBERS.length })}</p>
         </div>
       </motion.div>
     </div>

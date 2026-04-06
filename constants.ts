@@ -1,10 +1,11 @@
 import React from 'react';
-// FIX: Replaced BossChallenge with MajorGoal for consistency.
 import { User, Skill, Realm, Quest, Difficulty, QuestStatus, StoryLogEntry, Integration, Arc, KnowledgeTopic, TopicDifficulty, SystemMessage, StoreItem, Badge, WeeklyProgress, ActivityData, MajorGoal, JournalEntry } from './types';
 import { Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck, TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat, BookText, Timer } from 'lucide-react';
+import { TECHNICIAN_USERNAMES, ALL_USERNAMES } from './data/members';
 
-export const TECHNICIANS = ['Jonas', 'Gustavo'];
-export const ALL_MEMBERS = ['Jonas', 'Gustavo', 'Lucca', 'Enzo', 'Guilherme', 'Anexo', 'Clarice'];
+// Re-export from centralized source
+export const TECHNICIANS = TECHNICIAN_USERNAMES;
+export const ALL_MEMBERS = ALL_USERNAMES;
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
     Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck,
@@ -56,31 +57,31 @@ SKILL_DEFINITIONS.forEach(skillDef => {
 const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {};
 
 export const RANKS = [
-    { level: 1,  key: "e_rank", title: "E-Rank Apprentice" },
-    { level: 6,  key: "d_rank", title: "D-Rank Disciplined Learner" },
-    { level: 11, key: "c_rank", title: "C-Rank Focused Engineer" },
-    { level: 21, key: "b_rank", title: "B-Rank Builder of Systems" },
-    { level: 31, key: "a_rank", title: "A-Rank Awakened Creator" },
-    { level: 41, key: "s_rank", title: "S-Rank Polymath" },
+    { level: 1,  key: "e_rank", title: "Novato" },
+    { level: 6,  key: "d_rank", title: "Aprendiz" },
+    { level: 11, key: "c_rank", title: "Membro Dedicado" },
+    { level: 21, key: "b_rank", title: "Construtor" },
+    { level: 31, key: "a_rank", title: "Líder Técnico" },
+    { level: 41, key: "s_rank", title: "Referência da Equipe" },
 ];
 
-export const EXAM_ARC: Arc = {
-    id: 'exam_arc_sem1',
-    title: 'Final Siege — Signals Gate',
-    description: 'The final semester exams are imminent. All systems must prioritize academic conquest.',
+export const KICKOFF_ARC: Arc = {
+    id: 'ftc_kickoff',
+    title: 'Kickoff da Temporada',
+    description: 'A nova temporada FTC começou! É hora de analisar o jogo, formar as estratégias e iniciar os projetos.',
     type: 'Exam',
-    effects: ['Study XP x1.5', 'Non-essential quests reduced', 'Legendary Lootbox upon completion']
+    effects: ['XP de Planejamento x1.5', 'Missões de análise priorizadas', 'Lootbox épica ao completar']
 };
 
-export const FITNESS_ARC: Arc = {
-    id: 'fitness_arc_sprint1',
-    title: 'Project Phoenix Body',
-    description: 'A focused sprint to rebuild physical foundations. Body realm quests are prioritized and enhanced.',
-    type: 'Fitness',
-    effects: ['Body XP x1.5', 'Stamina drain reduced', 'Increased chance for rare Body-related items']
+export const COMPETITION_ARC: Arc = {
+    id: 'ftc_competition_sprint',
+    title: 'Sprint de Competição',
+    description: 'A competição está próxima! Todos os sistemas devem priorizar integração, testes e preparação.',
+    type: 'Exam',
+    effects: ['XP de Build/Test x1.5', 'Missões de documentação intensificadas', 'Bônus de streak aumentado']
 };
 
-export const ALL_ARCS: Arc[] = [EXAM_ARC, FITNESS_ARC];
+export const ALL_ARCS: Arc[] = [KICKOFF_ARC, COMPETITION_ARC];
 
 
 export const INITIAL_USER: User = {
@@ -109,7 +110,7 @@ export const INITIAL_USER: User = {
     daily_streak: 0,
     lastQuestCompletionDate: null,
   },
-  activeArc: EXAM_ARC,
+  activeArc: KICKOFF_ARC,
   inventory: [],
   activeBuffs: [],
   questsCompleted: 0,
@@ -148,9 +149,9 @@ export const INITIAL_QUESTS: Quest[] = [];
 export const INITIAL_STORY_LOG: StoryLogEntry[] = [
   {
     id: 'log1',
-    date: "Week 1",
-    title: "The Awakening",
-    narrative: "The System activated. Initial diagnostics are complete. A new User entity has been identified. Primary objective: Level Up. The path to multidisciplinary innovation begins now."
+    date: "Semana 1",
+    title: "Início da Jornada",
+    narrative: "O sistema foi ativado. Um novo membro da Bazinga! 73 foi identificado. Objetivo principal: evoluir. A jornada de desenvolvimento na FIRST Tech Challenge começa agora."
   }
 ];
 

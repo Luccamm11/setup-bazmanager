@@ -3,6 +3,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest, UserRole, TeamMission } from './types';
 import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill, INITIAL_JOURNAL_ENTRIES, TECHNICIANS } from './constants';
+import { getMemberByUsername } from './data/members';
+import { getInitialUserData } from './data/initialData';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import SkillTree from './components/SkillTree';
@@ -1823,7 +1825,14 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                 }
                 setStateFromData(migratedData);
               } else {
-                setUser(prev => ({ ...prev, name: username }));
+                // First login — generate initial data based on member's award focus
+                const member = getMemberByUsername(username);
+                if (member) {
+                  const initialData = getInitialUserData(member);
+                  setStateFromData(initialData);
+                } else {
+                  setUser(prev => ({ ...prev, name: username }));
+                }
               }
               if (missionsData.success) {
                 setTeamMissions(missionsData.missions);
@@ -1831,7 +1840,13 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
-              setUser(prev => ({ ...prev, name: username }));
+              const member = getMemberByUsername(username);
+              if (member) {
+                const initialData = getInitialUserData(member);
+                setStateFromData(initialData);
+              } else {
+                setUser(prev => ({ ...prev, name: username }));
+              }
             })
             .finally(() => setIsInitialLoading(false));
         }} 

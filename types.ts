@@ -160,6 +160,8 @@ export interface ActiveTimedQuest {
 
 export interface User {
   name: string;
+  role?: string;
+  awardFocus?: string | null;
   rank: string;
   level_overall: number;
   xp_total: number;

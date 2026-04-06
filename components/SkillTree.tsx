@@ -5,6 +5,8 @@ import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { getAwardProfile } from '../data/awardProfiles';
+import type { AwardType } from '../data/members';
 
 interface SkillTreeProps {
   user: User;
@@ -194,11 +196,26 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     return acc;
   }, {} as Record<Realm, { skill: Skill; topics: KnowledgeTopic[] }[]>);
 
-  const radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
-      const skillsInRealm = skillsByRealm[realm] || [];
-      const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
-      return { subject: t(`common:realm.${realm}`), A: totalLevel, fullMark: Math.max(20, totalLevel + 5) };
-  });
+  const awardType = user.awardFocus as AwardType;
+  const awardProfile = awardType ? getAwardProfile(awardType) : null;
+  let radarData;
+
+  if (awardProfile && awardProfile.attributesPtBR && awardProfile.attributesPtBR.length === 6) {
+      const realmsMap = [Realm.Mind, Realm.Creation, Realm.Spirit, Realm.Mind, Realm.Creation, Realm.Spirit];
+      radarData = awardProfile.attributesPtBR.map((attr, index) => {
+          const r = realmsMap[index];
+          const skillsInRealm = skillsByRealm[r] || [];
+          const attrLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
+          const val = attrLevel + Math.floor(user.level_overall / 3);
+          return { subject: attr, A: val, fullMark: Math.max(20, val + 5) };
+      });
+  } else {
+      radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
+          const skillsInRealm = skillsByRealm[realm] || [];
+          const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
+          return { subject: t(`common:realm.${realm}`), A: totalLevel, fullMark: Math.max(20, totalLevel + 5) };
+      });
+  }
 
   const maxScore = Math.max(...radarData.map(d => d.A), 10);
   const chartDomain = [0, maxScore + (maxScore * 0.2)];

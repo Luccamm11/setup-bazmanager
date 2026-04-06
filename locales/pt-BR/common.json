@@ -1,5 +1,5 @@
 {
-  "app_name": "LevelUp: Despertar da IA",
+  "app_name": "BazManager — Bazinga! 73",
   "buttons": {
     "save": "Salvar",
     "cancel": "Cancelar",
@@ -48,7 +48,19 @@
     "badges": "Conquistas",
     "journal": "Diário",
     "timer": "Temporizador",
-    "system_mechanics": "Mecânicas do Sistema"
+    "system_mechanics": "Mecânicas do Sistema",
+    "team_missions": "Missões da Equipe",
+    "team_missions_desc": "Missões atribuídas pelos técnicos",
+    "tech_dashboard": "Painel do Técnico",
+    "tech_dashboard_desc": "Gerencie missões e membros"
+  },
+  "awards": {
+    "Sustentabilidade": "Sustentabilidade",
+    "PensamentoCriativo": "Pensamento Criativo",
+    "Conexao": "Conexão",
+    "Alcance": "Alcance",
+    "Controle": "Controle",
+    "DesignInovacao": "Design e Inovação"
   },
   "realm": {
     "Mind": "Mente",

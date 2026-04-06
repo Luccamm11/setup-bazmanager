@@ -14,9 +14,9 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean }[] = [
-    { view: 'team_missions',    label: 'Missões da Equipe',  desc: 'Missões atribuídas pelos técnicos', icon: Users },
+    { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
     ...(userRole === 'technician' ? [
-      { view: 'tech_dashboard' as View, label: 'Painel do Técnico', desc: 'Gerencie missões e membros', icon: Shield, techOnly: true },
+      { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
     ] : []),
     { view: 'timer',            label: t('nav.timer'),            desc: t('nav.timer'),            icon: Timer },
     { view: 'chatbot',          label: t('nav.chatbot'),          desc: t('nav.chatbot'),          icon: BotMessageSquare },

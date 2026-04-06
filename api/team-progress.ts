@@ -2,7 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
 const TECHNICIANS = ['Jonas', 'Gustavo'];
-const ALL_MEMBERS = ['Jonas', 'Gustavo', 'Lucca', 'Enzo', 'Guilherme', 'Anexo', 'Clarice'];
+const ALL_MEMBERS = [
+  'Jonas', 'Gustavo', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Ana Luisa', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
+];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {

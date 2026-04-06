@@ -1,5 +1,5 @@
 {
-  "app_name": "LevelUp: AI Awakening",
+  "app_name": "BazManager — Bazinga! 73",
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
@@ -58,7 +58,19 @@
     "badges": "Badges",
     "journal": "Journal",
     "timer": "Focus Timer",
-    "system_mechanics": "System Mechanics"
+    "system_mechanics": "System Mechanics",
+    "team_missions": "Team Missions",
+    "team_missions_desc": "Missions assigned by technicians",
+    "tech_dashboard": "Technician Panel",
+    "tech_dashboard_desc": "Manage missions and members"
+  },
+  "awards": {
+    "Sustentabilidade": "Sustainability",
+    "PensamentoCriativo": "Think Award",
+    "Conexao": "Connect Award",
+    "Alcance": "Motivate Award",
+    "Controle": "Control Award",
+    "DesignInovacao": "Design Award"
   },
   "realm": {
     "Mind": "Mind",

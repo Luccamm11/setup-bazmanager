@@ -54,44 +54,44 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
         `}</style>
         <div className="flex items-center space-x-3 mb-2">
             <User className="w-6 h-6 text-text-secondary" />
-            <h2 className="text-xl font-semibold text-text-primary">My State</h2>
+            <h2 className="text-xl font-semibold text-text-primary">Perfil B-LEAD</h2>
         </div>
-        <p className="text-sm text-text-secondary mb-6 ml-9">Define your mission and goals to help the AI generate relevant quests and provide better guidance.</p>
+        <p className="text-sm text-text-secondary mb-6 ml-9">Defina sua função e metas dentro da equipe Bazinga! para que a IA gere recomendações alinhadas ao seu desenvolvimento.</p>
         
         <div className="space-y-6">
             <StateTextarea 
-                label="Core Mission"
+                label="Função Principal / B-LEAD"
                 value={state.coreMission}
                 onChange={handleChange('coreMission')}
-                rows={4}
-                placeholder="What is your ultimate, long-term vision?"
+                rows={3}
+                placeholder="Qual sua responsabilidade principal na equipe?"
             />
              <StateTextarea 
-                label="Long-Term Goals"
-                sublabel="(6-12 months)"
+                label="Objetivo da Temporada"
+                sublabel="(Prêmio Foco & Longo Prazo)"
                 value={state.longTermGoals}
                 onChange={handleChange('longTermGoals')}
-                placeholder="What are your high-level objectives for the next year?"
+                placeholder="O que você quer dominar até a competição?"
             />
             <StateTextarea 
-                label="Short-Term Goals"
-                sublabel="(1-3 months)"
+                label="Metas de Especialização"
+                sublabel="(Curto/Médio Prazo)"
                 value={state.shortTermGoals}
                 onChange={handleChange('shortTermGoals')}
-                placeholder="What is your primary focus for the next quarter?"
+                placeholder="O que você está focando em aprender/fazer agora?"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StateTextarea 
-                    label="Emergency Goals"
+                    label="Entregas Urgentes"
                     value={state.emergencyGoals}
                     onChange={handleChange('emergencyGoals')}
-                    placeholder="Contingency plans or urgent tasks."
+                    placeholder="Entregas críticas do momento."
                 />
                 <StateTextarea 
-                    label="Side Quests"
+                    label="Expansão de Habilidades"
                     value={state.sideQuests}
                     onChange={handleChange('sideQuests')}
-                    placeholder="Fun or secondary tasks you're interested in."
+                    placeholder="Áreas secundárias que você tem interesse em ajudar."
                 />
             </div>
         </div>
@@ -103,7 +103,7 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
                 className="flex items-center space-x-2 text-sm font-semibold px-4 py-2 rounded-lg bg-border-color text-text-primary hover:bg-opacity-80 disabled:bg-border-color/50 disabled:text-text-muted disabled:cursor-not-allowed"
             >
                 <Save size={16}/>
-                <span>Save State</span>
+                <span>Salvar Perfil (B-LEAD)</span>
             </button>
         </div>
     </div>
