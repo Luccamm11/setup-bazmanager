@@ -19,7 +19,8 @@ const AWARD_LABELS: Record<string, string> = {
   Conexao: '🤝 Conexão',
   Alcance: '📢 Alcance',
   Controle: '🤖 Controle',
-  DesignInovacao: '🔧 Design e Inovação',
+  Inovacao: '🚀 Inovação',
+  Design: '🔧 Design Industrial',
 };
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {

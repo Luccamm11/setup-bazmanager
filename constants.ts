@@ -164,97 +164,98 @@ export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [];
 export const STORE_ITEMS: StoreItem[] = [
     {
         id: 'coffee_reward',
-        name: "Coffee Reward",
-        description: "Permission to buy a fancy coffee from your favorite cafe.",
+        name: "Cafézinho ou Lanche",
+        description: "Permissão para comprar um café/lanche especial durante o encontro.",
         cost: 100,
         category: 'Reward',
         effect: { type: 'REAL_WORLD_REWARD' }
     },
     {
+        id: '3d_priority',
+        name: "Prioridade na Impressora 3D",
+        description: "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste.",
+        cost: 300,
+        category: 'Reward',
+        effect: { type: 'REAL_WORLD_REWARD' }
+    },
+    {
+        id: 'playlist_control',
+        name: "DJ do Laboratório",
+        description: "Direito exclusivo de escolher a playlist de músicas do laboratório por um encontro inteiro.",
+        cost: 150,
+        category: 'Reward',
+        effect: { type: 'REAL_WORLD_REWARD' }
+    },
+    {
         id: 'focus_surge',
-        name: "Focus Surge",
-        description: "Doubles XP gain from all Mind quests for 24 hours.",
+        name: "Foco de Competição (Mind)",
+        description: "Ganha 2x XP em todas as missões de 'Mind' (Pesquisa, Estratégia, CAD) por 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Mind] }
     },
      {
         id: 'body_surge',
-        name: "Body Surge",
-        description: "Doubles XP gain from all Body quests for 24 hours.",
+        name: "Foco de Construção (Body)",
+        description: "Ganha 2x XP em todas as missões de 'Body' (Montagem, CNC, Fabricação) por 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Body] }
     },
     {
         id: 'creative_catalyst',
-        name: "Creative Catalyst",
-        description: "Doubles XP gain from all Creation quests for 24 hours.",
+        name: "Catalisador Criativo (Creation)",
+        description: "Ganha 2x XP em missões de 'Creation' (Ideação, Design Gráfico, Prototipagem) por 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Creation] }
     },
     {
         id: 'spirit_surge',
-        name: "Spirit Surge",
-        description: "Doubles XP gain from all Spirit quests for 24 hours.",
+        name: "Espírito Bazinga! (Spirit)",
+        description: "Ganha 2x XP em missões de 'Spirit' (Apresentação, Comunicação, Ajuda ao próximo) por 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Spirit] }
     },
     {
-        id: 'trinity_core_surge',
-        name: "Trinity Core Surge",
-        description: "A discounted bundle that doubles XP gain from Mind, Body, and Creation quests for 24 hours.",
-        cost: 600,
-        category: 'Buff',
-        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Mind, Realm.Body, Realm.Creation] }
-    },
-    {
         id: 'omni_boost',
-        name: "Omni-Boost",
-        description: "Doubles XP gain from ALL quests, regardless of realm, for 24 hours.",
+        name: "Grind de Temporada",
+        description: "Dobra o ganho de XP de TODAS as missões (todos os Realms) por 24 horas. Para sprints finais.",
         cost: 800,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [] }
     },
     {
         id: 'streak_shield',
-        name: "Streak Shield",
-        description: "Automatically protects your daily streak for one missed day.",
+        name: "Escudo Anti-Falta",
+        description: "Protege sua Streak (dias consecutivos) caso você não consiga treinar/completar missão naquele dia.",
         cost: 500,
         category: 'Utility',
         effect: { type: 'STREAK_SAVER' }
     },
     {
         id: 'quest_reroll',
-        name: "Quest Re-roll",
-        description: "Instantly receive a new set of daily quests from the System.",
+        name: "Re-roll de Missões",
+        description: "Receba novas missões diárias instantaneamente (bom quando as missões atuais estão bloqueadas).",
         cost: 150,
         category: 'Utility',
         effect: { type: 'QUEST_REROLL' }
-    },
-    {
-        id: 'instant_streak',
-        name: "Instant 3-Day Streak",
-        description: "Instantly sets your daily streak to 3 days, activating the streak bonus.",
-        cost: 300,
-        category: 'Utility',
-        effect: { type: 'INSTANT_STREAK' }
     }
 ];
 
 export const BADGE_DEFINITIONS: Badge[] = [
-    { id: 'level_10', name: 'Level 10', description: 'Reached overall level 10.', icon: 'Crown' },
-    { id: 'level_25', name: 'Level 25', description: 'Reached overall level 25.', icon: 'Crown' },
-    { id: 'first_quest', name: 'First Step', description: 'Completed your first quest.', icon: 'Star' },
-    { id: 'ten_quests', name: 'Quest Novice', description: 'Completed 10 quests.', icon: 'Star' },
-    { id: 'fifty_quests', name: 'Quest Adept', description: 'Completed 50 quests.', icon: 'Star' },
-    { id: 'first_boss', name: 'Boss Slayer', description: 'Completed a Boss Quest.', icon: 'Swords' },
-    { id: 'mind_adept', name: 'Mind Adept', description: 'Reached level 5 in a Mind skill.', icon: 'BrainCircuit' },
-    { id: 'body_adept', name: 'Body Adept', description: 'Reached level 5 in a Body skill.', icon: 'Heart' },
-    { id: 'creation_adept', name: 'Creation Adept', description: 'Reached level 5 in a Creation skill.', icon: 'Zap' },
-    { id: 'spirit_adept', name: 'Spirit Adept', description: 'Reached level 5 in a Spirit skill.', icon: 'Sparkles' },
+    { id: 'level_10', name: 'Novato Promissor', description: 'Chegou no nível 10.', icon: 'Star' },
+    { id: 'level_25', name: 'Veterano Bazinga', description: 'Chegou no nível 25. Já ensina aos novatos.', icon: 'Crown' },
+    { id: 'first_quest', name: 'Primeiro Parafuso', description: 'Completou a 1ª missão.', icon: 'Target' },
+    { id: 'fifty_quests', name: 'Máquina de Fazer', description: 'Completou 50 missões para a equipe.', icon: 'Zap' },
+    { id: 'first_boss', name: 'Entrega Crítica', description: 'Completou um Major Goal (Sub-sistema ou Entrega Grande).', icon: 'Swords' },
+    { id: 'design_award', name: 'Mestre do Design', description: 'Completou todas as metas do prêmio de Design.', icon: 'BrainCircuit' },
+    { id: 'innovate_award', name: 'Inovadornato', description: 'Completou todas as metas do prêmio Innovate.', icon: 'FlaskConical' },
+    { id: 'control_award', name: 'Control Freak', description: 'Completou todas as metas do Controle (Software).', icon: 'Code' },
+    { id: 'connect_award', name: 'Conector', description: 'Criou conexões poderosas (Connect Award).', icon: 'Heart' },
+    { id: 'outreach_award', name: 'Inspirador', description: 'Atingiu a comunidade (Outreach Award).', icon: 'Sparkles' },
+    { id: 'spca_award', name: 'Sustentabilidade', description: 'Mestre em negócios, verbas e futuro (Sustentabilidade/Pensamento Criativo).', icon: 'Coins' },
 ];
 
 export const INITIAL_WEEKLY_PROGRESS: WeeklyProgress[] = [

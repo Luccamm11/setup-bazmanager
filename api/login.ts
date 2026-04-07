@@ -19,9 +19,9 @@ const AWARD_FOCUS: Record<string, string | null> = {
   'Ana Luisa': 'Alcance',
   'Enzo Soares': 'Controle',
   'Pedro': 'Controle',
-  'Yan': 'DesignInovacao',
-  'Guilherme': 'DesignInovacao',
-  'Enzo Resende': 'DesignInovacao',
+  'Yan': 'Inovacao',
+  'Guilherme': 'Design',
+  'Enzo Resende': 'Design',
 };
 
 export default function handler(req: VercelRequest, res: VercelResponse) {

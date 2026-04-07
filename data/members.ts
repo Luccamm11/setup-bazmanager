@@ -6,7 +6,8 @@ export type AwardType =
   | 'Conexao'
   | 'Alcance'
   | 'Controle'
-  | 'DesignInovacao';
+  | 'Inovacao'
+  | 'Design';
 
 export type TeamRole = 'member' | 'technician';
 
@@ -116,7 +117,7 @@ const YAN: MemberProfile = {
   username: 'Yan',
   displayName: 'Yan',
   role: 'member',
-  awardFocus: 'DesignInovacao',
+  awardFocus: 'Inovacao',
   coreMission: 'Projetar soluções mecânicas criativas e funcionais que destaquem o robô da Bazinga!',
   seasonGoal: 'Entregar um robô com design inovador, robusto e que atenda à estratégia de jogo da temporada',
   shortTermGoal: 'Finalizar o primeiro protótipo do mecanismo de intake em CAD e iniciar a fabricação',
@@ -126,7 +127,7 @@ const GUILHERME: MemberProfile = {
   username: 'Guilherme',
   displayName: 'Guilherme',
   role: 'member',
-  awardFocus: 'DesignInovacao',
+  awardFocus: 'Design',
   coreMission: 'Inovar na arquitetura mecânica do robô com foco em eficiência e modularidade',
   seasonGoal: 'Desenvolver subsistemas mecânicos que permitam manutenção rápida e adaptação durante torneios',
   shortTermGoal: 'Projetar e iterar sobre o sistema de elevação com pelo menos 2 variações no CAD',
@@ -136,7 +137,7 @@ const ENZO_RESENDE: MemberProfile = {
   username: 'Enzo Resende',
   displayName: 'Enzo Resende',
   role: 'member',
-  awardFocus: 'DesignInovacao',
+  awardFocus: 'Design',
   coreMission: 'Contribuir com soluções mecânicas criativas e robustas para os desafios de jogo da temporada',
   seasonGoal: 'Participar ativamente do design de pelo menos 2 subsistemas do robô com protótipos testados',
   shortTermGoal: 'Aprender os fundamentos de CAD/Onshape e projetar o primeiro componente do robô',

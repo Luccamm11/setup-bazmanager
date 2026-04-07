@@ -264,46 +264,80 @@ const CONTROLE: AwardProfile = {
 };
 
 // --------------------------------
-// DESIGN E INOVAÇÃO
+// INOVAÇÃO
 // --------------------------------
-const DESIGN_INOVACAO: AwardProfile = {
-  id: 'DesignInovacao',
-  name: 'Design Award',
-  namePtBR: 'Design e Inovação',
-  description: 'CAD, robot architecture, mechanical creativity, prototyping, robustness, strategy integration, maintenance, functional efficiency.',
-  descriptionPtBR: 'CAD, arquitetura do robô, criatividade mecânica, prototipagem, robustez, integração com estratégia e manutenção.',
+const INOVACAO: AwardProfile = {
+  id: 'Inovacao',
+  name: 'Innovate Award',
+  namePtBR: 'Inovação',
+  description: 'Pensamento imaginativo, ingenuidade, criatividade mecânica, mitigação de riscos e estabilidade em inovações mecânicas/visuais.',
+  descriptionPtBR: 'Pensamento imaginativo, engenhosidade, criatividade mecânica e documentação de mitigação de riscos.',
   focusAreas: [
-    'CAD', 'Arquitetura do robô', 'Criatividade mecânica',
-    'Prototipagem', 'Robustez', 'Integração com estratégia'
+    'Pensamento imaginativo', 'Criatividade mecânica', 'Engenhosidade e invenção',
+    'Mitigação de riscos', 'Robô ou Mecanismo Único', 'Estabilidade e robustez'
   ],
-  attributes: ['Technical Creativity', 'CAD / Design', 'Prototyping', 'Problem Solving', 'Solution Robustness', 'Iteration'],
-  attributesPtBR: ['Criatividade Técnica', 'CAD / Projeto', 'Prototipagem', 'Resolução de Problemas', 'Robustez de Solução', 'Iteração'],
+  attributes: ['Imagination', 'Ingenuity', 'Risk Mitigation', 'Creativity', 'Stability', 'Uniqueness'],
+  attributesPtBR: ['Imaginação', 'Engenhosidade', 'Mitigação de Riscos', 'Criatividade', 'Estabilidade', 'Originalidade'],
   defaultSkills: [
-    { name: 'CAD e Modelagem 3D', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Prototipagem', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Arquitetura Mecânica', realm: 'Mind', priority: 4, xpScale: 1.2 },
-    { name: 'Fabricação e Montagem', realm: 'Body', priority: 4, xpScale: 0.8 },
-    { name: 'Análise de Robustez', realm: 'Mind', priority: 3, xpScale: 1.0 },
-    { name: 'Estratégia de Jogo', realm: 'Mind', priority: 3, xpScale: 1.0 },
+    { name: 'Engenharia Criativa', realm: 'Creation', priority: 5, xpScale: 1.0 },
+    { name: 'Gestão de Riscos Mecânicos', realm: 'Mind', priority: 5, xpScale: 1.0 },
+    { name: 'Prototipagem Inovadora', realm: 'Creation', priority: 4, xpScale: 1.2 },
+    { name: 'Validação de Robustez', realm: 'Body', priority: 4, xpScale: 0.8 },
+    { name: 'Design "Out of the Box"', realm: 'Creation', priority: 3, xpScale: 1.0 },
+    { name: 'Documentação de Soluções', realm: 'Mind', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
-    { name: 'Onshape / CAD para FTC', skillName: 'CAD e Modelagem 3D', difficulty: 'Medium' },
-    { name: 'Técnicas de prototipagem rápida', skillName: 'Prototipagem', difficulty: 'Medium' },
-    { name: 'Análise de game manual e estratégia', skillName: 'Estratégia de Jogo', difficulty: 'Medium' },
-    { name: 'Tolerâncias e ajustes mecânicos', skillName: 'Fabricação e Montagem', difficulty: 'Hard' },
-    { name: 'Design para manutenção rápida', skillName: 'Arquitetura Mecânica', difficulty: 'Hard' },
+    { name: 'Técnicas de brainstorm avançado (SCAMPER/TRIZ)', skillName: 'Engenharia Criativa', difficulty: 'Hard' },
+    { name: 'Plano de Mitigação de Riscos', skillName: 'Gestão de Riscos Mecânicos', difficulty: 'Medium' },
+    { name: 'Testes de estabilidade e quebra', skillName: 'Validação de Robustez', difficulty: 'Medium' },
+    { name: 'Estruturação de portfólio para Innovate', skillName: 'Documentação de Soluções', difficulty: 'Easy' },
   ],
   defaultGoals: [
-    { title: 'Robô v1 — Chassi e Drive', description: 'Projetar e montar o chassi base com sistema de drive funcional', type: 'Forge', xp_reward: 500, credit_reward: 200, deadlineDaysFromNow: 21 },
-    { title: 'Mecanismo de Intake', description: 'Projetar, prototipar e testar o mecanismo de coleta de game elements', type: 'Forge', xp_reward: 600, credit_reward: 250, deadlineDaysFromNow: 45 },
-    { title: 'Robô Completo para Scrimmage', description: 'Entregar o robô com todos os subsistemas integrados e testados para o primeiro scrimmage', type: 'Siege', xp_reward: 800, credit_reward: 350, deadlineDaysFromNow: 75 },
+    { title: 'Protótipo do Mecanismo Inovador', description: 'Idear e prototipar um mecanismo único para o desafio da temporada', type: 'Forge', xp_reward: 500, credit_reward: 200, deadlineDaysFromNow: 30 },
+    { title: 'Matriz de Risco do Robô', description: 'Criar documento com as fraquezas e planos de contingência do projeto', type: 'Siege', xp_reward: 400, credit_reward: 150, deadlineDaysFromNow: 21 },
   ],
   defaultQuests: [
-    { title: 'Analisar o game manual da temporada', description: 'Ler o manual de jogo e identificar os elementos-chave para a estratégia do robô', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 60 },
-    { title: 'Modelar chassi base no CAD', description: 'Criar o modelo 3D do chassi com dimensões reais no Onshape', realm: 'Creation', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
-    { title: 'Prototipar mecanismo com papelão', description: 'Criar um protótipo funcional em baixa fidelidade para testar o conceito do mecanismo', realm: 'Creation', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Registrar 3 iterações de design', description: 'Documentar com fotos e anotações as 3 primeiras versões de um mecanismo', realm: 'Spirit', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 30 },
-    { title: 'Testar robustez de um subsistema', description: 'Realizar testes de estresse em um subsistema montado e documentar os resultados', realm: 'Body', xp_reward: 120, credit_reward: 50, difficulty: 'Hard', duration_est_min: 45 },
+    { title: 'Sessão de Brainstorming', description: 'Participar ou liderar sessão para encontrar soluções únicas', realm: 'Creation', xp_reward: 100, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Documentar a evolução do design', description: 'Escrever como chegamos na solução mecânica atual', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
+  ],
+};
+
+// --------------------------------
+// DESIGN
+// --------------------------------
+const DESIGN: AwardProfile = {
+  id: 'Design',
+  name: 'Design Award',
+  namePtBR: 'Design Industrial',
+  description: 'Equilíbrio entre forma, função e estética. Design eficiente, executável e prático de manter com base sólida de plano de jogo.',
+  descriptionPtBR: 'Design industrial que equilibre estética, função, manutenção rápida e coerência com a estratégia.',
+  focusAreas: [
+    'Design industrial', 'Manutenção prática', 'Estética e função',
+    'Eficiência / Simplicidade', 'Integração de estratégia', 'Modelagem 3D perfeita'
+  ],
+  attributes: ['Aesthetics', 'Maintainability', 'Efficiency', 'CAD Design', 'Form vs Function', 'Simplicity'],
+  attributesPtBR: ['Estética', 'Manutenibilidade', 'Eficiência', 'Projeto CAD', 'Forma vs Função', 'Simplicidade'],
+  defaultSkills: [
+    { name: 'Modelagem CAD Onshape', realm: 'Creation', priority: 5, xpScale: 1.0 },
+    { name: 'Design para Manutenção', realm: 'Mind', priority: 5, xpScale: 1.0 },
+    { name: 'Design Industrial (Estética)', realm: 'Creation', priority: 4, xpScale: 1.2 },
+    { name: 'Análise Estratégica Espacial', realm: 'Mind', priority: 4, xpScale: 0.8 },
+    { name: 'Usinagem CNC/Impressão 3D', realm: 'Body', priority: 3, xpScale: 1.0 },
+    { name: 'Estratégia Mecânica', realm: 'Mind', priority: 3, xpScale: 1.0 },
+  ],
+  defaultTopics: [
+    { name: 'Regras de Ouro de Design FTC', skillName: 'Design para Manutenção', difficulty: 'Medium' },
+    { name: 'Boas práticas no CAD Onshape', skillName: 'Modelagem CAD Onshape', difficulty: 'Hard' },
+    { name: 'Otimização de materiais e peso', skillName: 'Estratégia Mecânica', difficulty: 'Medium' },
+    { name: 'Padronização visual (Cores, Logos)', skillName: 'Design Industrial (Estética)', difficulty: 'Easy' },
+  ],
+  defaultGoals: [
+    { title: 'Modelo Funcional CAD v1', description: 'Finalizar o chassi e componentes centrais perfeitamente modelados e restritos', type: 'Forge', xp_reward: 600, credit_reward: 250, deadlineDaysFromNow: 40 },
+    { title: 'Guia de Montagem e Manutenção', description: 'Criar manual de como consertar rapidamente partes vitais do robô (Pit Stop)', type: 'Siege', xp_reward: 500, credit_reward: 200, deadlineDaysFromNow: 60 },
+  ],
+  defaultQuests: [
+    { title: 'Revisar tolerâncias no CAD', description: 'Analisar e arrumar os mates e folgas do robô 3D', realm: 'Mind', xp_reward: 120, credit_reward: 50, difficulty: 'Hard', duration_est_min: 90 },
+    { title: 'Desenhar suportes estéticos ou side-panels', description: 'Projeto de placas de acrílico/policarbonato para proteger e embelezar', realm: 'Creation', xp_reward: 80, credit_reward: 35, difficulty: 'Medium', duration_est_min: 60 },
   ],
 };
 
@@ -314,7 +348,8 @@ export const AWARD_PROFILES: Record<AwardType, AwardProfile> = {
   Conexao: CONEXAO,
   Alcance: ALCANCE,
   Controle: CONTROLE,
-  DesignInovacao: DESIGN_INOVACAO,
+  Inovacao: INOVACAO,
+  Design: DESIGN,
 };
 
 export const getAwardProfile = (awardType: AwardType): AwardProfile =>
