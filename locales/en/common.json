@@ -62,7 +62,9 @@
     "team_missions": "Team Missions",
     "team_missions_desc": "Missions assigned by technicians",
     "tech_dashboard": "Technician Panel",
-    "tech_dashboard_desc": "Manage missions and members"
+    "tech_dashboard_desc": "Manage missions and members",
+    "journey": "B-LEAD Journey",
+    "journey_desc": "Export your Engineering Portfolio"
   },
   "awards": {
     "Sustentabilidade": "Sustainability",

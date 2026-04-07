@@ -42,13 +42,14 @@ import NameEntryModal from './components/NameEntryModal';
 import TechDashboard from './components/TechDashboard';
 import TeamMissions from './components/TeamMissions';
 import CreateTeamMissionModal from './components/CreateTeamMissionModal';
+import JourneyTab from './components/JourneyTab';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard';
+type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -1785,6 +1786,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }

@@ -52,7 +52,9 @@
     "team_missions": "Missões da Equipe",
     "team_missions_desc": "Missões atribuídas pelos técnicos",
     "tech_dashboard": "Painel do Técnico",
-    "tech_dashboard_desc": "Gerencie missões e membros"
+    "tech_dashboard_desc": "Gerencie missões e membros",
+    "journey": "Jornada B-LEAD",
+    "journey_desc": "Exporte seu Portfólio"
   },
   "awards": {
     "Sustentabilidade": "Sustentabilidade",
