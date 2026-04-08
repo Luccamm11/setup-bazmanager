@@ -73,6 +73,12 @@ const migrateLoadedState = (loadedState: any): any => {
 
     const migratedUser = { ...defaults, ...user };
     
+    // Force migration to new Bazinga Championship arc if legacy arc detected
+    const legacyArcIds = ['ftc_kickoff', 'ftc_competition_sprint', 'final_siege', 'signals_gate'];
+    if (!migratedUser.activeArc || legacyArcIds.includes(migratedUser.activeArc.id) || migratedUser.activeArc.title.includes('Signals Gate')) {
+        migratedUser.activeArc = INITIAL_USER.activeArc;
+    }
+    
     return { ...loadedState, user: migratedUser };
 };
 
