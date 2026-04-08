@@ -281,7 +281,7 @@ const TestingPanel: React.FC<TestingPanelProps> = (props) => {
                 <button onClick={() => onAddSkillXp(selectedSkillId, skillXpAmount)} className="bg-blue-600 hover:bg-blue-700 text-xs font-bold py-1 px-2 rounded">Add XP</button>
             </div>
              <div className="grid grid-cols-2 gap-2 mt-2">
-                {[Realm.Mind, Realm.Body, Realm.Creation, Realm.Spirit].map(realm => (
+                {[Realm.TechnicalWriting, Realm.Networking, Realm.Oratory, Realm.Planning, Realm.Creativity, Realm.Programming, Realm.Engineering, Realm.FirstCulture].map(realm => (
                     <div key={realm} className="flex items-center space-x-1">
                         <span className="text-xs w-12">{realm}</span>
                         <input type="number" value={stats[realm]} onChange={e => handleStatChange(realm, e.target.value)} className="w-16 bg-gray-700 p-1 rounded" />

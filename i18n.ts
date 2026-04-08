@@ -56,7 +56,7 @@ i18n
     fallbackLng: 'en',
     detection: {
       order: ['localStorage', 'navigator'],
-      lookupLocalStorage: 'levelUpLanguage',
+      lookupLocalStorage: 'bazManagerLanguage',
       caches: ['localStorage'],
     },
     interpolation: {

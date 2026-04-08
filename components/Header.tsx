@@ -156,32 +156,40 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                 
                 {/* Desktop Stats Row */}
                 <div className="hidden lg:flex gap-3">
-                    {Object.entries(realmStatsConfig).map(([realm, config]) => (
-                        <StatDisplay 
-                            key={realm}
-                            icon={config.icon} 
-                            value={user.stats[realm as Realm] || 0} 
-                            colorClass={config.color} 
-                            bgClass={`${config.bg} hover:bg-opacity-20`} 
-                            label={t(`common:realm.${realm}`)} 
-                        />
-                    ))}
+                    {Object.entries(realmStatsConfig)
+                        .map(([realm, config]) => ({ realm, config, value: user.stats[realm as Realm] || 0 }))
+                        .sort((a, b) => b.value - a.value)
+                        .slice(0, 4)
+                        .map(({ realm, config, value }) => (
+                            <StatDisplay 
+                                key={realm}
+                                icon={config.icon} 
+                                value={value} 
+                                colorClass={config.color} 
+                                bgClass={`${config.bg} hover:bg-opacity-20`} 
+                                label={t(`common:realm.${realm}`)} 
+                            />
+                        ))}
                 </div>
             </div>
         </div>
         
         {/* Mobile/Tablet Stats Row */}
         <div className="flex lg:hidden w-full gap-1 sm:gap-3 overflow-x-auto scrollbar-hide py-1">
-            {Object.entries(realmStatsConfig).map(([realm, config]) => (
-                <StatDisplay 
-                    key={`mobile-${realm}`}
-                    icon={config.icon} 
-                    value={user.stats[realm as Realm] || 0} 
-                    colorClass={config.color} 
-                    bgClass={`${config.bg} shrink-0`} 
-                    label={t(`common:realm.${realm}`)} 
-                />
-            ))}
+            {Object.entries(realmStatsConfig)
+                .map(([realm, config]) => ({ realm, config, value: user.stats[realm as Realm] || 0 }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 4)
+                .map(({ realm, config, value }) => (
+                    <StatDisplay 
+                        key={`mobile-${realm}`}
+                        icon={config.icon} 
+                        value={value} 
+                        colorClass={config.color} 
+                        bgClass={`${config.bg} shrink-0`} 
+                        label={t(`common:realm.${realm}`)} 
+                    />
+                ))}
         </div>
       </div>
       

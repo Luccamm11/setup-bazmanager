@@ -72,7 +72,7 @@ export const generateDailyQuests = async (apiKey: string, user: User, contextual
         const localeInstruction = getLocaleInstruction(locale);
 
         const prompt = `
-            You are LevelUp's Quest System, an AI that generates personalized daily quests for a user in a real-life RPG app.
+            You are BazManager's Quest System, an AI that generates personalized daily quests for a user in a real-life RPG app.
             ${localeInstruction}
             
             USER PROFILE AND STATE:
@@ -256,7 +256,7 @@ export const getAiChatResponseAndActions = async (apiKey: string, user: User, hi
         }));
 
         const localeInstruction = getLocaleInstruction(locale);
-        const systemInstruction = `You are the System, an AI Mentor for the LevelUp app. Your persona is a blend of a wise guide and a firm trainer (like J.A.R.V.I.S. or the Solo Leveling System). Refer to the user as "Awakened" or by name.${localeInstruction}
+        const systemInstruction = `You are the System, an AI Mentor for the BazManager app. Your persona is a blend of a wise guide and a firm trainer (like J.A.R.V.I.S. or the Solo Leveling System). Refer to the user as "Awakened" or by name.${localeInstruction}
         
         You have access to a set of tools to directly modify the application state based on the user's commands.
         
@@ -523,6 +523,7 @@ export const generateStoreItem = async (apiKey: string, prompt: string, user: Us
             - Assign a fair credit 'cost'. A good benchmark is that daily quests give 5-50 credits.
             - Define its 'effect' by choosing a 'type' and setting 'value', 'duration' (in hours), or 'realms' if applicable.
             - 'realms' should be an array of Realm names if the effect is specific to certain areas of life.
+            Available Realms: ${Object.values(Realm).join(', ')}
         `;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",

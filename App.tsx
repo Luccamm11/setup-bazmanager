@@ -1490,7 +1490,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `levelup-awakening-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `bazmanager-awakening-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setSystemMessages(prev => [{ id: `backup-${Date.now()}`, text: t('common:messages.backup_downloaded'), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
@@ -1902,7 +1902,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-primary to-accent-tertiary flex items-center justify-center shadow-glow-primary shrink-0">
                  <Dna className="w-6 h-6 text-white" />
              </div>
-             <span className="font-black text-xl tracking-tight text-white hidden lg:block">Level-Up</span>
+             <span className="font-black text-xl tracking-tight text-white hidden lg:block">BazManager</span>
         </div>
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
            {navItems.map(item => (

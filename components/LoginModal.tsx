@@ -98,8 +98,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
         </div>
 
         {/* Title with team branding */}
-        <h1 className="text-3xl font-bold text-white mb-1 tracking-tight text-center">Bazinga! 73</h1>
-        <p className="text-yellow-500/70 text-xs font-bold text-center uppercase tracking-[0.2em] mb-1">BazManager</p>
+        <h1 className="text-3xl font-bold text-white mb-1 tracking-tight text-center">BazManager</h1>
+        <p className="text-yellow-500/70 text-xs font-bold text-center uppercase tracking-[0.2em] mb-1">Bazinga! 73 — FTC Team</p>
         <p className="text-zinc-400 mb-8 text-center text-balance text-sm">{t('accessRestricted')}</p>
         
         <form onSubmit={handleLogin} className="space-y-5">
