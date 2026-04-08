@@ -81,7 +81,15 @@ export const COMPETITION_ARC: Arc = {
     effects: ['XP de Build/Test x1.5', 'Missões de documentação intensificadas', 'Bônus de streak aumentado']
 };
 
-export const ALL_ARCS: Arc[] = [KICKOFF_ARC, COMPETITION_ARC];
+export const CHAMPIONSHIP_ARC: Arc = {
+    id: 'bazinga_championship',
+    title: 'Em Busca do Inspire',
+    description: 'O objetivo supremo: conquistar o prêmio Inspire. Para isso, a Bazinga! 73 deve demonstrar excelência em todas as categorias: engenharia, programação, escrita técnica e conexão com a comunidade.',
+    type: 'Exam',
+    effects: ['Ganhos de XP x1.2 em todos os Pilares', 'Missões de Engenharia e Documentação Priorizadas', 'Acesso a Peças de Teste Especiais']
+};
+
+export const ALL_ARCS: Arc[] = [KICKOFF_ARC, COMPETITION_ARC, CHAMPIONSHIP_ARC];
 
 
 export const INITIAL_USER: User = {
@@ -111,7 +119,7 @@ export const INITIAL_USER: User = {
     daily_streak: 0,
     lastQuestCompletionDate: null,
   },
-  activeArc: KICKOFF_ARC,
+  activeArc: CHAMPIONSHIP_ARC,
   inventory: [],
   activeBuffs: [],
   questsCompleted: 0,
