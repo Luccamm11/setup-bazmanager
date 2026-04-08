@@ -665,7 +665,7 @@ const App: React.FC = () => {
           contextualData['GitHub'] = formatGithubActivityForPrompt(await getRecentActivity());
       }
       
-      const newQuestsData = await generateDailyQuests(apiKey, user, contextualData, chatHistory, shouldGenerateWeeklyBoss);
+      const newQuestsData = await generateDailyQuests(apiKey, user, contextualData, chatHistory, shouldGenerateWeeklyBoss, i18n.language || 'pt-BR');
 
       const nowWithOffset = getCurrentDate();
 
@@ -1115,7 +1115,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setIsChatbotLoading(true);
 
     try {
-        const { text, functionCalls } = await getAiChatResponseAndActions(apiKey, user, newHistory, message, quests, majorGoals, storeItems);
+        const { text, functionCalls } = await getAiChatResponseAndActions(apiKey, user, newHistory, message, quests, majorGoals, storeItems, i18n.language || 'pt-BR');
         
         if (functionCalls) {
             for (const call of functionCalls) {
@@ -1197,7 +1197,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     } finally {
         setIsChatbotLoading(false);
     }
-  }, [apiKey, chatHistory, user, quests, majorGoals, storeItems]);
+  }, [apiKey, chatHistory, user, quests, majorGoals, storeItems, i18n.language]);
 
   const handleJournalSubmit = useCallback(async (goalId: string, reflection: string) => {
     const goal = user.completedMajorGoals?.find(g => g.id === goalId);
@@ -1210,7 +1210,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       handleGrantReward(25, 0, Realm.FirstCulture, 'journal-entry');
 
       // 2. Generate checklist quests
-      const checklistItems = await generateJournalChecklist(apiKey, reflection, goal, user);
+      const checklistItems = await generateJournalChecklist(apiKey, reflection, goal, user, i18n.language || 'pt-BR');
       
       const newQuests: Quest[] = checklistItems.map((item, index) => ({
         ...item,
@@ -1244,7 +1244,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     } finally {
       setIsChatbotLoading(false);
     }
-  }, [apiKey, user, handleGrantReward]);
+  }, [apiKey, user, handleGrantReward, i18n.language]);
 
   const handleStartTimedQuest = useCallback((title: string, realm: Realm, estimatedMinutes: number) => {
     const newTimedQuest: ActiveTimedQuest = {
@@ -1564,7 +1564,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     setIsGeneratingRecommendations(true);
     setAiRecommendations(null);
     try {
-      const recs = await generateRecommendations(apiKey, user, majorGoals);
+      const recs = await getAiRecommendations(apiKey, user, majorGoals, i18n.language || 'pt-BR');
       setAiRecommendations(recs);
     } catch(e) {
       console.error(e);

@@ -32,8 +32,8 @@ const Journal: React.FC<JournalProps> = ({ journalEntries, quests, onCompleteQue
         animate="visible"
     >
       <div className="text-center group">
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">Journal & AARs</h2>
-        <p className="text-text-secondary">Reflections on past encounters and plans for future growth.</p>
+        <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">Diário & AARs</h2>
+        <p className="text-text-secondary">Reflexões sobre encontros passados e planos para crescimento futuro.</p>
       </div>
       
       <div className="max-w-4xl mx-auto space-y-8">
@@ -48,7 +48,7 @@ const Journal: React.FC<JournalProps> = ({ journalEntries, quests, onCompleteQue
                 key={entry.id} 
                 variants={itemVariants}
                 layout
-                className="bg-primary/40 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/5 shadow-glass hover:shadow-[0_8px_30px_rgba(88,166,255,0.15)] hover:border-accent-primary/30 transition-all duration-300"
+                className="bg-primary/40 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/5 shadow-glass hover:shadow-[0_8px_30_rgba(88,166,255,0.15)] hover:border-accent-primary/30 transition-all duration-300"
             >
               <div className="border-b border-white/10 pb-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2 sm:gap-0">
@@ -63,7 +63,7 @@ const Journal: React.FC<JournalProps> = ({ journalEntries, quests, onCompleteQue
                 <p className="text-text-secondary leading-relaxed whitespace-pre-wrap font-medium text-[15px]">{entry.reflectionText}</p>
               </div>
               <div>
-                <h4 className="text-lg font-black text-white mb-4 tracking-tight">Improvement Sequence</h4>
+                <h4 className="text-lg font-black text-white mb-4 tracking-tight">Sequência de Melhoria</h4>
                 {checklistQuests.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {checklistQuests.map(quest => (
@@ -72,7 +72,7 @@ const Journal: React.FC<JournalProps> = ({ journalEntries, quests, onCompleteQue
                   </div>
                 ) : (
                   <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                      <p className="text-sm text-text-muted font-bold tracking-wide italic">All sequential improvements completed.</p>
+                      <p className="text-sm text-text-muted font-bold tracking-wide italic">Todas as melhorias sequenciais foram concluídas.</p>
                   </div>
                 )}
               </div>
@@ -88,8 +88,8 @@ const Journal: React.FC<JournalProps> = ({ journalEntries, quests, onCompleteQue
                 <div className="absolute inset-0 bg-accent-primary/20 blur-xl rounded-full"></div>
                 <BookText className="w-16 h-16 text-text-muted relative z-10" />
             </div>
-            <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Empty Archives</h3>
-            <p className="text-text-secondary max-w-sm mx-auto leading-relaxed">Your journal currently holds no records. Use the System terminal to log your After Action Reports following Major Goal completions.</p>
+            <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Arquivos Vazios</h3>
+            <p className="text-text-secondary max-w-sm mx-auto leading-relaxed">Seu diário ainda não possui registros. Use o terminal do Sistema para registrar seu After Action Report após completar metas principais.</p>
           </motion.div>
         )}
         </AnimatePresence>

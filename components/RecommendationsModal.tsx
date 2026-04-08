@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Wand2, Loader2, Lightbulb, GraduationCap, ArrowRight } from 'lucide-react';
-import { AiRecommendations, AiSkillRecommendation, AiTopicRecommendation, Realm, Skill } from '../types';
+import { X, Wand2, Loader2, Lightbulb, GraduationCap } from 'lucide-react';
+import { AiRecommendations, Realm, Skill } from '../types';
 
 interface RecommendationsModalProps {
   isOpen: boolean;
@@ -67,8 +67,8 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
       return (
         <div className="text-center min-h-[20rem] flex flex-col items-center justify-center">
           <Loader2 className="w-12 h-12 text-accent-tertiary animate-spin mx-auto" />
-          <p className="mt-4 text-text-secondary">The System is analyzing your profile...</p>
-          <p className="text-sm text-text-muted">Generating personalized recommendations.</p>
+          <p className="mt-4 text-text-secondary">O Sistema está analisando seu perfil...</p>
+          <p className="text-sm text-text-muted">Gerando recomendações personalizadas.</p>
         </div>
       );
     }
@@ -77,8 +77,8 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
         return (
              <div className="text-center min-h-[20rem] flex flex-col items-center justify-center">
                 <X className="w-12 h-12 text-accent-red mx-auto" />
-                <p className="mt-4 text-text-secondary">Failed to generate recommendations.</p>
-                <p className="text-sm text-text-muted">Please try again.</p>
+                <p className="mt-4 text-text-secondary">Falha ao gerar recomendações.</p>
+                <p className="text-sm text-text-muted">Por favor, tente novamente.</p>
             </div>
         )
     }
@@ -89,7 +89,7 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
         <div className="space-y-6">
             {skills.length > 0 && (
                 <div>
-                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><GraduationCap className="mr-2"/>Recommended New Skills</h3>
+                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><GraduationCap className="mr-2"/>Novas Habilidades Recomendadas</h3>
                     <div className="space-y-2 max-h-40 overflow-y-auto bg-background p-3 rounded-md">
                         {skills.map((skill) => (
                              <label key={skill.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
@@ -105,7 +105,7 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
             )}
             {topics.length > 0 && (
                  <div>
-                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><Lightbulb className="mr-2"/>Recommended New Topics</h3>
+                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><Lightbulb className="mr-2"/>Novos Tópicos Recomendados</h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto bg-background p-3 rounded-md">
                         {topics.map((topic) => (
                              <label key={topic.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
@@ -113,7 +113,7 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
                                 <div className="flex-1">
                                     <p className="text-text-primary font-semibold">{topic.name}</p>
                                     <p className="text-xs text-text-secondary flex items-center">
-                                        For Skill: <span className="font-bold text-accent-primary ml-1.5">{userSkills[topic.skillId]?.name || 'Unknown Skill'}</span>
+                                        Para Habilidade: <span className="font-bold text-accent-primary ml-1.5">{userSkills[topic.skillId]?.name || 'Unknown Skill'}</span>
                                     </p>
                                     <p className="text-xs text-text-secondary italic mt-1">"{topic.reason}"</p>
                                 </div>
@@ -136,8 +136,8 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
         <div className="flex items-center space-x-3 mb-4">
           <Wand2 className="w-8 h-8 text-accent-tertiary" />
           <div>
-            <h2 className="text-2xl font-bold text-text-primary">AI Recommendations</h2>
-            <p className="text-text-secondary">Your personalized growth path suggestions.</p>
+            <h2 className="text-2xl font-bold text-text-primary">Recomendações da IA</h2>
+            <p className="text-text-secondary">Sugestões personalizadas para o seu caminho de crescimento.</p>
           </div>
         </div>
 
@@ -147,14 +147,14 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
 
         <div className="pt-6 flex justify-end space-x-2 border-t border-border-color mt-4">
           <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded">
-            Cancel
+            Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading || totalSelected === 0}
             className="bg-accent-tertiary hover:bg-opacity-80 disabled:bg-border-color disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
           >
-            Add Selected ({totalSelected})
+            Adicionar Selecionados ({totalSelected})
           </button>
         </div>
       </div>

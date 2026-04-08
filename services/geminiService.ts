@@ -38,13 +38,12 @@ function getSanitizedUserForPrompt(user: User) {
 }
 
 const getLocaleInstruction = (locale: string): string => {
-    if (locale === 'pt-BR' || locale === 'pt') {
-        return `\n\nIMPORTANT: You MUST respond entirely in Brazilian Portuguese (PT-BR). All quest titles, descriptions, and any text content you generate must be in Portuguese. Do not use English in any generated text fields.`;
-    }
-    return '';
+    // BazManager is for a Brazilian team, so pt-BR is the default and prioritized language.
+    // We force PT-BR even if locale is not passed correctly to ensure consistency.
+    return `\n\nIMPORTANT: You MUST respond entirely in Brazilian Portuguese (PT-BR). All titles, descriptions, reflections, recommendations, chat responses and any text content you generate MUST be in clear, natural, and correct Portuguese. Do not use English in any generated text fields. This is a non-negotiable requirement.`;
 };
 
-export const generateDailyQuests = async (apiKey: string, user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean, locale: string = 'en'): Promise<any[]> => {
+export const generateDailyQuests = async (apiKey: string, user: User, contextualData: { [key: string]: string }, chatHistory: ChatMessage[], shouldGenerateWeeklyBoss: boolean, locale: string = 'pt-BR'): Promise<any[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         
@@ -247,7 +246,7 @@ const tools: FunctionDeclaration[] = [
 ];
 
 // FIX: Completed the function implementation to make the API call and return a response object, resolving errors in App.tsx.
-export const getAiChatResponseAndActions = async (apiKey: string, user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[], locale: string = 'en'): Promise<{ text: string, functionCalls: any[] | undefined }> => {
+export const getAiChatResponseAndActions = async (apiKey: string, user: User, history: ChatMessage[], newMessage: string, quests: Quest[], majorGoals: MajorGoal[], storeItems: StoreItem[], locale: string = 'pt-BR'): Promise<{ text: string, functionCalls: any[] | undefined }> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
@@ -561,7 +560,7 @@ export const generateStoreItem = async (apiKey: string, prompt: string, user: Us
 };
 
 // FIX: Implemented missing function to generate skill and topic recommendations.
-export const generateRecommendations = async (apiKey: string, user: User, majorGoals: MajorGoal[], locale: string = 'en'): Promise<AiRecommendations> => {
+export const getAiRecommendations = async (apiKey: string, user: User, majorGoals: MajorGoal[], locale: string = 'pt-BR'): Promise<AiRecommendations> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
@@ -619,7 +618,7 @@ export const generateRecommendations = async (apiKey: string, user: User, majorG
     }
 };
 
-export const generateJournalChecklist = async (apiKey:string, reflectionText: string, majorGoal: MajorGoal, user: User, locale: string = 'en'): Promise<any[]> => {
+export const generateJournalChecklist = async (apiKey:string, reflectionText: string, majorGoal: MajorGoal, user: User, locale: string = 'pt-BR'): Promise<any[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const userProfile = getSanitizedUserForPrompt(user);
