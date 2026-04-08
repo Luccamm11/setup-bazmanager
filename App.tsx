@@ -42,7 +42,7 @@ import TechDashboard from './components/TechDashboard';
 import TeamMissions from './components/TeamMissions';
 import CreateTeamMissionModal from './components/CreateTeamMissionModal';
 import JourneyTab from './components/JourneyTab';
-import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, generateRecommendations, generateJournalChecklist } from './services/geminiService';
+import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -199,7 +199,7 @@ const recalculateSkillTree = (
 
 
 const App: React.FC = () => {
-  const { t } = useTranslation(['common', 'constants']);
+  const { t, i18n } = useTranslation(['common', 'constants']);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
@@ -697,7 +697,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingQuests(false);
     }
-  }, [apiKey, user, integrations, chatHistory, getCurrentDate, getFutureDateWithOffset, setUser]);
+  }, [apiKey, user, integrations, chatHistory, getCurrentDate, getFutureDateWithOffset, setUser, i18n.language]);
   
  const handleGrantReward = useCallback((
     baseXp: number,
@@ -1571,7 +1571,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     } finally {
       setIsGeneratingRecommendations(false);
     }
-  }, [apiKey, user, majorGoals]);
+  }, [apiKey, user, majorGoals, i18n.language]);
 
   const handleSaveRecommendations = useCallback((
     selectedSkills: { name: string; realm: Realm }[],
