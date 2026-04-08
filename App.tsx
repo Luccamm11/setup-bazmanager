@@ -708,8 +708,8 @@ const App: React.FC = () => {
 ) => {
     setUser(prevUser => {
         // --- 1. Calculate final amounts
-        let finalXp = baseXp;
-        let finalCredits = baseCredits;
+        let finalXp = Math.abs(baseXp);
+        let finalCredits = Math.abs(baseCredits);
 
         prevUser.activeBuffs.forEach(buff => {
             if (buff.effect.type === 'XP_BOOST' && (!buff.effect.realms || buff.effect.realms.length === 0 || buff.effect.realms.includes(realm))) {

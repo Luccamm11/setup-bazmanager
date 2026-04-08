@@ -108,7 +108,7 @@ export const generateDailyQuests = async (apiKey: string, user: User, contextual
 
             3.  **PROGRESSION & BALANCE:**
                 - **Balance:** Sempre inclua pelo menos uma missão de 'Cultura FIRST' ou 'Networking'.
-                - **Dynamic Difficulty:** Adjust difficulty and XP rewards based on user level (Levels 1-10: 10-50 XP; Levels 11-25: 40-100 XP; Levels 26+: 75-200 XP). Weekly Mega Boss rewards are an exception.
+                - **Dynamic Difficulty:** Adjust difficulty and XP rewards based on user level (Levels 1-10: 10-50 XP; Levels 11-25: 40-100 XP; Levels 26+: 75-200 XP). Weekly Mega Boss rewards are an exception. **Rewards (XP and Credits) MUST ALWAYS be positive integers.**
         `;
 
         const response = await ai.models.generateContent({
@@ -163,6 +163,8 @@ export const generateDailyQuests = async (apiKey: string, user: User, contextual
 
         return jsonResponse.map((questData: any, index: number) => ({
             ...questData,
+            xp_reward: Math.max(10, Math.abs(questData.xp_reward || 0)), // Ensure positive XP
+            credit_reward: Math.max(5, Math.abs(questData.credit_reward || 0)), // Ensure positive Credits
             id: `gemini-quest-${Date.now()}-${index}`,
             status: QuestStatus.Pending,
             source: questData.source || 'ai_system',
@@ -184,8 +186,8 @@ const tools: FunctionDeclaration[] = [
                 realm: { type: Type.STRING, enum: Object.values(Realm), description: "The realm this quest belongs to." },
                 duration_est_min: { type: Type.INTEGER, description: "Estimated time in minutes to complete." },
                 difficulty: { type: Type.STRING, enum: Object.values(Difficulty), description: "The difficulty of the quest." },
-                xp_reward: { type: Type.INTEGER, description: "The XP reward for completing the quest." },
-                credit_reward: { type: Type.INTEGER, description: "The credit reward for completing the quest." },
+                xp_reward: { type: Type.INTEGER, description: "The XP reward for completing the quest. MUST be a positive integer." },
+                credit_reward: { type: Type.INTEGER, description: "The credit reward for completing the quest. MUST be a positive integer." },
             },
             required: ["title", "description", "realm", "duration_est_min"],
         }
@@ -638,7 +640,7 @@ export const generateJournalChecklist = async (apiKey:string, reflectionText: st
             1.  Analyze the user's reflection to understand their perceived strengths, weaknesses, and areas for improvement.
             2.  Generate a checklist of 3-5 small, actionable "fix-it" quests based on their reflection. These quests are concrete steps they can take to address the issues they mentioned.
             3.  Each quest must be a simple, completable task.
-            4.  For each quest, provide a 'title', 'description', a small 'xp_reward' (between 10-25 XP), and an appropriate 'realm' from the user's available realms.
+            4.  For each quest, provide a 'title', 'description', a small 'xp_reward' (between 10-25 XP - MUST be a positive integer), and an appropriate 'realm' from the user's available realms.
             5.  The tone should be encouraging but firm, like a coach helping them patch up their weaknesses.
             ${localeInstruction}
         `;
