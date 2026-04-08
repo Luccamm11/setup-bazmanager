@@ -37,7 +37,6 @@ import RewardToast from './components/RewardToast';
 import AddEditBadgeModal from './components/AddEditBadgeModal';
 import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
-import EnterApiKeyModal from './components/EnterApiKeyModal';
 import NameEntryModal from './components/NameEntryModal';
 import TechDashboard from './components/TechDashboard';
 import TeamMissions from './components/TeamMissions';
@@ -208,8 +207,7 @@ const App: React.FC = () => {
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('googleAiApiKey') || '');
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(!localStorage.getItem('googleAiApiKey'));
+  const [apiKey, setApiKey] = useState<string>(() => import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('googleAiApiKey') || '');
   const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
   const [user, _setUser] = useState<User>(INITIAL_USER);
@@ -1886,9 +1884,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     );
   }
 
-  if (isApiKeyModalOpen) {
-    return <EnterApiKeyModal onSave={handleSaveApiKey} />;
-  }
 
   if (isNameEntryModalOpen) {
     return <NameEntryModal onSave={handleSaveName} />;
