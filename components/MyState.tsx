@@ -59,6 +59,23 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
         <p className="text-sm text-text-secondary mb-6 ml-9">Defina sua função e metas dentro da equipe Bazinga! para que a IA gere recomendações alinhadas ao seu desenvolvimento.</p>
         
         <div className="space-y-6">
+            <div>
+              <label className="block text-md font-semibold text-text-primary mb-1">Foco em Prêmios (FTC)</label>
+              <select
+                value={state.awardFocus || ''}
+                onChange={(e) => { setState(s => ({ ...s, awardFocus: e.target.value })); setHasChanges(true); }}
+                className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm"
+              >
+                <option value="">Nenhum em particular</option>
+                <option value="Inspire">Inspire Award (Geral/Excelência)</option>
+                <option value="Think">Think Award (Documentação/Notebook)</option>
+                <option value="Connect">Connect Award (Networking/Comunidade)</option>
+                <option value="Innovate">Innovate Award (Inovador/Engenharia)</option>
+                <option value="Control">Control Award (Programação/Sensores)</option>
+                <option value="Design">Design Award (Industrial Design/CAD)</option>
+                <option value="Motivate">Motivate Award (Cultura/Equipe)</option>
+              </select>
+            </div>
             <StateTextarea 
                 label="Função Principal / B-LEAD"
                 value={state.coreMission}

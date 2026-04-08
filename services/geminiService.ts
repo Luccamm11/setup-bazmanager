@@ -107,7 +107,7 @@ export const generateDailyQuests = async (apiKey: string, user: User, contextual
                 - **Deadlines & Penalties:** Every quest MUST have a \`deadlineHours\` property (integer, hours from now). Unless it is a Mystery Quest, it MUST also have a \`penalty\` object with \`type: 'xp'\` and an \`amount\` (integer, roughly 25% of the xp_reward).
 
             3.  **PROGRESSION & BALANCE:**
-                - **Balance:** Always include one 'Body' realm quest.
+                - **Balance:** Sempre inclua pelo menos uma missão de 'Cultura FIRST' ou 'Networking'.
                 - **Dynamic Difficulty:** Adjust difficulty and XP rewards based on user level (Levels 1-10: 10-50 XP; Levels 11-25: 40-100 XP; Levels 26+: 75-200 XP). Weekly Mega Boss rewards are an exception.
         `;
 

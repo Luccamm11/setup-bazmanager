@@ -1,8 +1,19 @@
 import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
-import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe } from 'lucide-react';
+import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+const realmStatsConfig: { [key in Realm]?: { icon: React.ReactNode; color: string; bg: string } } = {
+  [Realm.Programming]: { icon: <Code size={14} />, color: "text-blue-400", bg: "bg-blue-500/10" },
+  [Realm.Engineering]: { icon: <Hammer size={14} />, color: "text-orange-400", bg: "bg-orange-500/10" },
+  [Realm.TechnicalWriting]: { icon: <BookText size={14} />, color: "text-slate-400", bg: "bg-slate-500/10" },
+  [Realm.Networking]: { icon: <Users size={14} />, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  [Realm.Planning]: { icon: <ClipboardList size={14} />, color: "text-amber-400", bg: "bg-amber-500/10" },
+  [Realm.Oratory]: { icon: <Mic2 size={14} />, color: "text-rose-400", bg: "bg-rose-500/10" },
+  [Realm.Creativity]: { icon: <Zap size={14} />, color: "text-violet-400", bg: "bg-violet-500/10" },
+  [Realm.FirstCulture]: { icon: <Globe size={14} />, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+};
 
 interface HeaderProps {
   user: User;
@@ -145,20 +156,32 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                 
                 {/* Desktop Stats Row */}
                 <div className="hidden lg:flex gap-3">
-                    <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 hover:bg-accent-primary/20" label={t('realm.Mind')} />
-                    <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 hover:bg-accent-red/20" label={t('realm.Body')} />
-                    <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 hover:bg-accent-secondary/20" label={t('realm.Creation')} />
-                    <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 hover:bg-accent-tertiary/20" label={t('realm.Spirit')} />
+                    {Object.entries(realmStatsConfig).map(([realm, config]) => (
+                        <StatDisplay 
+                            key={realm}
+                            icon={config.icon} 
+                            value={user.stats[realm as Realm] || 0} 
+                            colorClass={config.color} 
+                            bgClass={`${config.bg} hover:bg-opacity-20`} 
+                            label={t(`common:realm.${realm}`)} 
+                        />
+                    ))}
                 </div>
             </div>
         </div>
         
         {/* Mobile/Tablet Stats Row */}
-        <div className="flex lg:hidden w-full gap-1 sm:gap-3 overflow-x-auto scrollbar-hide">
-            <StatDisplay icon={<BrainCircuit size={16} />} value={user.stats[Realm.Mind]} colorClass="text-accent-primary" bgClass="bg-accent-primary/10 shrink-0" label={t('realm.Mind')} />
-            <StatDisplay icon={<Heart size={16} />} value={user.stats[Realm.Body]} colorClass="text-accent-red" bgClass="bg-accent-red/10 shrink-0" label={t('realm.Body')} />
-            <StatDisplay icon={<Zap size={16} />} value={user.stats[Realm.Creation]} colorClass="text-accent-secondary" bgClass="bg-accent-secondary/10 shrink-0" label={t('realm.Creation')} />
-            <StatDisplay icon={<Sparkles size={16} />} value={user.stats[Realm.Spirit]} colorClass="text-accent-tertiary" bgClass="bg-accent-tertiary/10 shrink-0" label={t('realm.Spirit')} />
+        <div className="flex lg:hidden w-full gap-1 sm:gap-3 overflow-x-auto scrollbar-hide py-1">
+            {Object.entries(realmStatsConfig).map(([realm, config]) => (
+                <StatDisplay 
+                    key={`mobile-${realm}`}
+                    icon={config.icon} 
+                    value={user.stats[realm as Realm] || 0} 
+                    colorClass={config.color} 
+                    bgClass={`${config.bg} shrink-0`} 
+                    label={t(`common:realm.${realm}`)} 
+                />
+            ))}
         </div>
       </div>
       

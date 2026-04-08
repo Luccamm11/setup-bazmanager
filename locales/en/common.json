@@ -76,14 +76,15 @@
     "Design": "Design Award"
   },
   "realm": {
-    "Mind": "Mind",
-    "Body": "Body",
-    "Creation": "Creation",
-    "Spirit": "Spirit",
+    "TechnicalWriting": "Technical Writing",
+    "Networking": "Networking",
+    "Oratory": "Oratory",
+    "Planning": "Planning",
     "Creativity": "Creativity",
-    "Finance": "Finance",
-    "Social": "Social",
-    "Meta": "Meta"
+    "Programming": "Programming",
+    "Engineering": "Engineering",
+    "FirstCulture": "FIRST Culture",
+    "Meta": "Synergy"
   },
   "difficulty": {
     "Easy": "Easy",

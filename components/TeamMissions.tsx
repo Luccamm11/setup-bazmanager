@@ -12,24 +12,26 @@ interface TeamMissionsProps {
 }
 
 const REALM_COLORS: { [key in Realm]?: string } = {
-  [Realm.Mind]: 'from-blue-500 to-cyan-500',
-  [Realm.Body]: 'from-red-500 to-orange-500',
-  [Realm.Creation]: 'from-yellow-500 to-amber-500',
-  [Realm.Spirit]: 'from-purple-500 to-pink-500',
-  [Realm.Creativity]: 'from-pink-500 to-rose-500',
-  [Realm.Finance]: 'from-green-500 to-emerald-500',
-  [Realm.Social]: 'from-indigo-500 to-violet-500',
+  [Realm.TechnicalWriting]: 'from-slate-500 to-slate-700',
+  [Realm.Networking]: 'from-emerald-500 to-teal-500',
+  [Realm.Oratory]: 'from-rose-500 to-pink-600',
+  [Realm.Planning]: 'from-amber-500 to-orange-600',
+  [Realm.Creativity]: 'from-violet-500 to-purple-600',
+  [Realm.Programming]: 'from-blue-500 to-indigo-600',
+  [Realm.Engineering]: 'from-orange-500 to-red-600',
+  [Realm.FirstCulture]: 'from-cyan-500 to-sky-600',
   [Realm.Meta]: 'from-zinc-500 to-slate-500',
 };
 
 const REALM_BG_COLORS: { [key in Realm]?: string } = {
-  [Realm.Mind]: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  [Realm.Body]: 'bg-red-500/10 text-red-400 border-red-500/20',
-  [Realm.Creation]: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  [Realm.Spirit]: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  [Realm.Creativity]: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  [Realm.Finance]: 'bg-green-500/10 text-green-400 border-green-500/20',
-  [Realm.Social]: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  [Realm.TechnicalWriting]: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+  [Realm.Networking]: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  [Realm.Oratory]: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  [Realm.Planning]: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  [Realm.Creativity]: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  [Realm.Programming]: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  [Realm.Engineering]: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  [Realm.FirstCulture]: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   [Realm.Meta]: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
 };
 

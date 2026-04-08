@@ -47,7 +47,7 @@ import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, gene
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal } from 'lucide-react';
+import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText } from 'lucide-react';
 
 type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey';
 
@@ -472,10 +472,10 @@ const App: React.FC = () => {
             case 'ten_quests': unlocked = user.questsCompleted >= 10; break;
             case 'fifty_quests': unlocked = user.questsCompleted >= 50; break;
             case 'first_boss': unlocked = user.bossQuestsCompleted >= 1; break;
-            case 'mind_adept': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Mind && s.level >= 5); break;
-            case 'body_adept': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Body && s.level >= 5); break;
-            case 'creation_adept': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Creation && s.level >= 5); break;
-            case 'spirit_adept': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Spirit && s.level >= 5); break;
+            case 'design_award': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Engineering && s.level >= 5); break;
+            case 'control_award': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Programming && s.level >= 5); break;
+            case 'innovate_award': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Creativity && s.level >= 5); break;
+            case 'outreach_award': unlocked = Object.values(user.skill_tree).some((s: Skill) => s.realm === Realm.Networking && s.level >= 5); break;
         }
 
         if (unlocked) newlyUnlocked.push(badge);
@@ -762,8 +762,17 @@ const App: React.FC = () => {
         return updatedUser;
     });
 }, [getCurrentDate]);
+  const addDevelopmentLog = useCallback((title: string, narrative: string) => {
+    const newEntry: StoryLogEntry = {
+      id: `dev-log-${Date.now()}`,
+      date: new Date().toLocaleDateString('pt-BR'),
+      title,
+      narrative
+    };
+    setStoryLog(prev => [newEntry, ...prev]);
+  }, [setStoryLog]);
 
- const handleCompleteTeamMission = useCallback(async (missionId: string) => {
+  const handleCompleteTeamMission = useCallback(async (missionId: string) => {
     if (!currentUser) return;
     const mission = teamMissions.find(m => m.id === missionId);
     if (!mission || mission.completedBy.includes(currentUser)) return;
@@ -785,12 +794,18 @@ const App: React.FC = () => {
           handleGrantReward(0, mission.credit_reward, Realm.Meta, `team-mission-credits-${missionId}`);
         }
 
+        // Factual development logging
+        addDevelopmentLog(
+          `Missão de Equipe: ${mission.title}`,
+          `Participação na missão de equipe focada em ${mission.realmRewards.map(r => r.realm).join(', ')}. Contribuição registrada com sucesso.`
+        );
+
         setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: `Missão da equipe "${mission.title}" completada!`, timestamp: 'Just now', type: 'reward' }, ...prev]);
       }
     } catch (err) {
       console.error('Failed to complete team mission:', err);
     }
-  }, [currentUser, teamMissions, handleGrantReward]);
+  }, [currentUser, teamMissions, handleGrantReward, addDevelopmentLog]);
 
 
 const handleCompleteQuest = useCallback((questId: string) => {
@@ -811,9 +826,16 @@ const handleCompleteQuest = useCallback((questId: string) => {
     };
 
     handleGrantReward(quest.xp_reward, quest.credit_reward, quest.realm, questId, questCompleter);
+    
+    // Factual development logging
+    addDevelopmentLog(
+        `Missão Pessoal: ${quest.title}`,
+        `Conclusão de missão individual no reino ${quest.realm}. Recompensas: ${quest.xp_reward} XP e ${quest.credit_reward} créditos.`
+    );
+
     setQuests(prev => prev.filter(q => q.id !== questId));
 
-}, [quests, getCurrentDate, handleGrantReward]);
+}, [quests, getCurrentDate, handleGrantReward, addDevelopmentLog]);
 
 const handleCompleteMajorGoal = useCallback((goal: MajorGoal) => {
     const realm = goal.skillId ? user.skill_tree[goal.skillId]?.realm || Realm.Meta : Realm.Meta;
@@ -828,9 +850,15 @@ const handleCompleteMajorGoal = useCallback((goal: MajorGoal) => {
 
     handleGrantReward(goal.xp_reward, goal.credit_reward, realm, goal.id, goalCompleter);
 
+    // Factual development logging
+    addDevelopmentLog(
+        `META ALCANÇADA: ${goal.title}`,
+        `Entrega concluída: ${goal.description}. Esta conquista representa um marco significativo no desenvolvimento da equipe para a competição FTC.`
+    );
+
     setMajorGoals(prev => prev.filter(g => g.id !== goal.id));
     setSystemMessages(prev => [{ id: `major-goal-res-${Date.now()}`, text: t('common:messages.goal_completed', { title: goal.title }), timestamp: t('common:states.just_now'), type: 'system' }, ...prev]);
-}, [user.skill_tree, handleGrantReward]);
+}, [user.skill_tree, handleGrantReward, addDevelopmentLog]);
 
 const handleOpenLootbox = useCallback(() => {
     const today = getCurrentDate().toISOString().split('T')[0];
@@ -1094,7 +1122,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                         const newQuestData: Omit<Quest, 'id' | 'status' | 'source'> = {
                           title: questArgs.title || 'AI Generated Quest',
                           description: questArgs.description || '',
-                          realm: questArgs.realm || Realm.Mind,
+                          realm: questArgs.realm || Realm.Programming,
                           knowledgeTopics: [],
                           xp_reward: questArgs.xp_reward || 20,
                           credit_reward: questArgs.credit_reward || 10,
@@ -1175,7 +1203,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
     try {
       // 1. Grant journaling XP
-      handleGrantReward(25, 0, Realm.Spirit, 'journal-entry');
+      handleGrantReward(25, 0, Realm.FirstCulture, 'journal-entry');
 
       // 2. Generate checklist quests
       const checklistItems = await generateJournalChecklist(apiKey, reflection, goal, user);
@@ -1801,6 +1829,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
       { view: 'dashboard', label: t('common:nav.dashboard'), icon: LayoutDashboard },
       { view: 'skill_tree', label: t('common:nav.skill_tree'), icon: TreeDeciduous },
+      { view: 'journey', label: t('common:nav.journey'), icon: ScrollText },
       { view: 'system_mechanics', label: t('common:nav.system_mechanics'), icon: Dna },
       { view: 'inventory', label: t('common:nav.inventory'), icon: Package },
       { view: 'more', label: t('common:nav.more'), icon: MoreHorizontal },

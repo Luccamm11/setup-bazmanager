@@ -5,17 +5,28 @@ interface RealmDistributionPieChartProps {
     stats: { [key in Realm]: number };
 }
 
-const realmOrder: Realm[] = [Realm.Mind, Realm.Creation, Realm.Body, Realm.Spirit, Realm.Social, Realm.Finance, Realm.Creativity, Realm.Meta];
+const realmOrder: Realm[] = [
+  Realm.Programming, 
+  Realm.Engineering, 
+  Realm.TechnicalWriting, 
+  Realm.Networking, 
+  Realm.Planning, 
+  Realm.Oratory, 
+  Realm.Creativity, 
+  Realm.FirstCulture,
+  Realm.Meta
+];
 
 const realmColors: { [key in Realm]: string } = {
-  [Realm.Mind]: "#58A6FF",       // accent-primary
-  [Realm.Body]: "#DA3633",       // accent-red
-  [Realm.Creation]: "#E3B341",   // accent-secondary
-  [Realm.Spirit]: "#A371F7",     // accent-tertiary
-  [Realm.Creativity]: "#58A6FF",
-  [Realm.Finance]: "#238636",    // accent-green
-  [Realm.Social]: "#58A6FF",
-  [Realm.Meta]: "#8B949E",       // text-secondary
+  [Realm.Programming]: "#58A6FF",
+  [Realm.Engineering]: "#F85149",
+  [Realm.TechnicalWriting]: "#8B949E",
+  [Realm.Networking]: "#3FB950",
+  [Realm.Planning]: "#E3B341",
+  [Realm.Oratory]: "#F85149",
+  [Realm.Creativity]: "#BC8CFF",
+  [Realm.FirstCulture]: "#38D39F",
+  [Realm.Meta]: "#8B949E",
 };
 
 const PieChartSlice: React.FC<{

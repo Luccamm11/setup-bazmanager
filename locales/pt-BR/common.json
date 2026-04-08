@@ -66,14 +66,15 @@
     "Design": "Design Industrial"
   },
   "realm": {
-    "Mind": "Mente",
-    "Body": "Corpo",
-    "Creation": "Criação",
-    "Spirit": "Espírito",
+    "TechnicalWriting": "Escrita Técnica",
+    "Networking": "Networking",
+    "Oratory": "Oratória",
+    "Planning": "Planejamento",
     "Creativity": "Criatividade",
-    "Finance": "Finanças",
-    "Social": "Social",
-    "Meta": "Meta"
+    "Programming": "Programação",
+    "Engineering": "Engenharia",
+    "FirstCulture": "Cultura FIRST",
+    "Meta": "Sinergia"
   },
   "difficulty": {
     "Easy": "Fácil",

@@ -8,15 +8,15 @@
     "s_rank": "S-Rank Polymath"
   },
   "arcs": {
-    "exam_arc": {
-      "title": "Final Siege — Signals Gate",
-      "description": "The final semester exams are imminent. All systems must prioritize academic conquest.",
-      "effects": ["Study XP x1.5", "Non-essential quests reduced", "Legendary Lootbox upon completion"]
+    "inspire_arc": {
+      "title": "Inspire Award Quest",
+      "description": "The FTC season is at its peak. Every portfolio entry and every robot test brings us closer to the top prize.",
+      "effects": ["Engineering XP x1.5", "Technical Writing Bonus", "Legendary Lootbox upon completion"]
     },
-    "fitness_arc": {
-      "title": "Project Phoenix Body",
-      "description": "A focused sprint to rebuild physical foundations. Body realm quests are prioritized and enhanced.",
-      "effects": ["Body XP x1.5", "Stamina drain reduced", "Increased chance for rare Body-related items"]
+    "regional_sprint": {
+      "title": "Regional Sprint",
+      "description": "Only a few weeks left until competition. Time to refine oratory and ensure the code is flawless.",
+      "effects": ["Programming XP x1.5", "Oratory Bonus", "Lower credits drain"]
     }
   },
   "store_items": {
@@ -24,25 +24,25 @@
       "name": "Coffee Reward",
       "description": "Permission to buy a fancy coffee from your favorite cafe."
     },
-    "focus_surge": {
-      "name": "Focus Surge",
-      "description": "Doubles XP gain from all Mind quests for 24 hours."
+    "programming_surge": {
+      "name": "Programming Surge",
+      "description": "Doubles XP gain from all Programming quests for 24 hours."
     },
-    "body_surge": {
-      "name": "Body Surge",
-      "description": "Doubles XP gain from all Body quests for 24 hours."
+    "engineering_surge": {
+      "name": "Engineering Surge",
+      "description": "Doubles XP gain from all Engineering quests for 24 hours."
     },
-    "creative_catalyst": {
-      "name": "Creative Catalyst",
-      "description": "Doubles XP gain from all Creation quests for 24 hours."
+    "writing_catalyst": {
+      "name": "Writing Catalyst",
+      "description": "Doubles XP gain from all Technical Writing quests for 24 hours."
     },
-    "spirit_surge": {
-      "name": "Spirit Surge",
-      "description": "Doubles XP gain from all Spirit quests for 24 hours."
+    "networking_surge": {
+      "name": "Networking Surge",
+      "description": "Doubles XP gain from all Networking quests for 24 hours."
     },
-    "trinity_core_surge": {
-      "name": "Trinity Core Surge",
-      "description": "A discounted bundle that doubles XP gain from Mind, Body, and Creation quests for 24 hours."
+    "inspire_core_surge": {
+      "name": "Inspire Core Surge",
+      "description": "A discounted bundle that doubles XP gain from Engineering, Programming, and Writing quests for 24 hours."
     },
     "omni_boost": {
       "name": "Omni-Boost",
@@ -68,14 +68,14 @@
     "ten_quests": { "name": "Quest Novice", "description": "Completed 10 quests." },
     "fifty_quests": { "name": "Quest Adept", "description": "Completed 50 quests." },
     "first_boss": { "name": "Boss Slayer", "description": "Completed a Boss Quest." },
-    "mind_adept": { "name": "Mind Adept", "description": "Reached level 5 in a Mind skill." },
-    "body_adept": { "name": "Body Adept", "description": "Reached level 5 in a Body skill." },
-    "creation_adept": { "name": "Creation Adept", "description": "Reached level 5 in a Creation skill." },
-    "spirit_adept": { "name": "Spirit Adept", "description": "Reached level 5 in a Spirit skill." }
+    "engineering_adept": { "name": "Workshop Master", "description": "Reached level 5 in an Engineering skill." },
+    "coding_adept": { "name": "Software Architect", "description": "Reached level 5 in a Programming skill." },
+    "writing_adept": { "name": "Engineering Chronicler", "description": "Reached level 5 in a Technical Writing skill." },
+    "networking_adept": { "name": "Galactic Connector", "description": "Reached level 5 in a Networking skill." }
   },
   "initial_story": {
-    "title": "The Awakening",
-    "narrative": "The System activated. Initial diagnostics are complete. A new User entity has been identified. Primary objective: Level Up. The path to multidisciplinary innovation begins now."
+    "title": "Bazinga! 73: The Journey Begins",
+    "narrative": "The workshop is lit. The chassis is on the table, and the blank portfolio awaits its first entries. The B-LEAD System has been activated to guide the team's growth toward Worlds. Primary objective: Multidisciplinary Excellence. Winning the prize starts with your first line of code or your first bolt."
   },
-  "system_initialized": "System Initialized. Welcome, Awakened."
+  "system_initialized": "B-LEAD System Initialized. Welcome, Bazinga! 73 member."
 }

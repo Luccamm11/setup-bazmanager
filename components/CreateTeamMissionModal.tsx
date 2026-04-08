@@ -20,7 +20,7 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
   const [assignAll, setAssignAll] = useState(!missionToEdit || missionToEdit.assignedTo.length === 0);
   const [selectedMembers, setSelectedMembers] = useState<string[]>(missionToEdit?.assignedTo || []);
   const [realmRewards, setRealmRewards] = useState<RealmXpReward[]>(
-    missionToEdit?.realmRewards || [{ realm: Realm.Mind, xp: 20 }]
+    missionToEdit?.realmRewards || [{ realm: Realm.Programming, xp: 20 }]
   );
 
   if (!isOpen) return null;

@@ -64,12 +64,12 @@ const SUSTENTABILIDADE: AwardProfile = {
   attributes: ['Planning', 'Management', 'Responsibility', 'Strategic Vision', 'Organization', 'Decision Making'],
   attributesPtBR: ['Planejamento', 'Gestão', 'Responsabilidade', 'Visão Estratégica', 'Organização', 'Tomada de Decisão'],
   defaultSkills: [
-    { name: 'Gestão de Projetos', realm: 'Mind', priority: 5, xpScale: 1.0 },
-    { name: 'Planejamento Estratégico', realm: 'Mind', priority: 4, xpScale: 1.0 },
-    { name: 'Gestão Financeira', realm: 'Mind', priority: 4, xpScale: 1.2 },
-    { name: 'Organização Interna', realm: 'Spirit', priority: 3, xpScale: 0.8 },
-    { name: 'Liderança Operacional', realm: 'Spirit', priority: 3, xpScale: 1.0 },
-    { name: 'Captação de Recursos', realm: 'Creation', priority: 3, xpScale: 1.2 },
+    { name: 'Gestão de Projetos', realm: 'Planning', priority: 5, xpScale: 1.0 },
+    { name: 'Planejamento Estratégico', realm: 'Planning', priority: 4, xpScale: 1.0 },
+    { name: 'Gestão Financeira', realm: 'Planning', priority: 4, xpScale: 1.2 },
+    { name: 'Organização Interna', realm: 'Planning', priority: 3, xpScale: 0.8 },
+    { name: 'Liderança Operacional', realm: 'Networking', priority: 3, xpScale: 1.0 },
+    { name: 'Captação de Recursos', realm: 'Networking', priority: 3, xpScale: 1.2 },
   ],
   defaultTopics: [
     { name: 'Planejamento de projetos FTC', skillName: 'Gestão de Projetos', difficulty: 'Medium' },
@@ -84,10 +84,10 @@ const SUSTENTABILIDADE: AwardProfile = {
     { title: 'Plano de Captação de Recursos', description: 'Definir e documentar estratégias para captação de patrocínio e apoio financeiro', type: 'Siege', xp_reward: 600, credit_reward: 250, deadlineDaysFromNow: 45 },
   ],
   defaultQuests: [
-    { title: 'Listar todas as despesas previstas', description: 'Levantar custos de materiais, inscrição, viagem e equipamentos para a temporada', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
-    { title: 'Criar cronograma semanal', description: 'Montar o cronograma de atividades da equipe para as próximas 4 semanas', realm: 'Mind', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Mapear potenciais patrocinadores', description: 'Pesquisar empresas e instituições da região que possam apoiar a equipe', realm: 'Creation', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
-    { title: 'Documentar estrutura da equipe', description: 'Criar documento descrevendo papéis, responsabilidades e organograma da Bazinga!', realm: 'Spirit', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
+    { title: 'Listar todas as despesas previstas', description: 'Levantar custos de materiais, inscrição, viagem e equipamentos para a temporada', realm: 'Planning', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
+    { title: 'Criar cronograma semanal', description: 'Montar o cronograma de atividades da equipe para as próximas 4 semanas', realm: 'Planning', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Mapear potenciais patrocinadores', description: 'Pesquisar empresas e instituições da região que possam apoiar a equipe', realm: 'Networking', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
+    { title: 'Documentar estrutura da equipe', description: 'Criar documento descrevendo papéis, responsabilidades e organograma da Bazinga!', realm: 'TechnicalWriting', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
   ],
 };
 
@@ -107,12 +107,12 @@ const PENSAMENTO_CRIATIVO: AwardProfile = {
   attributes: ['Organization', 'Technical Writing', 'Analysis', 'Engineering Process', 'Communication Clarity', 'Continuous Learning'],
   attributesPtBR: ['Organização', 'Escrita Técnica', 'Análise', 'Processo de Engenharia', 'Clareza de Comunicação', 'Aprendizado Contínuo'],
   defaultSkills: [
-    { name: 'Documentação Técnica', realm: 'Mind', priority: 5, xpScale: 1.0 },
-    { name: 'Processo de Engenharia', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Análise Crítica', realm: 'Mind', priority: 4, xpScale: 1.2 },
-    { name: 'Comunicação Escrita', realm: 'Spirit', priority: 4, xpScale: 0.8 },
-    { name: 'Portfólio de Engenharia', realm: 'Creation', priority: 3, xpScale: 1.0 },
-    { name: 'Pesquisa e Referências', realm: 'Mind', priority: 3, xpScale: 1.0 },
+    { name: 'Documentação Técnica', realm: 'TechnicalWriting', priority: 5, xpScale: 1.0 },
+    { name: 'Processo de Engenharia', realm: 'Engineering', priority: 5, xpScale: 1.0 },
+    { name: 'Análise Crítica', realm: 'Engineering', priority: 4, xpScale: 1.2 },
+    { name: 'Comunicação Escrita', realm: 'TechnicalWriting', priority: 4, xpScale: 0.8 },
+    { name: 'Portfólio de Engenharia', realm: 'TechnicalWriting', priority: 3, xpScale: 1.0 },
+    { name: 'Pesquisa e Referências', realm: 'Engineering', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
     { name: 'Estrutura do Engineering Portfolio', skillName: 'Portfólio de Engenharia', difficulty: 'Medium' },
@@ -127,10 +127,10 @@ const PENSAMENTO_CRIATIVO: AwardProfile = {
     { title: 'Análise de Trade-offs do Robô', description: 'Criar análise comparativa formal de pelo menos 3 decisões de design com trade-offs documentados', type: 'Forge', xp_reward: 400, credit_reward: 150, deadlineDaysFromNow: 30 },
   ],
   defaultQuests: [
-    { title: 'Definir estrutura do portfólio', description: 'Criar índice e template para cada seção do Engineering Portfolio', realm: 'Mind', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Documentar primeiro ciclo de engenharia', description: 'Registrar um ciclo completo: problema → brainstorm → design → build → test → aprendizados', realm: 'Creation', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
-    { title: 'Fotografar processo de montagem', description: 'Tirar fotos documentando cada etapa da montagem atual do robô', realm: 'Creation', xp_reward: 60, credit_reward: 20, difficulty: 'Easy', duration_est_min: 30 },
-    { title: 'Escrever resumo de lições aprendidas', description: 'Listar 3 principais aprendizados da última sessão de trabalho', realm: 'Spirit', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 30 },
+    { title: 'Definir estrutura do portfólio', description: 'Criar índice e template para cada seção do Engineering Portfolio', realm: 'TechnicalWriting', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Documentar primeiro ciclo de engenharia', description: 'Registrar um ciclo completo: problema → brainstorm → design → build → test → aprendizados', realm: 'TechnicalWriting', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
+    { title: 'Fotografar processo de montagem', description: 'Tirar fotos documentando cada etapa da montagem atual do robô', realm: 'Engineering', xp_reward: 60, credit_reward: 20, difficulty: 'Easy', duration_est_min: 30 },
+    { title: 'Escrever resumo de lições aprendidas', description: 'Listar 3 principais aprendizados da última sessão de trabalho', realm: 'TechnicalWriting', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 30 },
   ],
 };
 
@@ -150,12 +150,12 @@ const CONEXAO: AwardProfile = {
   attributes: ['Communication', 'Networking', 'Professional Posture', 'Planning', 'Persuasion', 'Proactivity'],
   attributesPtBR: ['Comunicação', 'Networking', 'Postura Profissional', 'Planejamento', 'Persuasão', 'Proatividade'],
   defaultSkills: [
-    { name: 'Comunicação Institucional', realm: 'Spirit', priority: 5, xpScale: 1.0 },
-    { name: 'Networking', realm: 'Spirit', priority: 5, xpScale: 1.0 },
-    { name: 'Apresentação e Pitch', realm: 'Spirit', priority: 4, xpScale: 1.0 },
-    { name: 'Planejamento de Parcerias', realm: 'Mind', priority: 4, xpScale: 1.2 },
-    { name: 'Marketing da Equipe', realm: 'Creation', priority: 3, xpScale: 0.8 },
-    { name: 'Relações Públicas', realm: 'Spirit', priority: 3, xpScale: 1.0 },
+    { name: 'Comunicação Institucional', realm: 'Networking', priority: 5, xpScale: 1.0 },
+    { name: 'Networking', realm: 'Networking', priority: 5, xpScale: 1.0 },
+    { name: 'Apresentação e Pitch', realm: 'Oratory', priority: 4, xpScale: 1.0 },
+    { name: 'Planejamento de Parcerias', realm: 'Planning', priority: 4, xpScale: 1.2 },
+    { name: 'Marketing da Equipe', realm: 'Networking', priority: 3, xpScale: 0.8 },
+    { name: 'Relações Públicas', realm: 'Networking', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
     { name: 'Como abordar uma empresa para parceria', skillName: 'Networking', difficulty: 'Medium' },
@@ -170,10 +170,10 @@ const CONEXAO: AwardProfile = {
     { title: '3 Parcerias Ativas', description: 'Formalizar pelo menos 3 parcerias com empresas ou instituições', type: 'Siege', xp_reward: 700, credit_reward: 300, deadlineDaysFromNow: 75 },
   ],
   defaultQuests: [
-    { title: 'Pesquisar empresas de tecnologia na região', description: 'Listar 10 empresas que poderiam se interessar por apoiar a equipe', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
-    { title: 'Preparar e-mail modelo de contato', description: 'Escrever um template de e-mail profissional para primeiro contato com parceiros', realm: 'Spirit', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 40 },
-    { title: 'Criar one-pager da equipe', description: 'Montar um documento visual de 1 página com informações-chave da Bazinga!', realm: 'Creation', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Agendar primeira visita/reunião de networking', description: 'Contatar e agendar ao menos uma reunião com um potencial parceiro', realm: 'Spirit', xp_reward: 150, credit_reward: 60, difficulty: 'Hard', duration_est_min: 30 },
+    { title: 'Pesquisar empresas de tecnologia na região', description: 'Listar 10 empresas que poderiam se interessar por apoiar a equipe', realm: 'Networking', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
+    { title: 'Preparar e-mail modelo de contato', description: 'Escrever um template de e-mail profissional para primeiro contato com parceiros', realm: 'Networking', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 40 },
+    { title: 'Criar one-pager da equipe', description: 'Montar um documento visual de 1 página com informações-chave da Bazinga!', realm: 'Creativity', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Agendar primeira visita/reunião de networking', description: 'Contatar e agendar ao menos uma reunião com um potencial parceiro', realm: 'Networking', xp_reward: 150, credit_reward: 60, difficulty: 'Hard', duration_est_min: 30 },
   ],
 };
 
@@ -193,12 +193,12 @@ const ALCANCE: AwardProfile = {
   attributes: ['Public Speaking', 'Leadership', 'Creativity', 'Engagement', 'Event Organization', 'Social Impact'],
   attributesPtBR: ['Oratória', 'Liderança', 'Criatividade', 'Engajamento', 'Organização de Eventos', 'Impacto Social'],
   defaultSkills: [
-    { name: 'Oratória e Apresentação', realm: 'Spirit', priority: 5, xpScale: 1.0 },
-    { name: 'Organização de Eventos', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Criação de Conteúdo', realm: 'Creation', priority: 4, xpScale: 0.8 },
-    { name: 'Impacto Social', realm: 'Spirit', priority: 4, xpScale: 1.2 },
-    { name: 'Recrutamento e Engajamento', realm: 'Spirit', priority: 3, xpScale: 1.0 },
-    { name: 'Divulgação da FIRST', realm: 'Mind', priority: 3, xpScale: 1.0 },
+    { name: 'Oratória e Apresentação', realm: 'Oratory', priority: 5, xpScale: 1.0 },
+    { name: 'Organização de Eventos', realm: 'Planning', priority: 5, xpScale: 1.0 },
+    { name: 'Criação de Conteúdo', realm: 'Creativity', priority: 4, xpScale: 0.8 },
+    { name: 'Impacto Social', realm: 'FirstCulture', priority: 4, xpScale: 1.2 },
+    { name: 'Recrutamento e Engajamento', realm: 'FirstCulture', priority: 3, xpScale: 1.0 },
+    { name: 'Divulgação da FIRST', realm: 'FirstCulture', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
     { name: 'Valores e missão da FIRST', skillName: 'Divulgação da FIRST', difficulty: 'Easy' },
@@ -213,10 +213,10 @@ const ALCANCE: AwardProfile = {
     { title: '4 Ações de Outreach', description: 'Realizar pelo menos 4 ações de outreach distintas durante a temporada', type: 'Siege', xp_reward: 700, credit_reward: 300, deadlineDaysFromNow: 90 },
   ],
   defaultQuests: [
-    { title: 'Criar post sobre a FIRST no Instagram', description: 'Produzir um post educativo explicando o que é a FIRST e como participar', realm: 'Creation', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
-    { title: 'Planejar roteiro da primeira oficina', description: 'Definir público-alvo, cronograma, materiais necessários e atividades para a oficina', realm: 'Mind', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Visitar escola para divulgar robótica', description: 'Preparar apresentação e visitar uma escola da comunidade para falar sobre FIRST', realm: 'Spirit', xp_reward: 150, credit_reward: 60, difficulty: 'Hard', duration_est_min: 120 },
-    { title: 'Registrar impacto de ação realizada', description: 'Documentar com fotos, números e depoimentos o resultado de uma ação de outreach', realm: 'Spirit', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 45 },
+    { title: 'Criar post sobre a FIRST no Instagram', description: 'Produzir um post educativo explicando o que é a FIRST e como participar', realm: 'Creativity', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
+    { title: 'Planejar roteiro da primeira oficina', description: 'Definir público-alvo, cronograma, materiais necessários e atividades para a oficina', realm: 'Planning', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Visitar escola para divulgar robótica', description: 'Preparar apresentação e visitar uma escola da comunidade para falar sobre FIRST', realm: 'Oratory', xp_reward: 150, credit_reward: 60, difficulty: 'Hard', duration_est_min: 120 },
+    { title: 'Registrar impacto de ação realizada', description: 'Documentar com fotos, números e depoimentos o resultado de uma ação de outreach', realm: 'TechnicalWriting', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 45 },
   ],
 };
 
@@ -236,12 +236,12 @@ const CONTROLE: AwardProfile = {
   attributes: ['Programming', 'Logic', 'Sensors', 'Autonomy', 'Debug', 'Reliability'],
   attributesPtBR: ['Programação', 'Lógica', 'Sensores', 'Autonomia', 'Debug', 'Confiabilidade'],
   defaultSkills: [
-    { name: 'Programação Java/Kotlin', realm: 'Mind', priority: 5, xpScale: 1.0 },
-    { name: 'Programação Autônoma', realm: 'Creation', priority: 5, xpScale: 1.2 },
-    { name: 'Sensores e Eletrônica', realm: 'Creation', priority: 4, xpScale: 1.0 },
-    { name: 'Debug e Testes', realm: 'Mind', priority: 4, xpScale: 0.8 },
-    { name: 'Controle de Motores', realm: 'Creation', priority: 3, xpScale: 1.0 },
-    { name: 'Versionamento (Git)', realm: 'Mind', priority: 3, xpScale: 0.8 },
+    { name: 'Programação Java/Kotlin', realm: 'Programming', priority: 5, xpScale: 1.0 },
+    { name: 'Programação Autônoma', realm: 'Programming', priority: 5, xpScale: 1.2 },
+    { name: 'Sensores e Eletrônica', realm: 'Engineering', priority: 4, xpScale: 1.0 },
+    { name: 'Debug e Testes', realm: 'Programming', priority: 4, xpScale: 0.8 },
+    { name: 'Controle de Motores', realm: 'Engineering', priority: 3, xpScale: 1.0 },
+    { name: 'Versionamento (Git)', realm: 'Programming', priority: 3, xpScale: 0.8 },
   ],
   defaultTopics: [
     { name: 'Estrutura de projeto FTC (FtcRobotController)', skillName: 'Programação Java/Kotlin', difficulty: 'Medium' },
@@ -256,10 +256,10 @@ const CONTROLE: AwardProfile = {
     { title: 'Pipeline de Visão Computacional', description: 'Implementar detecção de objetos no campo usando a câmera do robô', type: 'Siege', xp_reward: 600, credit_reward: 250, deadlineDaysFromNow: 75 },
   ],
   defaultQuests: [
-    { title: 'Configurar ambiente de desenvolvimento', description: 'Instalar Android Studio, clonar FtcRobotController e compilar com sucesso', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 60 },
-    { title: 'Implementar drive básico', description: 'Programar controle de movimentação (tank drive ou mecanum) funcional no TeleOp', realm: 'Creation', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
-    { title: 'Testar leitura de sensor de distância', description: 'Conectar e ler valores do sensor de distância no robô, exibindo no telemetry', realm: 'Creation', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 45 },
-    { title: 'Documentar arquitetura do código', description: 'Criar diagrama simples mostrando a estrutura de classes do projeto do robô', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
+    { title: 'Configurar ambiente de desenvolvimento', description: 'Instalar Android Studio, clonar FtcRobotController e compilar com sucesso', realm: 'Programming', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 60 },
+    { title: 'Implementar drive básico', description: 'Programar controle de movimentação (tank drive ou mecanum) funcional no TeleOp', realm: 'Programming', xp_reward: 120, credit_reward: 50, difficulty: 'Medium', duration_est_min: 90 },
+    { title: 'Testar leitura de sensor de distância', description: 'Conectar e ler valores do sensor de distância no robô, exibindo no telemetry', realm: 'Engineering', xp_reward: 100, credit_reward: 40, difficulty: 'Medium', duration_est_min: 45 },
+    { title: 'Documentar arquitetura do código', description: 'Criar diagrama simples mostrando a estrutura de classes do projeto do robô', realm: 'TechnicalWriting', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 40 },
   ],
 };
 
@@ -279,12 +279,12 @@ const INOVACAO: AwardProfile = {
   attributes: ['Imagination', 'Ingenuity', 'Risk Mitigation', 'Creativity', 'Stability', 'Uniqueness'],
   attributesPtBR: ['Imaginação', 'Engenhosidade', 'Mitigação de Riscos', 'Criatividade', 'Estabilidade', 'Originalidade'],
   defaultSkills: [
-    { name: 'Engenharia Criativa', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Gestão de Riscos Mecânicos', realm: 'Mind', priority: 5, xpScale: 1.0 },
-    { name: 'Prototipagem Inovadora', realm: 'Creation', priority: 4, xpScale: 1.2 },
-    { name: 'Validação de Robustez', realm: 'Body', priority: 4, xpScale: 0.8 },
-    { name: 'Design "Out of the Box"', realm: 'Creation', priority: 3, xpScale: 1.0 },
-    { name: 'Documentação de Soluções', realm: 'Mind', priority: 3, xpScale: 1.0 },
+    { name: 'Engenharia Criativa', realm: 'Engineering', priority: 5, xpScale: 1.0 },
+    { name: 'Gestão de Riscos Mecânicos', realm: 'Planning', priority: 5, xpScale: 1.0 },
+    { name: 'Prototipagem Inovadora', realm: 'Engineering', priority: 4, xpScale: 1.2 },
+    { name: 'Validação de Robustez', realm: 'Engineering', priority: 4, xpScale: 0.8 },
+    { name: 'Design "Out of the Box"', realm: 'Engineering', priority: 3, xpScale: 1.0 },
+    { name: 'Documentação de Soluções', realm: 'TechnicalWriting', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
     { name: 'Técnicas de brainstorm avançado (SCAMPER/TRIZ)', skillName: 'Engenharia Criativa', difficulty: 'Hard' },
@@ -297,8 +297,8 @@ const INOVACAO: AwardProfile = {
     { title: 'Matriz de Risco do Robô', description: 'Criar documento com as fraquezas e planos de contingência do projeto', type: 'Siege', xp_reward: 400, credit_reward: 150, deadlineDaysFromNow: 21 },
   ],
   defaultQuests: [
-    { title: 'Sessão de Brainstorming', description: 'Participar ou liderar sessão para encontrar soluções únicas', realm: 'Creation', xp_reward: 100, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
-    { title: 'Documentar a evolução do design', description: 'Escrever como chegamos na solução mecânica atual', realm: 'Mind', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
+    { title: 'Sessão de Brainstorming', description: 'Participar ou liderar sessão para encontrar soluções únicas', realm: 'Creativity', xp_reward: 100, credit_reward: 50, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Documentar a evolução do design', description: 'Escrever como chegamos na solução mecânica atual', realm: 'TechnicalWriting', xp_reward: 80, credit_reward: 30, difficulty: 'Easy', duration_est_min: 45 },
   ],
 };
 
@@ -318,12 +318,12 @@ const DESIGN: AwardProfile = {
   attributes: ['Aesthetics', 'Maintainability', 'Efficiency', 'CAD Design', 'Form vs Function', 'Simplicity'],
   attributesPtBR: ['Estética', 'Manutenibilidade', 'Eficiência', 'Projeto CAD', 'Forma vs Função', 'Simplicidade'],
   defaultSkills: [
-    { name: 'Modelagem CAD Onshape', realm: 'Creation', priority: 5, xpScale: 1.0 },
-    { name: 'Design para Manutenção', realm: 'Mind', priority: 5, xpScale: 1.0 },
-    { name: 'Design Industrial (Estética)', realm: 'Creation', priority: 4, xpScale: 1.2 },
-    { name: 'Análise Estratégica Espacial', realm: 'Mind', priority: 4, xpScale: 0.8 },
-    { name: 'Usinagem CNC/Impressão 3D', realm: 'Body', priority: 3, xpScale: 1.0 },
-    { name: 'Estratégia Mecânica', realm: 'Mind', priority: 3, xpScale: 1.0 },
+    { name: 'Modelagem CAD Onshape', realm: 'Engineering', priority: 5, xpScale: 1.0 },
+    { name: 'Design para Manutenção', realm: 'Engineering', priority: 5, xpScale: 1.0 },
+    { name: 'Design Industrial (Estética)', realm: 'Engineering', priority: 4, xpScale: 1.2 },
+    { name: 'Análise Estratégica Espacial', realm: 'Planning', priority: 4, xpScale: 0.8 },
+    { name: 'Usinagem CNC/Impressão 3D', realm: 'Engineering', priority: 3, xpScale: 1.0 },
+    { name: 'Estratégia Mecânica', realm: 'Engineering', priority: 3, xpScale: 1.0 },
   ],
   defaultTopics: [
     { name: 'Regras de Ouro de Design FTC', skillName: 'Design para Manutenção', difficulty: 'Medium' },
@@ -336,8 +336,8 @@ const DESIGN: AwardProfile = {
     { title: 'Guia de Montagem e Manutenção', description: 'Criar manual de como consertar rapidamente partes vitais do robô (Pit Stop)', type: 'Siege', xp_reward: 500, credit_reward: 200, deadlineDaysFromNow: 60 },
   ],
   defaultQuests: [
-    { title: 'Revisar tolerâncias no CAD', description: 'Analisar e arrumar os mates e folgas do robô 3D', realm: 'Mind', xp_reward: 120, credit_reward: 50, difficulty: 'Hard', duration_est_min: 90 },
-    { title: 'Desenhar suportes estéticos ou side-panels', description: 'Projeto de placas de acrílico/policarbonato para proteger e embelezar', realm: 'Creation', xp_reward: 80, credit_reward: 35, difficulty: 'Medium', duration_est_min: 60 },
+    { title: 'Revisar tolerâncias no CAD', description: 'Analisar e arrumar os mates e folgas do robô 3D', realm: 'Engineering', xp_reward: 120, credit_reward: 50, difficulty: 'Hard', duration_est_min: 90 },
+    { title: 'Desenhar suportes estéticos ou side-panels', description: 'Projeto de placas de acrílico/policarbonato para proteger e embelezar', realm: 'Engineering', xp_reward: 80, credit_reward: 35, difficulty: 'Medium', duration_est_min: 60 },
   ],
 };
 

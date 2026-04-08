@@ -24,13 +24,14 @@ export interface TeamMission {
 }
 
 export enum Realm {
-  Mind = "Mind",
-  Body = "Body",
-  Creation = "Creation",
-  Spirit = "Spirit",
+  TechnicalWriting = "TechnicalWriting",
+  Networking = "Networking",
+  Oratory = "Oratory",
+  Planning = "Planning",
   Creativity = "Creativity",
-  Finance = "Finance",
-  Social = "Social",
+  Programming = "Programming",
+  Engineering = "Engineering",
+  FirstCulture = "FirstCulture",
   Meta = "Meta",
 }
 
@@ -149,6 +150,7 @@ export interface UserState {
   shortTermGoals: string;
   emergencyGoals: string;
   sideQuests: string;
+  awardFocus: string;
 }
 
 export interface ActiveTimedQuest {

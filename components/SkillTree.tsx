@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
@@ -24,14 +24,15 @@ interface SkillTreeProps {
 }
 
 const realmConfig = {
-  [Realm.Mind]:       { icon: <BrainCircuit size={20} />, color: "text-accent-primary" },
-  [Realm.Body]:       { icon: <Heart size={20} />,        color: "text-accent-red" },
-  [Realm.Creation]:   { icon: <Zap size={20} />,          color: "text-accent-secondary" },
-  [Realm.Spirit]:     { icon: <Sparkles size={20} />,     color: "text-accent-tertiary" },
-  [Realm.Creativity]: { icon: <Sparkles size={20} />,     color: "text-accent-primary" },
-  [Realm.Finance]:    { icon: <Sparkles size={20} />,     color: "text-accent-green" },
-  [Realm.Social]:     { icon: <Sparkles size={20} />,     color: "text-accent-primary" },
-  [Realm.Meta]:       { icon: <Sparkles size={20} />,     color: "text-text-secondary" },
+  [Realm.TechnicalWriting]: { icon: <BookText size={20} />,    color: "text-slate-400" },
+  [Realm.Networking]:       { icon: <Users size={20} />,       color: "text-emerald-400" },
+  [Realm.Oratory]:          { icon: <Mic2 size={20} />,        color: "text-rose-400" },
+  [Realm.Planning]:         { icon: <ClipboardList size={20} />, color: "text-amber-400" },
+  [Realm.Creativity]:       { icon: <Zap size={20} />,         color: "text-violet-400" },
+  [Realm.Programming]:      { icon: <Code size={20} />,        color: "text-blue-400" },
+  [Realm.Engineering]:      { icon: <Hammer size={20} />,      color: "text-orange-400" },
+  [Realm.FirstCulture]:     { icon: <Globe size={20} />,       color: "text-cyan-400" },
+  [Realm.Meta]:             { icon: <Sparkles size={20} />,    color: "text-text-secondary" },
 };
 
 const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficulty; label: string; colorClass: string; onClick: () => void }> = ({ level, current, label, colorClass, onClick }) => {
@@ -200,22 +201,13 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const awardProfile = awardType ? getAwardProfile(awardType) : null;
   let radarData;
 
-  if (awardProfile && awardProfile.attributesPtBR && awardProfile.attributesPtBR.length === 6) {
-      const realmsMap = [Realm.Mind, Realm.Creation, Realm.Spirit, Realm.Mind, Realm.Creation, Realm.Spirit];
-      radarData = awardProfile.attributesPtBR.map((attr, index) => {
-          const r = realmsMap[index];
-          const skillsInRealm = skillsByRealm[r] || [];
-          const attrLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
-          const val = attrLevel + Math.floor(user.level_overall / 3);
-          return { subject: attr, A: val, fullMark: Math.max(20, val + 5) };
-      });
-  } else {
-      radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
-          const skillsInRealm = skillsByRealm[realm] || [];
-          const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
-          return { subject: t(`common:realm.${realm}`), A: totalLevel, fullMark: Math.max(20, totalLevel + 5) };
-      });
-  }
+  radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
+      const skillsInRealm = skillsByRealm[realm as Realm] || [];
+      const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
+      const subject = t(`common:realm.${realm}`);
+      const val = totalLevel + Math.floor(user.level_overall / 4); // Small bonus based on overall level
+      return { subject, A: val, fullMark: Math.max(30, val + 5) };
+  });
 
   const maxScore = Math.max(...radarData.map(d => d.A), 10);
   const chartDomain = [0, maxScore + (maxScore * 0.2)];

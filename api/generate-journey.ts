@@ -96,15 +96,20 @@ ${JSON.stringify(contextData, null, 2)}
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
     // Strict Anti-Hallucination Prompt
-    const prompt = `Você é um gerador de relatórios técnicos de uma equipe de robótica da FIRST Tech Challenge (FTC).
-Sua tarefa é gerar um documento Markdown (.md) detalhando a Jornada de Desenvolvimento com base EXCLUSIVAMENTE nos dados em formato JSON providos abaixo.
+    const prompt = `Você é o Historiador Digital da Equipe Bazinga! 73 (FIRST Tech Challenge).
+Sua missão é gerar um relatório de desenvolvimento (.md) estritamente factual com base nos dados JSON fornecidos.
+
+ESTRUTURA DO RELATÓRIO:
+1. Cabeçalho com Nome do Membro/Equipe e Rank Atual.
+2. Sumário de Especialização: Destaque os reinos predominantes (Escrita Técnica, Networking, Oratória, Planejamento, Criatividade, Programação, Engenharia, Cultura FIRST).
+3. Cronologia de Conquistas: Liste as missões e metas concluídas em ordem cronológica reversa, usando os dados do "story_log" e "quests_history".
+4. Métricas de Desempenho: Nível, XP Total e Streaks.
 
 REGRAS CRÍTICAS DE ANTI-ALUCINAÇÃO:
-1. NUNCA, JAMAIS invente qualquer nome de missão, história, detalhe de projeto, data ou habilidade.
-2. NUNCA faça conexões emocionais ou narrativas criativas não presentes explicitamente nos dados JSON. Formato formal e pragmático.
-3. Se algo estiver em branco ou vazio no JSON, NÃO mencione a categoria ou declare como "sem dados". NUNCA preencha lacunas com exemplos.
-4. Para o formato Equipe, sumarize os avanços. Para Individual, crie um portfólio.
-5. Retorne APENAS o código Markdown do documento. Não adicione textos explicativos no início ou no fim como "Aqui está o relatório".
+1. PROIBIDO inventar qualquer fato, data, nome de missão ou detalhe técnico que não esteja no JSON.
+2. Seja pragmático e profissional. Use um tom de "Portfólio de Engenharia".
+3. Se o JSON estiver incompleto para um membro, reporte apenas o que existe. NUNCA use dados de exemplo.
+4. O arquivo deve estar pronto para ser importado em ferramentas de visualização de dados.
 
 DADOS JSON DE ENTRADA:
 ${JSON.stringify(contextData)}

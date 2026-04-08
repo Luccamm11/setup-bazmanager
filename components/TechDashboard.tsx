@@ -380,9 +380,8 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                         </div>
                       )}
 
-                      {/* Realm Stats */}
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {Object.entries(member.stats).slice(0, 4).map(([realm, value]) => (
+                        {Object.entries(member.stats).map(([realm, value]) => (
                           <span key={realm} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 text-zinc-500">
                             {realm}: {value}
                           </span>

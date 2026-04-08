@@ -91,13 +91,14 @@ export const INITIAL_USER: User = {
   xp_total: 0,
   xpToNextLevel: 130,
   stats: {
-    [Realm.Mind]: 10,
-    [Realm.Body]: 10,
-    [Realm.Creation]: 10,
-    [Realm.Spirit]: 10,
-    [Realm.Creativity]: 5,
-    [Realm.Finance]: 5,
-    [Realm.Social]: 5,
+    [Realm.TechnicalWriting]: 10,
+    [Realm.Networking]: 10,
+    [Realm.Oratory]: 10,
+    [Realm.Planning]: 10,
+    [Realm.Creativity]: 10,
+    [Realm.Programming]: 10,
+    [Realm.Engineering]: 10,
+    [Realm.FirstCulture]: 10,
     [Realm.Meta]: 1,
   },
   wallet: {
@@ -126,7 +127,8 @@ export const INITIAL_USER: User = {
     longTermGoals: '',
     shortTermGoals: '',
     emergencyGoals: '',
-    sideQuests: ''
+    sideQuests: '',
+    awardFocus: ''
   }
 };
 
@@ -187,36 +189,44 @@ export const STORE_ITEMS: StoreItem[] = [
         effect: { type: 'REAL_WORLD_REWARD' }
     },
     {
-        id: 'focus_surge',
-        name: "Foco de Competição (Mind)",
-        description: "Ganha 2x XP em todas as missões de 'Mind' (Pesquisa, Estratégia, CAD) por 24h.",
+        id: 'programming_surge',
+        name: "Foco em Programação",
+        description: "Ganha 2x XP em todas as missões de 'Programming' por 24h.",
         cost: 250,
         category: 'Buff',
-        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Mind] }
-    },
-     {
-        id: 'body_surge',
-        name: "Foco de Construção (Body)",
-        description: "Ganha 2x XP em todas as missões de 'Body' (Montagem, CNC, Fabricação) por 24h.",
-        cost: 250,
-        category: 'Buff',
-        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Body] }
+        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Programming] }
     },
     {
-        id: 'creative_catalyst',
-        name: "Catalisador Criativo (Creation)",
-        description: "Ganha 2x XP em missões de 'Creation' (Ideação, Design Gráfico, Prototipagem) por 24h.",
+        id: 'engineering_surge',
+        name: "Foco em Engenharia",
+        description: "Ganha 2x XP em todas as missões de 'Engineering' por 24h.",
         cost: 250,
         category: 'Buff',
-        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Creation] }
+        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Engineering] }
     },
     {
-        id: 'spirit_surge',
-        name: "Espírito Bazinga! (Spirit)",
-        description: "Ganha 2x XP em missões de 'Spirit' (Apresentação, Comunicação, Ajuda ao próximo) por 24h.",
+        id: 'writing_catalyst',
+        name: "Catalisador de Escrita",
+        description: "Ganha 2x XP em missões de 'Technical Writing' por 24h.",
         cost: 250,
         category: 'Buff',
-        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Spirit] }
+        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.TechnicalWriting] }
+    },
+    {
+        id: 'networking_surge',
+        name: "Surto de Networking",
+        description: "Ganha 2x XP em missões de 'Networking' por 24h.",
+        cost: 250,
+        category: 'Buff',
+        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Networking] }
+    },
+    {
+        id: 'inspire_core_surge',
+        name: "Pack Inspire Award",
+        description: "Um pacote que dobra o XP de Engenharia, Programação e Escrita Técnica por 24h.",
+        cost: 650,
+        category: 'Buff',
+        effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Engineering, Realm.Programming, Realm.TechnicalWriting] }
     },
     {
         id: 'omni_boost',
