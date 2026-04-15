@@ -74,55 +74,55 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
     }
 
     if (!recommendations) {
-        return (
-             <div className="text-center min-h-[20rem] flex flex-col items-center justify-center">
-                <X className="w-12 h-12 text-accent-red mx-auto" />
-                <p className="mt-4 text-text-secondary">Falha ao gerar recomendações.</p>
-                <p className="text-sm text-text-muted">Por favor, tente novamente.</p>
-            </div>
-        )
+      return (
+        <div className="text-center min-h-[20rem] flex flex-col items-center justify-center">
+          <X className="w-12 h-12 text-accent-red mx-auto" />
+          <p className="mt-4 text-text-secondary">Falha ao gerar recomendações.</p>
+          <p className="text-sm text-text-muted">Por favor, tente novamente.</p>
+        </div>
+      )
     }
 
     const { skills, topics } = recommendations;
 
     return (
-        <div className="space-y-6">
-            {skills.length > 0 && (
-                <div>
-                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><GraduationCap className="mr-2"/>Novas Habilidades Recomendadas</h3>
-                    <div className="space-y-2 max-h-40 overflow-y-auto bg-background p-3 rounded-md">
-                        {skills.map((skill) => (
-                             <label key={skill.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
-                                <input type="checkbox" checked={selectedSkills.has(skill.name)} onChange={() => handleSkillToggle(skill.name)} className="h-5 w-5 rounded bg-background-tertiary border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1" />
-                                <div className="flex-1">
-                                    <p className="text-text-primary font-semibold">{skill.name} <span className="text-xs font-mono text-text-secondary">({skill.realm})</span></p>
-                                    <p className="text-xs text-text-secondary italic">"{skill.reason}"</p>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
-            {topics.length > 0 && (
-                 <div>
-                    <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><Lightbulb className="mr-2"/>Novos Tópicos Recomendados</h3>
-                    <div className="space-y-2 max-h-48 overflow-y-auto bg-background p-3 rounded-md">
-                        {topics.map((topic) => (
-                             <label key={topic.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
-                                <input type="checkbox" checked={selectedTopics.has(topic.name)} onChange={() => handleTopicToggle(topic.name)} className="h-5 w-5 rounded bg-background-tertiary border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1" />
-                                <div className="flex-1">
-                                    <p className="text-text-primary font-semibold">{topic.name}</p>
-                                    <p className="text-xs text-text-secondary flex items-center">
-                                        Para Habilidade: <span className="font-bold text-accent-primary ml-1.5">{userSkills[topic.skillId]?.name || 'Unknown Skill'}</span>
-                                    </p>
-                                    <p className="text-xs text-text-secondary italic mt-1">"{topic.reason}"</p>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+      <div className="space-y-6">
+        {skills.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><GraduationCap className="mr-2" />Novas Habilidades Recomendadas</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto bg-background p-3 rounded-md">
+              {skills.map((skill) => (
+                <label key={skill.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
+                  <input type="checkbox" checked={selectedSkills.has(skill.name)} onChange={() => handleSkillToggle(skill.name)} className="h-5 w-5 rounded bg-background-tertiary border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1" />
+                  <div className="flex-1">
+                    <p className="text-text-primary font-semibold">{skill.name} <span className="text-xs font-mono text-text-secondary">({skill.realm})</span></p>
+                    <p className="text-xs text-text-secondary italic">"{skill.reason}"</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+        {topics.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2 flex items-center"><Lightbulb className="mr-2" />Novos Tópicos Recomendados</h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto bg-background p-3 rounded-md">
+              {topics.map((topic) => (
+                <label key={topic.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
+                  <input type="checkbox" checked={selectedTopics.has(topic.name)} onChange={() => handleTopicToggle(topic.name)} className="h-5 w-5 rounded bg-background-tertiary border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1" />
+                  <div className="flex-1">
+                    <p className="text-text-primary font-semibold">{topic.name}</p>
+                    <p className="text-xs text-text-secondary flex items-center">
+                      Para Habilidade: <span className="font-bold text-accent-primary ml-1.5">{userSkills[topic.skillId]?.name || 'Unknown Skill'}</span>
+                    </p>
+                    <p className="text-xs text-text-secondary italic mt-1">"{topic.reason}"</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -142,7 +142,7 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
         </div>
 
         <div className="flex-grow overflow-y-auto pr-2">
-            {renderContent()}
+          {renderContent()}
         </div>
 
         <div className="pt-6 flex justify-end space-x-2 border-t border-border-color mt-4">
