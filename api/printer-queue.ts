@@ -18,7 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (method === 'POST') {
-    const { filename, userName } = req.body;
+    const { 
+      filename, 
+      userName, 
+      materialType, 
+      materialQuantity, 
+      color, 
+      brand, 
+      estimatedTime 
+    } = req.body;
 
     if (!filename || !userName) {
       return res.status(400).json({ error: 'Filename and userName are required.' });
@@ -28,12 +36,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const rawData = await redis.get(REDIS_KEY);
       const queue = rawData ? JSON.parse(rawData) : [];
 
+      // Check if there are any active (non-completed) items
+      const hasActiveItems = queue.some((item: any) => item.status !== 'completed');
+
       const newItem = {
         id: `print-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         filename,
         userName,
-        status: queue.length === 0 ? 'printing' : 'pending',
+        status: !hasActiveItems ? 'printing' : 'pending',
         createdAt: new Date().toISOString(),
+        materialType,
+        materialQuantity: Number(materialQuantity),
+        color,
+        brand,
+        estimatedTime,
       };
 
       queue.push(newItem);
@@ -47,19 +63,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (method === 'PUT') {
-    const { action, itemId } = req.body;
+    const { action, itemId, quality, hasProblem, problemDescription } = req.body;
 
     try {
       const rawData = await redis.get(REDIS_KEY);
       let queue = rawData ? JSON.parse(rawData) : [];
 
       if (action === 'complete') {
-          // Remove the completed item (it should be the one at the top)
+          // Find the item and mark it as completed with feedback
+          queue = queue.map((item: any) => {
+              if (item.id === itemId) {
+                  return {
+                      ...item,
+                      status: 'completed',
+                      quality: Number(quality),
+                      hasProblem: !!hasProblem,
+                      problemDescription: problemDescription || '',
+                      completedAt: new Date().toISOString()
+                  };
+              }
+              return item;
+          });
+          
+          // Set the next 'pending' one to 'printing'
+          const nextPendingIndex = queue.findIndex((item: any) => item.status === 'pending');
+          if (nextPendingIndex !== -1) {
+              queue[nextPendingIndex].status = 'printing';
+          }
+      } else if (action === 'delete') {
           queue = queue.filter((item: any) => item.id !== itemId);
           
-          // Set the next one to 'printing'
-          if (queue.length > 0) {
-              queue[0].status = 'printing';
+          // If we deleted the printing one, start the next pending
+          const stillHasPrinting = queue.some((item: any) => item.status === 'printing');
+          if (!stillHasPrinting) {
+              const nextPendingIndex = queue.findIndex((item: any) => item.status === 'pending');
+              if (nextPendingIndex !== -1) {
+                  queue[nextPendingIndex].status = 'printing';
+              }
           }
       }
 

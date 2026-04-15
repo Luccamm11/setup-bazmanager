@@ -298,4 +298,13 @@ export interface PrinterQueueItem {
     userName: string;
     status: 'pending' | 'printing' | 'completed';
     createdAt: string;
+    materialType?: 'ABS' | 'PLA' | 'TPU' | 'PETG';
+    materialQuantity?: number; // em gramas
+    color?: string;
+    brand?: string;
+    estimatedTime?: string; // ex: "2h 30m"
+    quality?: number; // 0-10
+    hasProblem?: boolean;
+    problemDescription?: string;
+    completedAt?: string;
 }
