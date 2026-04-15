@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, WeeklyProgress, ActivityData } from '../types';
-import Analytics from './Analytics';
+import BLeedProfileDashboard from './analytics/BLeedProfileDashboard';
 import { Users, User as UserIcon, Search, Target, LayoutDashboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import TeamSummaryDashboard from './analytics/TeamSummaryDashboard';
@@ -121,7 +121,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                     className="min-h-[500px]"
                 >
                     {activeTab === 'personal' && (
-                        <Analytics 
+                        <BLeedProfileDashboard 
                             user={user} 
                             weeklyProgress={weeklyProgress} 
                             activityLog={activityLog} 

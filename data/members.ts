@@ -14,8 +14,14 @@ export type TeamRole = 'member' | 'technician';
 export interface MemberProfile {
   username: string;
   displayName: string;
+  fullName?: string;
   role: TeamRole;
-  awardFocus: AwardType | null; // null for technicians with no specific focus
+  grade?: string;
+  seasons?: string[];
+  entryDate?: string;
+  birthDate?: string;
+  bio?: string;
+  awardFocus: AwardType | null; 
   coreMission: string;
   seasonGoal: string;
   shortTermGoal: string;
@@ -25,7 +31,13 @@ export interface MemberProfile {
 const JONAS: MemberProfile = {
   username: 'Jonas',
   displayName: 'Jonas',
+  fullName: 'Jonas de Souza',
   role: 'technician',
+  grade: 'Técnico / Mentor',
+  seasons: ['Centerstage', 'PowerPlay', 'Freight Frenzy'],
+  entryDate: '15/05/2021',
+  birthDate: '10/02/1990',
+  bio: 'Mentor apaixonado por robótica e focado em desenvolver líderes na Bazinga! 73.',
   awardFocus: null,
   coreMission: 'Orientar o desenvolvimento técnico e humano dos membros da Bazinga!, garantindo alinhamento com a metodologia B-LEED',
   seasonGoal: 'Conduzir a equipe a uma performance competitiva e formativa durante toda a temporada FTC',
@@ -46,7 +58,13 @@ const GUSTAVO: MemberProfile = {
 const LUCCA: MemberProfile = {
   username: 'Lucca',
   displayName: 'Lucca',
+  fullName: 'Lucca Marques Mello',
   role: 'member',
+  grade: '3º Ano Médio',
+  seasons: ['Centerstage', 'PowerPlay'],
+  entryDate: '10/02/2022',
+  birthDate: '05/08/2007',
+  bio: 'Focado em sustentabilidade e eficiência mecânica. Busco transformar problemas em soluções inovadoras.',
   awardFocus: 'Sustentabilidade',
   coreMission: 'Garantir a sustentabilidade operacional e financeira da Bazinga! ao longo de toda a temporada',
   seasonGoal: 'Implementar um sistema de organização interna e cronograma de atividades que funcione de forma autônoma',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ALL_MEMBERS } from '../../data/members';
-import Analytics from '../Analytics';
+import BLeedProfileDashboard from './BLeedProfileDashboard';
 import { Search, Loader2, ArrowLeft, ShieldAlert, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -65,7 +65,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentTech }) => {
                 </div>
 
                 <div className="relative">
-                    <Analytics 
+                    <BLeedProfileDashboard 
                         user={selectedMemberData.user}
                         weeklyProgress={selectedMemberData.weeklyProgress || []}
                         activityLog={selectedMemberData.activityLog || []}

@@ -162,7 +162,13 @@ export interface ActiveTimedQuest {
 
 export interface User {
   name: string;
+  fullName?: string;
   role?: string;
+  grade?: string;        // Série (ex: 3º Ano Médio)
+  seasons?: string[];    // Temporadas (ex: PowerPlay, Centerstage)
+  entryDate?: string;    // Data de entrada na equipe
+  birthDate?: string;    // Data de nascimento
+  bio?: string;          // Breve descrição / Quem sou eu
   awardFocus?: string | null;
   rank: string;
   level_overall: number;
