@@ -15,6 +15,7 @@
   "accessRestricted": "Acesso restrito. Autentique-se para sincronizar seus dados.",
   "authenticate": "Autenticar",
   "user": "Usuário",
+  "you": "Você",
   "authorizedTeam": "Equipe Autorizada",
   "teamMembersCount_one": "1 MEMBRO AUTORIZADO",
   "teamMembersCount_other": "{{count}} MEMBROS AUTORIZADOS",
@@ -54,7 +55,9 @@
     "tech_dashboard": "Painel do Técnico",
     "tech_dashboard_desc": "Gerencie missões e membros",
     "journey": "Jornada B-LEED",
-    "journey_desc": "Exporte seu Portfólio (B-LEED)"
+    "journey_desc": "Exporte seu Portfólio (B-LEED)",
+    "printer_queue": "Fila de Impressora 3D",
+    "printer_queue_desc": "Gerencie a fila de uso da nossa impressora 3D"
   },
   "awards": {
     "Sustentabilidade": "Sustentabilidade",
@@ -136,5 +139,22 @@
     "hours": "Horas",
     "minutes": "Minutos",
     "seconds": "Segundos"
+  },
+  "printer": {
+    "title": "Fila de Impressão 3D",
+    "desc": "Gerencie a ordem de uso das nossas impressoras para as peças da Bazinga!.",
+    "add_to_queue": "Entrar na Fila",
+    "filename_placeholder": "Ex: Suporte_Bazinga_v2.stl",
+    "confirm": "Confirmar",
+    "instruction": "Instrução: Envie o arquivo para o Jonas no WhatsApp e insira o nome acima.",
+    "printing_now": "Imprimindo Agora",
+    "responsible": "Responsável",
+    "finish": "Finalizar",
+    "standby": "Impressora em Standby",
+    "standby_desc": "Nenhum projeto está sendo impresso no momento. Entre na fila e peça o OK do Jonas!",
+    "next_in_queue": "Próximos na Fila",
+    "empty_queue": "Nenhum pedido pendente.",
+    "tip_title": "Dica B-LEED",
+    "tip_desc": "O item Prioridade 3D na Loja permite pular para o topo da fila instantaneamente!"
   }
 }

@@ -285,3 +285,11 @@ export interface AiRecommendations {
 }
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+
+export interface PrinterQueueItem {
+    id: string;
+    filename: string;
+    userName: string;
+    status: 'pending' | 'printing' | 'completed';
+    createdAt: string;
+}

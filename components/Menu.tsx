@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
@@ -19,6 +19,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
     ] : []),
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
+    { view: 'printer_queue' as View, label: t('nav.printer_queue', 'Fila de Impressão 3D'), desc: t('nav.printer_queue_desc', 'Gerencie a fila de uso da nossa impressora 3D'), icon: Printer },
     { view: 'timer',            label: t('nav.timer'),            desc: t('nav.timer'),            icon: Timer },
     { view: 'chatbot',          label: t('nav.chatbot'),          desc: t('nav.chatbot'),          icon: BotMessageSquare },
     { view: 'system_mechanics', label: t('nav.system_mechanics'), desc: t('nav.system_mechanics'), icon: Dna },

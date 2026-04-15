@@ -40,6 +40,7 @@ import RecommendationsModal from './components/RecommendationsModal';
 import NameEntryModal from './components/NameEntryModal';
 import TechDashboard from './components/TechDashboard';
 import TeamMissions from './components/TeamMissions';
+import PrinterQueue from './components/PrinterQueue';
 import CreateTeamMissionModal from './components/CreateTeamMissionModal';
 import JourneyTab from './components/JourneyTab';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
@@ -48,7 +49,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey';
+type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -1817,6 +1818,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'badges': return <Badges user={user} allBadges={allBadges} onAddBadge={() => setIsBadgeModalOpen(true)} onEditBadge={(badge) => { setEditingBadge(badge); setIsBadgeModalOpen(true); }} onDeleteBadge={handleDeleteBadge} />;
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
+      case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
       case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
