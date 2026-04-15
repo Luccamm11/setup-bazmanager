@@ -54,7 +54,7 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
         `}</style>
         <div className="flex items-center space-x-3 mb-2">
             <User className="w-6 h-6 text-text-secondary" />
-            <h2 className="text-xl font-semibold text-text-primary">Perfil B-LEAD</h2>
+            <h2 className="text-xl font-semibold text-text-primary">Perfil B-LEED</h2>
         </div>
         <p className="text-sm text-text-secondary mb-6 ml-9">Defina sua função e metas dentro da equipe Bazinga! para que a IA gere recomendações alinhadas ao seu desenvolvimento.</p>
         
@@ -77,7 +77,7 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
               </select>
             </div>
             <StateTextarea 
-                label="Função Principal / B-LEAD"
+                label="Função Principal / B-LEED"
                 value={state.coreMission}
                 onChange={handleChange('coreMission')}
                 rows={3}
@@ -120,7 +120,7 @@ const MyState: React.FC<MyStateProps> = ({ initialState, onSave }) => {
                 className="flex items-center space-x-2 text-sm font-semibold px-4 py-2 rounded-lg bg-border-color text-text-primary hover:bg-opacity-80 disabled:bg-border-color/50 disabled:text-text-muted disabled:cursor-not-allowed"
             >
                 <Save size={16}/>
-                <span>Salvar Perfil (B-LEAD)</span>
+                <span>Salvar Perfil (B-LEED)</span>
             </button>
         </div>
     </div>

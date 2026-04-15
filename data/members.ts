@@ -27,7 +27,7 @@ const JONAS: MemberProfile = {
   displayName: 'Jonas',
   role: 'technician',
   awardFocus: null,
-  coreMission: 'Orientar o desenvolvimento técnico e humano dos membros da Bazinga!, garantindo alinhamento com a metodologia B-LEAD',
+  coreMission: 'Orientar o desenvolvimento técnico e humano dos membros da Bazinga!, garantindo alinhamento com a metodologia B-LEED',
   seasonGoal: 'Conduzir a equipe a uma performance competitiva e formativa durante toda a temporada FTC',
   shortTermGoal: 'Estruturar o plano de desenvolvimento individual de cada membro para os próximos 2 meses',
 };

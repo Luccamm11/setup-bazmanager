@@ -85,7 +85,7 @@ const JourneyTab: React.FC<JourneyTabProps> = ({ username, userRole }) => {
                 <h3 className="text-2xl font-black text-white">Jornada da Equipe</h3>
               </div>
               <p className="text-text-secondary mb-6 text-sm leading-relaxed">
-                Agrega o desenvolvimento e XP de todos os 12 membros da equipe (B-LEAD), exportando uma visão geral do crescimento técnico e do portfólio da robótica.
+                Agrega o desenvolvimento e XP de todos os 12 membros da equipe (B-LEED), exportando uma visão geral do crescimento técnico e do portfólio da robótica.
               </p>
             </div>
             

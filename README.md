@@ -1,6 +1,6 @@
 # BazManager — Bazinga! 73 FTC
 
-> Plataforma de desenvolvimento de membros para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEAD**.
+> Plataforma de desenvolvimento de membros para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/LuccaHP/Bazinga-LevelUp)
 
@@ -17,7 +17,7 @@ Este projeto foi adaptado do **LevelUp: AI Awakening** (criado por [Oniondas](ht
 - Desenvolvimento de competências por prêmio FIRST
 - Missões individuais e coletivas da equipe
 - Painel do técnico para atribuição de tarefas
-- Perfis pré-configurados para cada membro
+- Perfis pré-configurados para cada membro (B-LEED)
 
 ---
 
@@ -208,7 +208,7 @@ Quando um membro faz login pela primeira vez:
 Para adaptar o sistema para uma nova temporada FTC:
 
 1. **Atualizar membros:** Edite `data/members.ts` com novos membros e prêmios foco
-2. **Atualizar perfis:** Ajuste `data/awardProfiles.ts` com skills e metas relevantes
+2. **Perfis B-LEED Granulares:** Edite `data/awardProfiles.ts` com a nova base técnica.
 3. **Atualizar arcos:** Edite os arcos em `constants.ts` (Kickoff, Competition Sprint, etc.)
 4. **Atualizar login API:** Sincronize `api/login.ts` com a nova lista de membros
 5. **Limpar dados:** Opcionalmente, limpe as chaves Redis para resetar o progresso
