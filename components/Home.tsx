@@ -104,7 +104,7 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
 };
 
 
-const Dashboard: React.FC<DashboardProps> = (props) => {
+const Home: React.FC<DashboardProps> = (props) => {
   const { user, quests, activeArc, onCompleteQuest, onGenerateQuests, isLoading, error, onOpenLootbox, isLootboxClaimed, onAddQuestClick, majorGoals, onAddMajorGoal, onBulkAddMajorGoal, onEditMajorGoal, onCompleteMajorGoal, onSyllabusBreakdown, currentDate } = props;
   const { t } = useTranslation(['dashboard', 'common']);
 
@@ -218,4 +218,4 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   );
 };
 
-export default Dashboard;
+export default Home;

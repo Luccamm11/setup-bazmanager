@@ -6,7 +6,8 @@ import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, 
 import { getMemberByUsername } from './data/members';
 import { getInitialUserData } from './data/initialData';
 import Header from './components/Header';
-import Dashboard from './components/Dashboard';
+import Home from './components/Home';
+import Dashboard from './components/DashboardTab';
 import SkillTree from './components/SkillTree';
 import StoryLog from './components/StoryLog';
 import Analytics from './components/Analytics';
@@ -49,7 +50,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText } from 'lucide-react';
 
-type View = 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -229,7 +230,7 @@ const App: React.FC = () => {
   const [allArcs, setAllArcs] = useState<Arc[]>(ALL_ARCS);
   const [activeArcId, setActiveArcId] = useState<string | null>(INITIAL_USER.activeArc?.id || null);
   const [allBadges, setAllBadges] = useState<Badge[]>(BADGE_DEFINITIONS);
-  const [view, setView] = useState<View>('dashboard');
+  const [view, setView] = useState<View>('home');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingQuests, setIsLoadingQuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1804,7 +1805,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
   const renderView = () => {
     switch(view) {
-      case 'dashboard': return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
+      case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
+      case 'dashboard': return <Dashboard user={user} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
       case 'skill_tree': return <SkillTree user={user} onUpdateTopicDifficulty={handleUpdateTopicDifficulty} onAddSkill={() => setIsSkillModalOpen(true)} onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} onDeleteSkill={handleDeleteSkill} onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} onDeleteTopic={handleDeleteTopic} onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} onUpdateSkillPriority={handleUpdateSkillPriority} onToggleSkillActive={handleToggleSkillActive} onGenerateRecommendations={handleGenerateRecommendations} />;
       case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} completedMajorGoals={user.completedMajorGoals || []} onJournalSubmit={handleJournalSubmit} />;
       case 'inventory': return <Inventory inventory={user.inventory} storeItems={storeItems} onUseItem={handleUseItem} />;
@@ -1833,7 +1835,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   };
   
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
-      { view: 'dashboard', label: t('common:nav.dashboard'), icon: LayoutDashboard },
+      { view: 'home', label: t('common:nav.home', 'Início'), icon: LayoutDashboard },
       { view: 'skill_tree', label: t('common:nav.skill_tree'), icon: TreeDeciduous },
       { view: 'journey', label: t('common:nav.journey'), icon: ScrollText },
       { view: 'system_mechanics', label: t('common:nav.system_mechanics'), icon: Dna },

@@ -36,8 +36,11 @@
     "inventory_empty_desc": "Seu inventário está vazio no momento. Visite a Loja para adquirir buffs, utilitários e recompensas usando seus créditos."
   },
   "nav": {
+    "home": "Home",
     "dashboard": "Dashboard",
+    "dashboard_desc": "Visualize seu progresso e as métricas da equipe",
     "skill_tree": "Árvore de Habilidades",
+    "old_analytics": "Análises Antigas",
     "chatbot": "Mentor IA",
     "inventory": "Inventário",
     "more": "Mais",

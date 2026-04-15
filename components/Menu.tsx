@@ -3,7 +3,7 @@ import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, B
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -25,7 +25,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     { view: 'system_mechanics', label: t('nav.system_mechanics'), desc: t('nav.system_mechanics'), icon: Dna },
     { view: 'store',            label: t('nav.store'),            desc: t('nav.store'),            icon: LucideStore },
     { view: 'staking',          label: t('nav.staking'),          desc: t('nav.staking'),          icon: Landmark },
-    { view: 'analytics',        label: t('nav.analytics'),        desc: t('nav.analytics'),        icon: BarChart2 },
+    { view: 'dashboard',        label: t('nav.dashboard', 'Dashboard'), desc: t('nav.dashboard_desc', 'Visualize progresso pessoal e da equipe'), icon: BarChart2 },
     { view: 'story_log',        label: t('nav.story_log'),        desc: t('nav.story_log'),        icon: BookOpen },
     { view: 'badges',           label: t('nav.badges'),           desc: t('nav.badges'),           icon: Award },
     { view: 'journal',          label: t('nav.journal'),          desc: t('nav.journal'),          icon: BookText },

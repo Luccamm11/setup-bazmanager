@@ -46,7 +46,9 @@
     "inventory_empty_desc": "Your inventory is currently empty. Visit the System Store to acquire buffs, utilities, and rewards using your credits."
   },
   "nav": {
+    "home": "Home",
     "dashboard": "Dashboard",
+    "dashboard_desc": "View personal and team performance metrics",
     "skill_tree": "Skill Tree",
     "chatbot": "AI Mentor",
     "inventory": "Inventory",

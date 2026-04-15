@@ -49,6 +49,12 @@ Documentar faz parte do processo de aprender no B-LEED.
 - **Registro de Evolução:** Facilita o acompanhamento do seu crescimento histórico.
 - **Exportação para Portfólio:** Garante que a **Evolução Coletiva** seja visível no nosso portfólio oficial.
 
+### 4. 🖨️ Fila de Impressão 3D (Novo!)
+Integrada para facilitar o fluxo de fabricação do robô.
+- **Gestão FIFO:** Organize quem imprime primeiro de forma justa e transparente.
+- **Sincronização com WhatsApp:** Envie o arquivo para o técnico e registre o nome no sistema para entrar na fila.
+- **Prioridade Estratégica:** Use seus créditos da Loja para subir no topo da fila através do item "Prioridade 3D".
+
 ---
 
 ## 📈 Como isso aumenta a Produtividade?
