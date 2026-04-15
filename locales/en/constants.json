@@ -20,9 +20,9 @@
     }
   },
   "store_items": {
-    "coffee_reward": {
-      "name": "Coffee Reward",
-      "description": "Permission to buy a fancy coffee from your favorite cafe."
+    "3d_priority": {
+      "name": "3D Printer Priority",
+      "description": "Jump to the top of the 3D printing queue for your personal project or test part."
     },
     "programming_surge": {
       "name": "Programming Surge",
@@ -57,7 +57,7 @@
       "description": "Instantly receive a new set of daily quests from the System."
     },
     "instant_streak": {
-      "name": "Instant 3-Day Streak",
+      "name": "Instant Streak",
       "description": "Instantly sets your daily streak to 3 days, activating the streak bonus."
     }
   },

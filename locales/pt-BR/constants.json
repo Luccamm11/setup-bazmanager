@@ -20,9 +20,9 @@
     }
   },
   "store_items": {
-    "coffee_reward": {
-      "name": "Recompensa do Café",
-      "description": "Permissão para comprar um café especial no seu café favorito."
+    "3d_priority": {
+      "name": "Prioridade na Impressora 3D",
+      "description": "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste."
     },
     "programming_surge": {
       "name": "Surto de Programação",
@@ -53,11 +53,11 @@
       "description": "Protege automaticamente sua sequência diária por um dia perdido."
     },
     "quest_reroll": {
-      "name": "Re-rolar Missões",
+      "name": "Re-rolagem de Missões",
       "description": "Receba instantaneamente um novo conjunto de missões diárias do Sistema."
     },
     "instant_streak": {
-      "name": "Sequência Instantânea de 3 Dias",
+      "name": "Sequência Instantânea",
       "description": "Define instantaneamente sua sequência diária para 3 dias, ativando o bônus de sequência."
     }
   },

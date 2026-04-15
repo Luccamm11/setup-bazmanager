@@ -173,26 +173,10 @@ export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [];
 
 export const STORE_ITEMS: StoreItem[] = [
     {
-        id: 'coffee_reward',
-        name: "Cafézinho ou Lanche",
-        description: "Permissão para comprar um café/lanche especial durante o encontro.",
-        cost: 100,
-        category: 'Reward',
-        effect: { type: 'REAL_WORLD_REWARD' }
-    },
-    {
         id: '3d_priority',
         name: "Prioridade na Impressora 3D",
         description: "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste.",
         cost: 300,
-        category: 'Reward',
-        effect: { type: 'REAL_WORLD_REWARD' }
-    },
-    {
-        id: 'playlist_control',
-        name: "DJ do Laboratório",
-        description: "Direito exclusivo de escolher a playlist de músicas do laboratório por um encontro inteiro.",
-        cost: 150,
         category: 'Reward',
         effect: { type: 'REAL_WORLD_REWARD' }
     },
@@ -259,6 +243,14 @@ export const STORE_ITEMS: StoreItem[] = [
         cost: 150,
         category: 'Utility',
         effect: { type: 'QUEST_REROLL' }
+    },
+    {
+        id: 'instant_streak',
+        name: "Sequência Instantânea",
+        description: "Sua sequência diária pula para 3 dias, ativando bônus imediatamente.",
+        cost: 400,
+        category: 'Utility',
+        effect: { type: 'INSTANT_STREAK' } 
     }
 ];
 
