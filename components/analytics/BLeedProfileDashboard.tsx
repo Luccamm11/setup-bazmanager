@@ -234,7 +234,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                              <div key={key} className="space-y-1">
                                                  <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-text-secondary">
                                                      <span>{t(`common:realm.${key}`)}</span>
-                                                     <span>{value}%</span>
+                                                     <span>{value || 0}%</span>
                                                  </div>
                                                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                                      <motion.div 
@@ -260,7 +260,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                 <div key={realm} className="space-y-2">
                                     <div className="flex justify-between items-end">
                                         <span className="text-xs font-bold text-text-secondary">{t(`common:realm.${realm}`)}</span>
-                                        <span className="text-[10px] font-black text-white">{val} pts</span>
+                                        <span className="text-[10px] font-black text-white">{val || 0} pts</span>
                                     </div>
                                     <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                                         <motion.div 
