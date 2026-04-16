@@ -44,6 +44,7 @@ import TeamMissions from './components/TeamMissions';
 import PrinterQueue from './components/PrinterQueue';
 import CreateTeamMissionModal from './components/CreateTeamMissionModal';
 import JourneyTab from './components/JourneyTab';
+import AttendanceDashboard from './components/tech/AttendanceDashboard';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -1822,6 +1823,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
       case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'attendance': return userRole === 'technician' ? <AttendanceDashboard /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;

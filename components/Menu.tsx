@@ -3,7 +3,7 @@ import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, B
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -17,6 +17,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
     ...(userRole === 'technician' ? [
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
+      { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },
     ] : []),
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
     { view: 'printer_queue' as View, label: t('nav.printer_queue', 'Fila de Impressão 3D'), desc: t('nav.printer_queue_desc', 'Gerencie a fila de uso da nossa impressora 3D'), icon: Printer },
