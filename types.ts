@@ -33,6 +33,12 @@ export enum Realm {
   Engineering = "Engineering",
   FirstCulture = "FirstCulture",
   Meta = "Meta",
+  Mind = "Mind",
+  Body = "Body",
+  Creation = "Creation",
+  Spirit = "Spirit",
+  Finance = "Finance",
+  Social = "Social",
 }
 
 export enum Difficulty {

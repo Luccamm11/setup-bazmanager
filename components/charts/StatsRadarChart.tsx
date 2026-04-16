@@ -7,14 +7,14 @@ interface StatsRadarChartProps {
 }
 
 const realmOrder: Realm[] = [
-  Realm.Programming, 
-  Realm.Engineering, 
-  Realm.TechnicalWriting, 
-  Realm.Networking, 
-  Realm.Planning, 
-  Realm.Oratory, 
-  Realm.Creativity, 
-  Realm.FirstCulture
+  Realm.Mind,
+  Realm.Body,
+  Realm.Creation,
+  Realm.Spirit,
+  Realm.Creativity,
+  Realm.Finance,
+  Realm.Social,
+  Realm.Meta
 ];
 
 const realmColors: { [key in Realm]: string } = {
@@ -27,6 +27,12 @@ const realmColors: { [key in Realm]: string } = {
   [Realm.Creativity]: "#BC8CFF",
   [Realm.FirstCulture]: "#38D39F",
   [Realm.Meta]: "#8B949E",
+  [Realm.Mind]: "#58A6FF",
+  [Realm.Body]: "#F85149",
+  [Realm.Creation]: "#E3B341",
+  [Realm.Spirit]: "#BC8CFF",
+  [Realm.Finance]: "#3FB950",
+  [Realm.Social]: "#38D39F",
 };
 
 const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats }) => {

@@ -208,7 +208,6 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                     ))}
                 </div>
             )}
-            )}
 
             {/* ADD LEGACY MODAL */}
             <AnimatePresence>

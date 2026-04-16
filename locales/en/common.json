@@ -89,7 +89,13 @@
     "Programming": "Programming",
     "Engineering": "Engineering",
     "FirstCulture": "FIRST Culture",
-    "Meta": "Synergy"
+    "Meta": "Synergy",
+    "Mind": "Cognition",
+    "Body": "Execution",
+    "Creation": "Construction",
+    "Spirit": "Engagement",
+    "Finance": "Resources",
+    "Social": "Social"
   },
   "difficulty": {
     "Easy": "Easy",

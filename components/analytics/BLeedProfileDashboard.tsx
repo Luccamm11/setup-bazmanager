@@ -31,7 +31,20 @@ interface BLeedProfileDashboardProps {
     onBack?: () => void;
 }
 
+const realmOrder: Realm[] = [
+    Realm.Mind,
+    Realm.Body,
+    Realm.Creation,
+    Realm.Spirit,
+    Realm.Creativity,
+    Realm.Finance,
+    Realm.Social,
+    Realm.Meta
+];
+
 const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({ 
+    user,
+    weeklyProgress = [],
     activityLog = [], 
     currentDate,
     onUpdateUser,
@@ -83,7 +96,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                 bio: setupData.bio,
                 profileSetup: true
             };
-            await onUpdateUser(updatedUser);
+            if (onUpdateUser) {
+                await onUpdateUser(updatedUser);
+            }
             setIsSetupOpen(false);
         } catch (error) {
             console.error('Error saving profile setup:', error);
@@ -241,8 +256,28 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
 
                 {/* Right: Charts & Focus */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Award Focus or Legacy Type Details */}
-                    {isLegacy ? (
+                    {/* Award Focus - Shared for all if present */}
+                    {visibility.awardFocus && (user.awardFocus || !isLegacy) && (
+                        <div className="bg-gradient-to-r from-accent-tertiary/20 to-accent-primary/20 border border-accent-tertiary/30 p-8 rounded-[2rem] shadow-glass relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform">
+                                <Trophy size={80} />
+                            </div>
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-black text-accent-tertiary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                                    <Dna size={14} /> {t('analytics:profile.awardFocus')}
+                                </p>
+                                <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase underline decoration-accent-tertiary underline-offset-8 decoration-4">
+                                    {user.awardFocus || t('analytics:profile.award_focus_default')}
+                                </h3>
+                                <p className="text-text-secondary mt-4 text-sm font-medium">
+                                    {t('analytics:profile.award_focus_description', { focus: user.awardFocus || t('analytics:profile.award_focus_default') })}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Legacy Specific Details - Added content for Mentors/Former */}
+                    {isLegacy && (
                         <div className={`p-8 rounded-[2.5rem] border shadow-glass relative overflow-hidden group ${user.type === 'mentor' ? 'bg-accent-tertiary/10 border-accent-tertiary/30' : 'bg-accent-red/10 border-accent-red/30'}`}>
                             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
                                 {user.type === 'mentor' ? <GraduationCap size={120} /> : <History size={120} />}
@@ -252,7 +287,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2 ${user.type === 'mentor' ? 'text-accent-tertiary' : 'text-accent-red'}`}>
                                         <Info size={14} /> {user.type === 'mentor' ? 'Contribuição do Mentor' : 'Histórico na Equipe'}
                                     </p>
-                                    <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase leading-tight">
+                                    <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-tight">
                                         {user.howHelps || user.howHeHelped || 'Informação não fornecida.'}
                                     </h3>
                                 </div>
@@ -267,99 +302,83 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                 )}
                             </div>
                         </div>
-                    ) : (
-                        visibility.awardFocus && (
-                            <div className="bg-gradient-to-r from-accent-tertiary/20 to-accent-primary/20 border border-accent-tertiary/30 p-8 rounded-[2rem] shadow-glass relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform">
-                                    <Trophy size={80} />
-                                </div>
-                                <div className="relative z-10">
-                                    <p className="text-[10px] font-black text-accent-tertiary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-                                        <Dna size={14} /> {t('analytics:profile.awardFocus')}
-                                    </p>
-                                    <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase underline decoration-accent-tertiary underline-offset-8 decoration-4">
-                                        {user.awardFocus || t('analytics:profile.award_focus_default')}
+                    )}
+
+                    {/* Graphs and Attributes - Shown for everyone now as requested */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {visibility.radarChart && (
+                            <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
+                                        <History size={16} className="text-accent-primary" /> {t('analytics:profile.radarChart')}
                                     </h3>
-                                    <p className="text-text-secondary mt-4 text-sm font-medium">
-                                        {t('analytics:profile.award_focus_description', { focus: user.awardFocus || t('analytics:profile.award_focus_default') })}
-                                    </p>
+                                </div>
+                                <div className="h-[250px] flex items-center justify-center p-4">
+                                    <StatsRadarChart stats={user.stats} />
                                 </div>
                             </div>
-                        )
-                    )}
+                        )}
 
-                    {/* Graphs and Attributes - Only for Active Members */}
-                    {!isLegacy && (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {visibility.radarChart && (
-                                    <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
-                                                <History size={16} className="text-accent-primary" /> {t('analytics:profile.radarChart')}
-                                            </h3>
-                                        </div>
-                                        <div className="h-[250px] flex items-center justify-center p-4">
-                                            <StatsRadarChart stats={user.stats} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {visibility.barChart && (
-                                    <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
-                                                <BarChart3 size={16} className="text-accent-secondary" /> {t('analytics:profile.barChart')}
-                                            </h3>
-                                        </div>
-                                        <div className="h-[250px] flex items-center justify-center p-4 overflow-hidden">
-                                            <div className="w-full space-y-3 overflow-y-auto pr-2 max-h-full scrollbar-none">
-                                                {Object.entries(user.stats || {}).map(([key, value], index) => (
-                                                    <div key={key} className="space-y-1">
-                                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-text-secondary">
-                                                            <span>{t(`common:realm.${key}`)}</span>
-                                                            <span>{(value as number) || 0}%</span>
-                                                        </div>
-                                                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                                            <motion.div 
-                                                                initial={{ width: 0 }}
-                                                                animate={{ width: `${(value as number) || 0}%` }}
-                                                                transition={{ duration: 1, delay: index * 0.1 }}
-                                                                className="h-full bg-accent-secondary shadow-glow-secondary"
-                                                            />
-                                                        </div>
+                        {visibility.barChart && (
+                            <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
+                                        <BarChart3 size={16} className="text-accent-secondary" /> {t('analytics:profile.barChart')}
+                                    </h3>
+                                </div>
+                                <div className="h-[250px] flex items-center justify-center p-4 overflow-hidden">
+                                    <div className="w-full space-y-3 overflow-y-auto pr-2 max-h-full scrollbar-none">
+                                        {realmOrder.map((realm, index) => {
+                                            const value = user.stats ? (user.stats as any)[realm] : 0;
+                                            return (
+                                                <div key={realm} className="space-y-1">
+                                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-text-secondary">
+                                                        <span>{t(`common:realm.${realm}`)}</span>
+                                                        <span>{value || 0}%</span>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div 
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${value || 0}%` }}
+                                                            transition={{ duration: 1, delay: index * 0.1 }}
+                                                            className="h-full bg-accent-secondary shadow-glow-secondary"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10">
-                                <h4 className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em] mb-6">{t('analytics:profile.bleed_attributes')}</h4>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {Object.entries(user.stats || {}).map(([realm, val]: [string, any], index) => (
-                                        <div key={realm} className="space-y-2">
-                                            <div className="flex justify-between items-end">
-                                                <span className="text-xs font-bold text-text-secondary">{t(`common:realm.${realm}`)}</span>
-                                                <span className="text-[10px] font-black text-white">{val || 0} pts</span>
-                                            </div>
-                                            <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                                                <motion.div 
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${Math.min(val, 100)}%` }}
-                                                    transition={{ duration: 1, delay: index * 0.1 }}
-                                                    className="h-full bg-accent-secondary"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
-                        </>
-                    )}
+                        )}
+                    </div>
+
+                    <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10">
+                        <h4 className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em] mb-6">{t('analytics:profile.bleed_attributes')}</h4>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            {realmOrder.map((realm, index) => {
+                                const val = user.stats ? (user.stats as any)[realm] : 0;
+                                return (
+                                    <div key={realm} className="space-y-2">
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs font-bold text-text-secondary">{t(`common:realm.${realm}`)}</span>
+                                            <span className="text-[10px] font-black text-white">{val || 0} pts</span>
+                                        </div>
+                                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                                            <motion.div 
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${Math.min(val as number, 100)}%` }}
+                                                transition={{ duration: 1, delay: index * 0.1 }}
+                                                className="h-full bg-accent-secondary"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
+            </div>
             </div>
 
             {/* FIRST TIME SETUP MODAL */}
