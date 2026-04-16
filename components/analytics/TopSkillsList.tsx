@@ -1,6 +1,7 @@
 import React from 'react';
-import { Skill, Realm } from '../../types';
 import { BrainCircuit, Heart, Zap, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Realm, Skill } from '../../types';
 
 const realmConfig = {
   [Realm.Mind]: { icon: <BrainCircuit size={18} />, color: "bg-accent-primary" },
@@ -18,6 +19,7 @@ interface TopSkillsListProps {
 }
 
 const TopSkillsList: React.FC<TopSkillsListProps> = ({ skills }) => {
+    const { t } = useTranslation(['common']);
     const topSkills = Object.values(skills)
         .sort((a: Skill, b: Skill) => {
             if (b.level !== a.level) {
@@ -30,7 +32,7 @@ const TopSkillsList: React.FC<TopSkillsListProps> = ({ skills }) => {
     return (
         <div className="space-y-3">
             {topSkills.map((skill: Skill) => {
-                 const config = realmConfig[skill.realm];
+                 const config = realmConfig[skill.realm] || realmConfig[Realm.Meta];
                  const progress = (skill.xp / skill.xpToNextLevel) * 100;
                 return (
                     <div key={skill.id} className="bg-background p-3 rounded-lg border border-border-color">
@@ -38,6 +40,7 @@ const TopSkillsList: React.FC<TopSkillsListProps> = ({ skills }) => {
                             <div className="flex items-center space-x-2">
                                 {config.icon}
                                 <span className="font-semibold text-text-primary">{skill.name}</span>
+                                <span className="text-xs font-mono text-text-secondary">({t(`common:realm.${skill.realm}`)})</span>
                             </div>
                             <span className="font-bold text-lg text-text-primary">{t('common:level_short')} {skill.level}</span>
                         </div>

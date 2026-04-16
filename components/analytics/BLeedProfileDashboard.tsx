@@ -233,7 +233,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                          {Object.entries(user.stats).map(([key, value], index) => (
                                              <div key={key} className="space-y-1">
                                                  <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-text-secondary">
-                                                     <span>{key}</span>
+                                                     <span>{t(`common:realm.${key}`)}</span>
                                                      <span>{value}%</span>
                                                  </div>
                                                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
@@ -259,7 +259,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             {Object.entries(user.stats).map(([realm, val]: [string, any], index) => (
                                 <div key={realm} className="space-y-2">
                                     <div className="flex justify-between items-end">
-                                        <span className="text-xs font-bold text-text-secondary capitalize">{realm}</span>
+                                        <span className="text-xs font-bold text-text-secondary">{t(`common:realm.${realm}`)}</span>
                                         <span className="text-[10px] font-black text-white">{val} pts</span>
                                     </div>
                                     <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">

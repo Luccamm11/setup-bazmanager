@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Wand2, Loader2, Lightbulb, GraduationCap } from 'lucide-react';
 import { AiRecommendations, Realm, Skill } from '../types';
+import { useTranslation } from 'react-i18next';
 
 interface RecommendationsModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface RecommendationsModalProps {
 }
 
 const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onClose, recommendations, onSave, isLoading, userSkills }) => {
+  const { t } = useTranslation(['common', 'skills']);
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
 
@@ -95,7 +97,7 @@ const RecommendationsModal: React.FC<RecommendationsModalProps> = ({ isOpen, onC
                 <label key={skill.name} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
                   <input type="checkbox" checked={selectedSkills.has(skill.name)} onChange={() => handleSkillToggle(skill.name)} className="h-5 w-5 rounded bg-background-tertiary border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1" />
                   <div className="flex-1">
-                    <p className="text-text-primary font-semibold">{skill.name} <span className="text-xs font-mono text-text-secondary">({skill.realm})</span></p>
+                    <p className="text-text-primary font-semibold">{skill.name} <span className="text-xs font-mono text-text-secondary">({t(`common:realm.${skill.realm}`)})</span></p>
                     <p className="text-xs text-text-secondary italic">"{skill.reason}"</p>
                   </div>
                 </label>
