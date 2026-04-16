@@ -379,7 +379,6 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                     </div>
                 </div>
             </div>
-            </div>
 
             {/* FIRST TIME SETUP MODAL */}
             <AnimatePresence>
