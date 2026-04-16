@@ -61,12 +61,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                         <div className="p-2 bg-accent-primary/10 rounded-lg text-accent-primary">
                             <LayoutDashboard size={24} />
                         </div>
-                        <h1 className="text-3xl sm:text-4xl font-black text-text-primary tracking-tight">Dashboard</h1>
+                        <h1 className="text-3xl sm:text-4xl font-black text-text-primary tracking-tight">{t('analytics:dashboard_tab.title')}</h1>
                     </div>
                     <p className="text-text-secondary font-medium">
                         {isTechnician 
-                            ? "Central de comando e monitoramento da Bazinga! 73" 
-                            : "Acompanhe sua evolução e performance no sistema B-LEED"}
+                            ? t('analytics:dashboard_tab.subtitle_technician') 
+                            : t('analytics:dashboard_tab.subtitle_member')}
                     </p>
                 </div>
             </div>
@@ -83,7 +83,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                         }`}
                     >
                         <UserIcon size={16} />
-                        <span>Meu Progresso</span>
+                        <span>{t('analytics:dashboard_tab.nav.personal')}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('team')}
@@ -94,7 +94,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                         }`}
                     >
                         <Users size={16} />
-                        <span>Visão da Equipe</span>
+                        <span>{t('analytics:dashboard_tab.nav.team')}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('member_lookup')}
@@ -105,7 +105,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                         }`}
                     >
                         <Search size={16} />
-                        <span>Inspecionar Membro</span>
+                        <span>{t('analytics:dashboard_tab.nav.member_lookup')}</span>
                     </button>
                 </div>
             )}
@@ -137,7 +137,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                     )}
 
                     {activeTab === 'member_lookup' && isTechnician && (
-                        <MemberInspector currentTech={user.name} />
+                        <MemberInspector currentUser={user.name} />
                     )}
                 </motion.div>
             </AnimatePresence>

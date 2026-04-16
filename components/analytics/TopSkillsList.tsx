@@ -39,7 +39,7 @@ const TopSkillsList: React.FC<TopSkillsListProps> = ({ skills }) => {
                                 {config.icon}
                                 <span className="font-semibold text-text-primary">{skill.name}</span>
                             </div>
-                            <span className="font-bold text-lg text-text-primary">Lvl {skill.level}</span>
+                            <span className="font-bold text-lg text-text-primary">{t('common:level_short')} {skill.level}</span>
                         </div>
                         <div className="w-full bg-border-color rounded-full h-1.5">
                             <div className={`${config.color} h-1.5 rounded-full`} style={{ width: `${progress}%` }}></div>

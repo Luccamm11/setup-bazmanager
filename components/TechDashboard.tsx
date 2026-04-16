@@ -3,6 +3,7 @@ import { TeamMission, Realm } from '../types';
 import { ALL_MEMBERS } from '../constants';
 import { motion } from 'framer-motion';
 import { Plus, Users, Trophy, Zap, Trash2, CheckCircle, Clock, Shield, RefreshCw, Target, Crown, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface MemberProgress {
   username: string;
@@ -51,6 +52,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
   onRefreshMissions,
   isMissionsLoading,
 }) => {
+  const { t } = useTranslation(['dashboard']);
   const [membersProgress, setMembersProgress] = useState<MemberProgress[]>([]);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'missions' | 'members'>('missions');
@@ -115,8 +117,8 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight">Painel do Técnico</h2>
-              <p className="text-xs text-text-secondary">Gerencie missões e acompanhe o progresso da equipe</p>
+              <h2 className="text-2xl font-black text-white tracking-tight">{t('dashboard:tech.title')}</h2>
+              <p className="text-xs text-text-secondary">{t('dashboard:tech.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -124,17 +126,17 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
           onClick={onCreateMission}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-black uppercase tracking-wider shadow-lg hover:shadow-orange-500/20 transition-all hover:scale-105 active:scale-95"
         >
-          <Plus className="w-4 h-4" /> Criar Missão
+          <Plus className="w-4 h-4" /> {t('dashboard:tech.create_mission')}
         </button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Membros', value: ALL_MEMBERS.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-          { label: 'Missões Ativas', value: missions.filter(m => new Date(m.deadline) > now).length, icon: Target, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-          { label: 'Completadas', value: missions.reduce((s, m) => s + m.completedBy.length, 0), icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10' },
-          { label: 'Total Missões', value: missions.length, icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+          { label: t('dashboard:tech.stats.members'), value: ALL_MEMBERS.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: t('dashboard:tech.stats.active_missions'), value: missions.filter(m => new Date(m.deadline) > now).length, icon: Target, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+          { label: t('dashboard:tech.stats.completed'), value: missions.reduce((s, m) => s + m.completedBy.length, 0), icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: t('dashboard:tech.stats.total_missions'), value: missions.length, icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -164,7 +166,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                 : 'text-text-secondary hover:text-white'
             }`}
           >
-            {tab === 'missions' ? 'Missões' : 'Membros'}
+            {tab === 'missions' ? t('dashboard:tech.tabs.missions') : t('dashboard:tech.tabs.members')}
           </button>
         ))}
       </div>
@@ -184,7 +186,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                       : 'text-zinc-500 hover:text-white'
                   }`}
                 >
-                  {f === 'all' ? 'Todas' : f === 'active' ? 'Ativas' : 'Completas'}
+                  {f === 'all' ? t('dashboard:tech.filters.all') : f === 'active' ? t('dashboard:tech.filters.active') : t('dashboard:tech.filters.completed')}
                 </button>
               ))}
             </div>
@@ -200,9 +202,9 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
           {filteredMissions.length === 0 ? (
             <div className="text-center py-12 bg-white/[0.02] border border-white/5 rounded-2xl">
               <Target className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-              <p className="text-text-secondary text-sm">Nenhuma missão encontrada</p>
+              <p className="text-text-secondary text-sm">{t('dashboard:tech.no_missions')}</p>
               <button onClick={onCreateMission} className="mt-3 text-accent-primary text-xs font-bold hover:underline">
-                Criar primeira missão →
+                {t('dashboard:tech.create_first')}
               </button>
             </div>
           ) : (
@@ -224,7 +226,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-white font-bold truncate">{mission.title}</h4>
-                          {isExpired && <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">EXPIRADA</span>}
+                          {isExpired && <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">{t('dashboard:tech.expired_mission')}</span>}
                         </div>
                         {mission.description && (
                           <p className="text-text-secondary text-xs mt-1 line-clamp-1">{mission.description}</p>
@@ -242,7 +244,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                         {/* Progress Bar */}
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-1">
-                            <span>{completion.completed}/{completion.total} membros completaram</span>
+                            <span>{t('dashboard:tech.completed_by', { completed: completion.completed, total: completion.total })}</span>
                             <span className="font-bold">{progressPercent}%</span>
                           </div>
                           <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -275,7 +277,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         <button
                           onClick={() => {
-                            if (window.confirm(`Deletar missão "${mission.title}"?`)) {
+                            if (window.confirm(t('dashboard:tech.delete_confirm', { title: mission.title }))) {
                               onDeleteMission(mission.id);
                             }
                           }}
@@ -304,7 +306,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
       {activeTab === 'members' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-text-secondary">Progresso individual de cada membro</p>
+            <p className="text-xs text-text-secondary">{t('dashboard:tech.members_progress_subtitle')}</p>
             <button
               onClick={fetchProgress}
               disabled={isProgressLoading}
@@ -317,7 +319,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
           {isProgressLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-2 border-white/10 border-t-accent-primary rounded-full animate-spin mx-auto" />
-              <p className="text-xs text-zinc-500 mt-3">Carregando dados...</p>
+              <p className="text-xs text-zinc-500 mt-3">{t('dashboard:tech.loading_data')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

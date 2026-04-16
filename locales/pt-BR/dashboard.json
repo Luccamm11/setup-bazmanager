@@ -47,5 +47,32 @@
     "found_item": "Você encontrou: {{item}}!",
     "already_claimed": "Recompensa diária já coletada.",
     "streak_bonus": "(inclui +{{percent}}% de bônus de sequência)"
+  },
+  "tech": {
+    "title": "Painel do Técnico",
+    "subtitle": "Gerencie missões e acompanhe o progresso da equipe",
+    "create_mission": "Criar Missão",
+    "stats": {
+      "members": "Membros",
+      "active_missions": "Missões Ativas",
+      "completed": "Completadas",
+      "total_missions": "Total Missões"
+    },
+    "tabs": {
+      "missions": "Missões",
+      "members": "Membros"
+    },
+    "filters": {
+      "all": "Todas",
+      "active": "Ativas",
+      "completed": "Completas"
+    },
+    "no_missions": "Nenhuma missão encontrada",
+    "create_first": "Criar primeira missão →",
+    "members_progress_subtitle": "Progresso individual de cada membro",
+    "loading_data": "Carregando dados...",
+    "expired_mission": "EXPIRADA",
+    "completed_by": "{{completed}}/{{total}} membros completaram",
+    "delete_confirm": "Deletar missão \"{{title}}\"?"
   }
 }

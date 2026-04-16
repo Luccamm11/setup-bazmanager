@@ -16,6 +16,7 @@ import {
     Dna
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface BLeedProfileDashboardProps {
     user: User;
@@ -30,6 +31,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
     activityLog = [], 
     currentDate 
 }) => {
+    const { t } = useTranslation(['analytics']);
+    
     // Visibility Toggles State
     const [visibility, setVisibility] = useState({
         photo: true,
@@ -83,7 +86,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                         >
                             <h4 className="text-sm font-black text-white mb-4 flex items-center gap-2">
                                 <LayoutDashboard size={16} className="text-accent-primary" />
-                                Customizar Visualização
+                                {t('analytics:profile.customize')}
                             </h4>
                             <div className="space-y-3">
                                 {Object.entries(visibility).map(([key, value]) => (
@@ -92,8 +95,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                         onClick={() => toggleVisibility(key as any)}
                                         className="flex items-center justify-between w-full p-2 hover:bg-white/5 rounded-xl transition-all"
                                     >
-                                        <span className="text-xs font-bold text-text-secondary capitalize">
-                                            {key.replace(/([A-Z])/g, ' $1')}
+                                        <span className="text-xs font-bold text-text-secondary">
+                                            {t(`analytics:profile.${key}`)}
                                         </span>
                                         {value ? <Eye size={16} className="text-accent-primary" /> : <EyeOff size={16} className="text-text-muted" />}
                                     </button>
@@ -115,7 +118,11 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             {visibility.photo && (
                                 <div className="w-32 h-32 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary p-1 mb-6 shadow-glow-primary">
                                     <div className="w-full h-full rounded-full bg-primary flex items-center justify-center overflow-hidden border-4 border-primary">
-                                        <UserIcon size={50} className="text-text-muted" />
+                                        {user.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <UserIcon size={50} className="text-text-muted" />
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -133,7 +140,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
 
                             {visibility.description && user.bio && (
                                 <div className="mt-8 text-left">
-                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Quem sou eu</p>
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">{t('analytics:profile.description_label')}</p>
                                     <p className="text-text-secondary text-sm leading-relaxed italic">
                                         "{user.bio}"
                                     </p>
@@ -142,35 +149,35 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                         </div>
                     </div>
 
-                    {/* Personal Stats Details */}
+                    {/* Basic Info Details */}
                     {visibility.details && (
                         <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass space-y-4">
                             <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
                                 <GraduationCap className="text-accent-secondary" size={20} />
                                 <div>
-                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Série / Ano</p>
-                                    <p className="text-sm font-bold text-text-primary">{user.grade || 'Não informado'}</p>
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.grade')}</p>
+                                    <p className="text-sm font-bold text-text-primary">{user.grade || t('analytics:profile.not_informed')}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
                                 <Calendar className="text-accent-tertiary" size={20} />
                                 <div>
-                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Membro desde</p>
-                                    <p className="text-sm font-bold text-text-primary">{user.entryDate || 'Não informado'}</p>
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.entryDate')}</p>
+                                    <p className="text-sm font-bold text-text-primary">{user.entryDate || t('analytics:profile.not_informed')}</p>
                                 </div>
                             </div>
                             {visibility.birthDate && (
                                 <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
                                     <History className="text-accent-red" size={20} />
                                     <div>
-                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Data de Nascimento</p>
-                                        <p className="text-sm font-bold text-text-primary">{user.birthDate || 'Não informado'}</p>
+                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.birthDate')}</p>
+                                        <p className="text-sm font-bold text-text-primary">{user.birthDate || t('analytics:profile.not_informed')}</p>
                                     </div>
                                 </div>
                             )}
                             <div className="p-3 bg-white/5 rounded-2xl">
-                                <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-2">Temporadas</p>
-                                {renderSeasons() || <p className="text-xs text-text-muted italic">Nenhuma temporada registrada</p>}
+                                <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-2">{t('analytics:profile.seasons')}</p>
+                                {renderSeasons() || <p className="text-xs text-text-muted italic">{t('analytics:profile.no_seasons')}</p>}
                             </div>
                         </div>
                     )}
@@ -186,13 +193,13 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             </div>
                             <div className="relative z-10">
                                 <p className="text-[10px] font-black text-accent-tertiary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-                                    <Dna size={14} /> Foco em Prêmios
+                                    <Dna size={14} /> {t('analytics:profile.awardFocus')}
                                 </p>
                                 <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase underline decoration-accent-tertiary underline-offset-8 decoration-4">
-                                    {user.awardFocus || 'Multitarefa'}
+                                    {user.awardFocus || t('analytics:profile.award_focus_default')}
                                 </h3>
                                 <p className="text-text-secondary mt-4 text-sm font-medium">
-                                    Especialista dedicado a impulsionar a estratégia de {user.awardFocus || 'versatilidade operacional'} da Bazinga! 73.
+                                    {t('analytics:profile.award_focus_description', { focus: user.awardFocus || t('analytics:profile.award_focus_default') })}
                                 </p>
                             </div>
                         </div>
@@ -204,7 +211,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
-                                        <History size={16} className="text-accent-primary" /> Atributos B-LEED
+                                        <History size={16} className="text-accent-primary" /> {t('analytics:profile.radarChart')}
                                     </h3>
                                 </div>
                                 <div className="h-[250px] flex items-center justify-center p-4">
@@ -217,7 +224,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
-                                        <BarChart3 size={16} className="text-accent-secondary" /> Nível de Competência
+                                        <BarChart3 size={16} className="text-accent-secondary" /> {t('analytics:profile.barChart')}
                                     </h3>
                                 </div>
                                 <div className="h-[250px] flex items-center justify-center p-4 overflow-hidden">
@@ -243,6 +250,29 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* B-LEED Attributes Summary */}
+                    <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10">
+                        <h4 className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em] mb-6">{t('analytics:profile.bleed_attributes')}</h4>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            {Object.entries(user.stats).map(([realm, val]: [string, any], index) => (
+                                <div key={realm} className="space-y-2">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-xs font-bold text-text-secondary capitalize">{realm}</span>
+                                        <span className="text-[10px] font-black text-white">{val} pts</span>
+                                    </div>
+                                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.min(val, 100)}%` }}
+                                            transition={{ duration: 1, delay: index * 0.1 }}
+                                            className="h-full bg-accent-secondary"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
