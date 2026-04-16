@@ -13,11 +13,12 @@ interface DashboardTabProps {
     weeklyProgress: WeeklyProgress[];
     activityLog: ActivityData[];
     currentDate: Date;
+    onUpdateUser: (user: any) => void;
 }
 
 type Tab = 'personal' | 'team' | 'member_lookup';
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgress, activityLog, currentDate }) => {
+const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgress, activityLog, currentDate, onUpdateUser }) => {
     const { t } = useTranslation(['analytics', 'common']);
     const [activeTab, setActiveTab] = useState<Tab>('personal');
     const [teamData, setTeamData] = useState<any[]>([]);
@@ -126,6 +127,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                             weeklyProgress={weeklyProgress} 
                             activityLog={activityLog} 
                             currentDate={currentDate} 
+                            onUpdateUser={onUpdateUser}
                         />
                     )}
 

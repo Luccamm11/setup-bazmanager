@@ -13,7 +13,11 @@ import {
     LayoutDashboard,
     BarChart3,
     History,
-    Dna
+    Dna,
+    Edit2,
+    Save,
+    CheckCircle2,
+    X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -23,15 +27,17 @@ interface BLeedProfileDashboardProps {
     weeklyProgress?: WeeklyProgress[];
     activityLog?: ActivityData[];
     currentDate: Date;
+    onUpdateUser: (user: any) => void;
 }
 
 const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({ 
     user, 
     weeklyProgress = [], 
     activityLog = [], 
-    currentDate 
+    currentDate,
+    onUpdateUser
 }) => {
-    const { t } = useTranslation(['analytics']);
+    const { t } = useTranslation(['analytics', 'common']);
     
     // Visibility Toggles State
     const [visibility, setVisibility] = useState({
@@ -49,6 +55,40 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
 
     const toggleVisibility = (key: keyof typeof visibility) => {
         setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    // First-time setup state
+    const [isSetupOpen, setIsSetupOpen] = useState(!user.profileSetup);
+    const [setupData, setSetupData] = useState({
+        fullName: user.fullName || '',
+        grade: user.grade || '',
+        entryDate: user.entryDate || '',
+        birthDate: user.birthDate || '',
+        seasons: user.seasons?.join(', ') || '',
+        bio: user.bio || ''
+    });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveSetup = async () => {
+        setIsSaving(true);
+        try {
+            const updatedUser = {
+                ...user,
+                fullName: setupData.fullName,
+                grade: setupData.grade,
+                entryDate: setupData.entryDate,
+                birthDate: setupData.birthDate,
+                seasons: setupData.seasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                bio: setupData.bio,
+                profileSetup: true
+            };
+            await onUpdateUser(updatedUser);
+            setIsSetupOpen(false);
+        } catch (error) {
+            console.error('Error saving profile setup:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Formatar temporadas como badges
@@ -276,6 +316,139 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* FIRST TIME SETUP MODAL */}
+            <AnimatePresence>
+                {isSetupOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-background/80 backdrop-blur-xl"
+                            onClick={() => setIsSetupOpen(false)}
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="w-full max-w-lg bg-primary/90 border border-white/10 rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
+                        >
+                            <div className="p-8 pb-4">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 bg-accent-primary/20 rounded-2xl text-accent-primary">
+                                        <Dna size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-white">{t('analytics:profile.setup_title', 'Configurar Dossiê')}</h3>
+                                        <p className="text-xs text-text-secondary font-medium">{t('analytics:profile.setup_subtitle', 'Estas informações aparecerão no seu perfil.')}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsSetupOpen(false)}
+                                        className="ml-auto p-2 hover:bg-white/5 rounded-xl transition-all"
+                                    >
+                                        <X size={20} className="text-text-muted" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.fullName')}</label>
+                                        <input 
+                                            type="text" 
+                                            value={setupData.fullName}
+                                            onChange={(e) => setSetupData({...setupData, fullName: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                            placeholder="Nome completo..."
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.grade')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.grade}
+                                                onChange={(e) => setSetupData({...setupData, grade: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                                placeholder="Ex: 3º Ano Médio"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.entryDate')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.entryDate}
+                                                onChange={(e) => setSetupData({...setupData, entryDate: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                                placeholder="Ex: Fevereiro 2024"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.birthDate')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.birthDate}
+                                                onChange={(e) => setSetupData({...setupData, birthDate: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                                placeholder="Ex: 24/05/2008"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.seasons}
+                                                onChange={(e) => setSetupData({...setupData, seasons: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                                placeholder="Ex: 2023, 2024"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.bio_label', 'Quem sou eu')}</label>
+                                        <textarea 
+                                            value={setupData.bio}
+                                            onChange={(e) => setSetupData({...setupData, bio: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all h-20 resize-none"
+                                            placeholder="Conte um pouco sobre você..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-8 pt-4">
+                                <button 
+                                    onClick={handleSaveSetup}
+                                    disabled={isSaving}
+                                    className="w-full py-4 bg-accent-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:scale-100"
+                                >
+                                    {isSaving ? (
+                                        <motion.div 
+                                            animate={{ rotate: 360 }}
+                                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                        >
+                                            <Dna size={20} />
+                                        </motion.div>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 size={20} />
+                                            {t('common:actions.save_changes', 'Salvar Alterações')}
+                                        </>
+                                    )}
+                                </button>
+                                <p className="text-center text-[9px] text-text-muted uppercase font-black tracking-tighter mt-4">
+                                    {t('analytics:profile.setup_notice', 'Esta ação é feita uma única vez por temporada.')}
+                                </p>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

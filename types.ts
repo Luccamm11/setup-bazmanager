@@ -199,6 +199,7 @@ export interface User {
   state: UserState;
   completedMajorGoals?: MajorGoal[];
   activeTimedQuest?: ActiveTimedQuest | null;
+  profileSetup?: boolean;
 }
 
 export interface StoryLogEntry {
