@@ -84,6 +84,13 @@ const AttendanceDashboard: React.FC = () => {
         return new Date(year, month, 0).getDate();
     };
 
+    const isWeekend = (yearMonth: string, day: number) => {
+        const [year, month] = yearMonth.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        const dayOfWeek = date.getDay();
+        return dayOfWeek === 0 || dayOfWeek === 6;
+    };
+
     const calendarDays = getDaysInMonth(calendarMonth);
     const daysArray = Array.from({ length: calendarDays }, (_, i) => i + 1);
 
@@ -254,14 +261,21 @@ const AttendanceDashboard: React.FC = () => {
                                             const dayString = day.toString().padStart(2, '0');
                                             const targetDate = `${calendarMonth}-${dayString}`;
                                             const status = attendance[targetDate]?.[member];
+                                            const weekend = isWeekend(calendarMonth, day);
                                             
                                             return (
                                                 <td key={day} className="p-1">
                                                     <div className="flex justify-center items-center h-full">
                                                         <div 
-                                                            className={`w-5 h-5 rounded-md ${getStatusColor(status)} shadow-sm`}
-                                                            title={`${member} | ${targetDate}${status ? ` | ${status}` : ' | Sem registro'}`}
-                                                        ></div>
+                                                            className={`w-5 h-5 rounded-md ${getStatusColor(status)} shadow-sm relative overflow-hidden`}
+                                                            title={`${member} | ${targetDate}${status ? ` | ${status}` : ' | Sem registro'}${weekend ? ' | Final de Semana' : ''}`}
+                                                        >
+                                                            {weekend && (
+                                                                <div className="absolute inset-0 flex items-center justify-center text-white/40 pointer-events-none">
+                                                                    <div className="w-[1.5px] h-full bg-current rotate-45 transform origin-center"></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                             );
