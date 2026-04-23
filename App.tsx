@@ -1839,8 +1839,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   const navItems: { view: View, label: string, icon: React.ElementType }[] = [
       { view: 'home', label: t('common:nav.home', 'Início'), icon: LayoutDashboard },
       { view: 'skill_tree', label: t('common:nav.skill_tree'), icon: TreeDeciduous },
-      { view: 'journey', label: t('common:nav.journey'), icon: ScrollText },
-      { view: 'system_mechanics', label: t('common:nav.system_mechanics'), icon: Dna },
       { view: 'inventory', label: t('common:nav.inventory'), icon: Package },
       { view: 'more', label: t('common:nav.more'), icon: MoreHorizontal },
   ];
