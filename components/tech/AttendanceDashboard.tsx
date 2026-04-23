@@ -10,7 +10,7 @@ interface AttendanceRecord {
 }
 
 const ALL_MEMBERS = [
-  'Jonas', 'Gustavo', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
   'Ana Luisa', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
 ];
 
