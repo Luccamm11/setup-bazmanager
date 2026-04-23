@@ -45,6 +45,54 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
     fetchTasks();
   }, []);
 
+  // Auto-sync missions to Kanban tasks
+  useEffect(() => {
+    if (isLoading || missions.length === 0) return;
+
+    let hasChanges = false;
+    const newTasks: KanbanTask[] = [];
+
+    // For all missions, we need to ensure every assigned member has a task
+    // If it's assigned to ALL (empty array), we create for all TEAM_MEMBERS
+    missions.forEach(m => {
+      const targetMembers = m.assignedTo.length === 0 ? TEAM_MEMBERS : m.assignedTo;
+      
+      targetMembers.forEach(member => {
+        // Skip if member has completed it
+        if (m.completedBy.includes(member)) return;
+
+        // Skip if already exists
+        const exists = tasks.some(t => t.assignee === member && t.missionId === m.id);
+        if (!exists) {
+          newTasks.push({
+            id: Math.random().toString(36).substring(2, 9),
+            title: `[Missão] ${m.title}`,
+            description: m.description,
+            status: 'todo',
+            assignee: member,
+            createdBy: m.createdBy,
+            missionId: m.id,
+            createdAt: new Date().toISOString()
+          });
+          hasChanges = true;
+        }
+      });
+    });
+
+    if (hasChanges && newTasks.length > 0) {
+      const updatedTasks = [...tasks, ...newTasks];
+      setTasks(updatedTasks); // update UI immediately
+      
+      // We only save to backend if we are actually viewing the Kanban, to prevent multiple clients saving at once?
+      // Well, it's fine.
+      fetch('/api/kanban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tasks: updatedTasks })
+      }).catch(err => console.error('Auto-sync failed:', err));
+    }
+  }, [missions, isLoading]);
+
   const fetchTasks = async () => {
     try {
       const res = await fetch('/api/kanban');
@@ -72,37 +120,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
     }
   };
 
-  // Sync Missions into Kanban dynamically?
-  // Or just manual creation for now. We will provide a button to "Import my missions"
-  const handleImportMissions = () => {
-    const targetMember = selectedMember === 'Todos' ? currentUser : selectedMember;
-    const myMissions = missions.filter(m => 
-      (m.assignedTo.length === 0 || m.assignedTo.includes(targetMember)) &&
-      !m.completedBy.includes(targetMember)
-    );
 
-    const existingMissionIds = tasks.filter(t => t.assignee === targetMember && t.missionId).map(t => t.missionId);
-    
-    const newTasks: KanbanTask[] = [];
-    myMissions.forEach(m => {
-      if (!existingMissionIds.includes(m.id)) {
-        newTasks.push({
-          id: Math.random().toString(36).substring(2, 9),
-          title: `[Missão] ${m.title}`,
-          description: m.description,
-          status: 'todo',
-          assignee: targetMember,
-          createdBy: 'system',
-          missionId: m.id,
-          createdAt: new Date().toISOString()
-        });
-      }
-    });
-
-    if (newTasks.length > 0) {
-      saveTasks([...tasks, ...newTasks]);
-    }
-  };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,13 +235,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
             </select>
           )}
 
-          <button
-            onClick={handleImportMissions}
-            className="px-4 py-2 bg-surface hover:bg-white/5 border border-white/10 text-white font-medium rounded-xl transition-colors whitespace-nowrap"
-          >
-            Importar Missões
-          </button>
-          
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-secondary text-white font-bold rounded-xl transition-colors shadow-glow-primary whitespace-nowrap"

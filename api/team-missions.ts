@@ -14,8 +14,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const rawData = await redis.get(REDIS_KEY);
       let missions = rawData ? JSON.parse(rawData) : [];
 
-      // Filter by assigned member if specified
-      if (member && typeof member === 'string') {
+      // Filter by assigned member if specified, but if it's a technician, return all
+      if (member && typeof member === 'string' && !TECHNICIANS.includes(member)) {
         missions = missions.filter((m: any) =>
           m.assignedTo.length === 0 || m.assignedTo.includes(member)
         );
