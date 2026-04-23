@@ -3,7 +3,7 @@ import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, B
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -20,6 +20,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
       { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },
     ] : []),
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
+    { view: 'finance' as View,  label: t('nav.finance', 'Financeiro'), desc: t('nav.finance_desc', 'Gastos, ganhos e investimentos da equipe'), icon: BarChart2 },
     { view: 'printer_queue' as View, label: t('nav.printer_queue', 'Fila de Impressão 3D'), desc: t('nav.printer_queue_desc', 'Gerencie a fila de uso da nossa impressora 3D'), icon: Printer },
     { view: 'timer',            label: t('nav.timer'),            desc: t('nav.timer'),            icon: Timer },
     { view: 'dashboard',        label: t('nav.dashboard', 'Dashboard'), desc: t('nav.dashboard_desc', 'Visualize progresso pessoal e da equipe'), icon: BarChart2 },
