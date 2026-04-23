@@ -17,8 +17,9 @@ const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
 ];
 
 export const TEAM_MEMBERS = [
-  'Danilo', 'Rafael', 'João Paulo', 'João Victor', 'Matheus',
-  'Icaro', 'Caio', 'Bruno', 'Maria Luiza', 'Luiza', 'Lucca'
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Ana Luisa', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
+  'Jonas', 'Gustavo'
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missions, onCompleteMission }) => {
@@ -74,12 +75,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
   // Sync Missions into Kanban dynamically?
   // Or just manual creation for now. We will provide a button to "Import my missions"
   const handleImportMissions = () => {
+    const targetMember = selectedMember === 'Todos' ? currentUser : selectedMember;
     const myMissions = missions.filter(m => 
-      (m.assignedTo.length === 0 || m.assignedTo.includes(selectedMember)) &&
-      !m.completedBy.includes(selectedMember)
+      (m.assignedTo.length === 0 || m.assignedTo.includes(targetMember)) &&
+      !m.completedBy.includes(targetMember)
     );
 
-    const existingMissionIds = tasks.filter(t => t.assignee === selectedMember && t.missionId).map(t => t.missionId);
+    const existingMissionIds = tasks.filter(t => t.assignee === targetMember && t.missionId).map(t => t.missionId);
     
     const newTasks: KanbanTask[] = [];
     myMissions.forEach(m => {
@@ -89,7 +91,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
           title: `[Missão] ${m.title}`,
           description: m.description,
           status: 'todo',
-          assignee: selectedMember,
+          assignee: targetMember,
           createdBy: 'system',
           missionId: m.id,
           createdAt: new Date().toISOString()
@@ -111,7 +113,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
       title: newTaskTitle,
       description: newTaskDesc,
       status: 'todo',
-      assignee: selectedMember,
+      assignee: selectedMember === 'Todos' ? currentUser : selectedMember,
       createdBy: currentUser,
       missionId: newTaskMissionId || undefined,
       createdAt: new Date().toISOString()
@@ -175,10 +177,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
     }
   };
 
-  const visibleTasks = tasks.filter(t => t.assignee === selectedMember);
-  const myAvailableMissions = missions.filter(m => 
-    (m.assignedTo.length === 0 || m.assignedTo.includes(selectedMember))
-  );
+  const visibleTasks = selectedMember === 'Todos' 
+    ? tasks 
+    : tasks.filter(t => t.assignee === selectedMember);
+
+  const myAvailableMissions = selectedMember === 'Todos'
+    ? missions
+    : missions.filter(m => (m.assignedTo.length === 0 || m.assignedTo.includes(selectedMember)));
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64 text-white">Carregando Kanban...</div>;
@@ -202,8 +207,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
               onChange={(e) => setSelectedMember(e.target.value)}
               className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-primary transition-colors"
             >
+              <option value="Todos">Visão Geral (Todos)</option>
               <option value={currentUser}>Meu Quadro</option>
-              <optgroup label="Alunos">
+              <optgroup label="Equipe">
                 {TEAM_MEMBERS.map(member => (
                   <option key={member} value={member}>{member}</option>
                 ))}
@@ -276,6 +282,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
                         </span>
                       )}
                       
+                      {selectedMember === 'Todos' && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-white/10 px-2 py-0.5 rounded">
+                          {task.assignee}
+                        </span>
+                      )}
                       <div className="text-[10px] text-text-muted flex items-center gap-1">
                          <Users size={10} />
                          {task.createdBy === task.assignee ? 'Própria' : task.createdBy}
@@ -297,7 +308,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-4">Nova Tarefa para {selectedMember === currentUser ? 'Mim' : selectedMember}</h3>
+            <h3 className="text-xl font-bold text-white mb-4">Nova Tarefa para {selectedMember === 'Todos' ? 'Mim' : (selectedMember === currentUser ? 'Mim' : selectedMember)}</h3>
             
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
