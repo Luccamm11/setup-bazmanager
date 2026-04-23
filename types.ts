@@ -23,6 +23,19 @@ export interface TeamMission {
   createdAt: string;
 }
 
+export type KanbanStatus = 'todo' | 'in_progress' | 'done';
+
+export interface KanbanTask {
+  id: string;
+  title: string;
+  description: string;
+  status: KanbanStatus;
+  assignee: string; 
+  createdBy: string;
+  missionId?: string; // Optional link to a TeamMission
+  createdAt: string;
+}
+
 export enum Realm {
   TechnicalWriting = "TechnicalWriting",
   Networking = "Networking",
