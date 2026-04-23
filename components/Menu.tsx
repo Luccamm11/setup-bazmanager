@@ -22,8 +22,6 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
     { view: 'printer_queue' as View, label: t('nav.printer_queue', 'Fila de Impressão 3D'), desc: t('nav.printer_queue_desc', 'Gerencie a fila de uso da nossa impressora 3D'), icon: Printer },
     { view: 'timer',            label: t('nav.timer'),            desc: t('nav.timer'),            icon: Timer },
-    { view: 'chatbot',          label: t('nav.chatbot'),          desc: t('nav.chatbot'),          icon: BotMessageSquare },
-    { view: 'staking',          label: t('nav.staking'),          desc: t('nav.staking'),          icon: Landmark },
     { view: 'dashboard',        label: t('nav.dashboard', 'Dashboard'), desc: t('nav.dashboard_desc', 'Visualize progresso pessoal e da equipe'), icon: BarChart2 },
     { view: 'badges',           label: t('nav.badges'),           desc: t('nav.badges'),           icon: Award },
     { view: 'system_log',       label: t('nav.system_log'),       desc: t('nav.system_log'),       icon: Terminal },
