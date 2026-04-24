@@ -1,29 +1,24 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@vercel/kv';
-import { KanbanTask } from '../types';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import redis from './_lib/redis.js';
 
-const kv = createClient({
-  url: process.env.KV_REST_API_URL || '',
-  token: process.env.KV_REST_API_TOKEN || '',
-});
+const KANBAN_KEY = 'levelup_kanban_tasks';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const KANBAN_KEY = 'levelup_kanban_tasks';
-
   try {
     if (req.method === 'GET') {
-      const records = await kv.get<KanbanTask[]>(KANBAN_KEY);
-      return res.status(200).json({ success: true, tasks: records || [] });
-    } 
-    
+      const raw = await redis.get(KANBAN_KEY);
+      const tasks = raw ? JSON.parse(raw) : [];
+      return res.status(200).json({ success: true, tasks });
+    }
+
     if (req.method === 'POST') {
       const { tasks } = req.body;
-      
+
       if (!tasks || !Array.isArray(tasks)) {
         return res.status(400).json({ success: false, error: 'Invalid tasks format' });
       }
 
-      await kv.set(KANBAN_KEY, tasks);
+      await redis.set(KANBAN_KEY, JSON.stringify(tasks));
       return res.status(200).json({ success: true });
     }
 

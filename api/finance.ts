@@ -1,29 +1,24 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@vercel/kv';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import redis from './_lib/redis.js';
 
-// Initialize Redis client
-const kv = createClient({
-  url: process.env.KV_REST_API_URL || '',
-  token: process.env.KV_REST_API_TOKEN || '',
-});
+const FINANCE_KEY = 'levelup_finance_records';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const FINANCE_KEY = 'levelup_finance_records';
-
   try {
     if (req.method === 'GET') {
-      const records = await kv.get(FINANCE_KEY);
-      return res.status(200).json({ success: true, records: records || [] });
-    } 
-    
+      const raw = await redis.get(FINANCE_KEY);
+      const records = raw ? JSON.parse(raw) : [];
+      return res.status(200).json({ success: true, records });
+    }
+
     if (req.method === 'POST') {
       const { records } = req.body;
-      
+
       if (!records || !Array.isArray(records)) {
         return res.status(400).json({ success: false, error: 'Invalid records format' });
       }
 
-      await kv.set(FINANCE_KEY, records);
+      await redis.set(FINANCE_KEY, JSON.stringify(records));
       return res.status(200).json({ success: true });
     }
 
