@@ -1956,7 +1956,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             <Header 
               user={user} 
               userPicture={userPicture} 
-              onSettingsClick={useCallback(() => setIsSettingsOpen(true), [])} 
+              onSettingsClick={() => setIsSettingsOpen(true)} 
               syncStatus={syncStatus} 
             />
             <div className="flex-1 w-full relative">
