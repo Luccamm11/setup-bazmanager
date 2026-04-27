@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Realm, Difficulty, RealmXpReward, TeamMission } from '../types';
-import { ALL_MEMBERS } from '../constants';
+import { ALL_MEMBERS, SKILL_REALMS } from '../constants';
 
 interface CreateTeamMissionModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
 
   const handleAddRealm = () => {
     const usedRealms = realmRewards.map(r => r.realm);
-    const availableRealm = Object.values(Realm).find(r => !usedRealms.includes(r));
+    const availableRealm = SKILL_REALMS.find(r => !usedRealms.includes(r));
     if (availableRealm) {
       setRealmRewards(prev => [...prev, { realm: availableRealm, xp: 10 }]);
     }
@@ -141,7 +141,7 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
                     onChange={e => handleRealmChange(index, 'realm', e.target.value)}
                     className="flex-1 bg-background border border-border-color rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                   >
-                    {Object.values(Realm).map(r => (
+                    {SKILL_REALMS.map(r => (
                       <option key={r} value={r} disabled={realmRewards.some((rr2, i2) => i2 !== index && rr2.realm === r)}>
                         {r}
                       </option>

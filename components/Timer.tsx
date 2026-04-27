@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Timer as TimerIcon, Play, CheckCircle } from 'lucide-react';
 import { Realm, ActiveTimedQuest } from '../types';
+import { SKILL_REALMS } from '../constants';
 import AiTextGenerator from './AiTextGenerator';
 
 interface TimerProps {
@@ -42,7 +43,7 @@ const TimerDisplay: React.FC<{ startTime: string, targetMinutes: number }> = ({ 
 const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQuest, apiKey }) => {
   const [title, setTitle] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState(25);
-  const [realm, setRealm] = useState<Realm>(Realm.Mind);
+  const [realm, setRealm] = useState<Realm>(SKILL_REALMS[0]);
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +123,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
                 onChange={e => setRealm(e.target.value as Realm)}
                 className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary sm:text-sm"
               >
-                {Object.values(Realm).map(r => <option key={r} value={r}>{r}</option>)}
+                {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
           </div>

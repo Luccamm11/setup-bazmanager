@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Quest, Realm, Difficulty, QuestStatus } from '../types';
+import { SKILL_REALMS } from '../constants';
 import AiTextGenerator from './AiTextGenerator';
 
 interface AddQuestModalProps {
@@ -13,7 +14,7 @@ interface AddQuestModalProps {
 const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQuest, apiKey }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [realm, setRealm] = useState<Realm>(Realm.Mind);
+  const [realm, setRealm] = useState<Realm>(SKILL_REALMS[0]);
   const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.Easy);
   const [xp, setXp] = useState(10);
   const [credits, setCredits] = useState(5);
@@ -76,7 +77,7 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
             <div>
               <label htmlFor="realm" className="block text-sm font-medium text-text-secondary">Realm</label>
               <select id="realm" value={realm} onChange={e => setRealm(e.target.value as Realm)} className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm">
-                {Object.values(Realm).map(r => <option key={r} value={r}>{r}</option>)}
+                {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <div>

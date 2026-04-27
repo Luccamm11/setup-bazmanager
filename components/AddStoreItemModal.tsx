@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Wand2, Loader2 } from 'lucide-react';
 import { StoreItem, User, Realm } from '../types';
+import { SKILL_REALMS } from '../constants';
 import { generateStoreItem } from '../services/geminiService';
 
 interface AddStoreItemModalProps {
@@ -183,7 +184,7 @@ const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, 
                      <div>
                         <label className="block text-sm font-medium text-text-secondary mb-2">Affected Realms (optional)</label>
                         <div className="flex flex-wrap gap-2">
-                            {Object.values(Realm).map(r => (
+                            {SKILL_REALMS.map(r => (
                                 <button key={r} type="button" onClick={() => handleRealmToggle(r)} className={`px-3 py-1 text-sm rounded-full border-2 ${effectRealms.includes(r) ? 'bg-accent-tertiary border-accent-primary text-white' : 'bg-background border-border-color text-text-secondary hover:border-text-secondary'}`}>
                                     {r}
                                 </button>

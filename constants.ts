@@ -7,6 +7,23 @@ import { TECHNICIAN_USERNAMES, ALL_USERNAMES } from './data/members';
 export const TECHNICIANS = TECHNICIAN_USERNAMES;
 export const ALL_MEMBERS = ALL_USERNAMES;
 
+/**
+ * SKILL_REALMS — single source of truth.
+ * Every feature that has a "Realm" selector (quests, missions, timer, skill modal, etc.)
+ * MUST use this list. Adding/removing a realm here automatically syncs everywhere.
+ */
+export const SKILL_REALMS: Realm[] = [
+  Realm.TechnicalWriting,
+  Realm.Networking,
+  Realm.Oratory,
+  Realm.Planning,
+  Realm.Creativity,
+  Realm.Programming,
+  Realm.Engineering,
+  Realm.FirstCulture,
+  Realm.Meta,
+];
+
 export const ICON_MAP: { [key: string]: React.ElementType } = {
     Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck,
     TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat, BookText, Timer
