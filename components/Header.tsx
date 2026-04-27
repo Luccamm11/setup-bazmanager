@@ -149,7 +149,7 @@ const Header: React.FC<HeaderProps> = React.memo(({ user, userPicture, onSetting
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] sm:text-sm text-accent-primary/90 font-bold uppercase tracking-widest mt-0.5 truncate">{t(`constants:ranks.${user.rank}`)}</p>
+                <p className="text-[10px] sm:text-sm text-accent-primary/90 font-bold uppercase tracking-widest mt-0.5 truncate">{t(`common:ranks.${user.rank}`)}</p>
               </div>
             </div>
             

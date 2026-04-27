@@ -80,12 +80,12 @@ SKILL_DEFINITIONS.forEach(skillDef => {
 const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {};
 
 export const RANKS = [
-    { level: 1,  key: "e_rank", title: "Novato" },
-    { level: 6,  key: "d_rank", title: "Aprendiz" },
-    { level: 11, key: "c_rank", title: "Membro Dedicado" },
-    { level: 21, key: "b_rank", title: "Construtor" },
-    { level: 31, key: "a_rank", title: "Líder Técnico" },
-    { level: 41, key: "s_rank", title: "Referência da Equipe" },
+    { level: 1,  key: "e_rank", title: "Aprendiz Rank-E" },
+    { level: 6,  key: "d_rank", title: "Iniciado Rank-D" },
+    { level: 11, key: "c_rank", title: "Membro Rank-C" },
+    { level: 21, key: "b_rank", title: "Construtor Rank-B" },
+    { level: 31, key: "a_rank", title: "Líder Rank-A" },
+    { level: 41, key: "s_rank", title: "Lenda Rank-S" },
 ];
 
 export const KICKOFF_ARC: Arc = {

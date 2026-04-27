@@ -149,8 +149,17 @@
   "goal_name_placeholder": "Ex: Dominar Fusion 360",
   "goal_desc": "Descrição",
   "goal_desc_placeholder": "O que você deseja alcançar?",
-  "goal_realm": "Domínio/Área",
+  "goal_realm": "Domínio/Reino",
   "goal_difficulty": "Dificuldade",
+  "ranks": {
+    "e_rank": "Aprendiz Rank-E",
+    "d_rank": "Iniciado Rank-D",
+    "c_rank": "Membro Rank-C",
+    "b_rank": "Construtor Rank-B",
+    "a_rank": "Líder Rank-A",
+    "s_rank": "Lenda Rank-S"
+  },
+
   "error_unknown": "Ocorreu um erro desconhecido.",
   "confirm_delete": "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.",
   "confirm_reset": "Tem certeza que deseja apagar todo o seu progresso? Esta ação não pode ser desfeita.",

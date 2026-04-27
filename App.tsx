@@ -47,6 +47,7 @@ import JourneyTab from './components/JourneyTab';
 import AttendanceDashboard from './components/tech/AttendanceDashboard';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
+import { recalculateSkillTree } from './utils/calculations';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -92,6 +93,21 @@ const migrateLoadedState = (loadedState: any): any => {
             }
         });
     }
+
+    // Patch missing state fields (awardFocus, coreMission, etc)
+    if (!migratedUser.state) {
+        migratedUser.state = { ...INITIAL_USER.state };
+    } else {
+        migratedUser.state = { ...INITIAL_USER.state, ...migratedUser.state };
+    }
+
+    // Ensure awardFocus is present (critical for initialization)
+    if (!migratedUser.awardFocus && migratedUser.state?.awardFocus) {
+        migratedUser.awardFocus = migratedUser.state.awardFocus;
+    } else if (!migratedUser.awardFocus) {
+        migratedUser.awardFocus = 'Supervisão Geral';
+    }
+
     
     return { ...loadedState, user: migratedUser };
 };
@@ -173,43 +189,8 @@ const formatMajorGoalsForPrompt = (goals: MajorGoal[], skills: { [id: string]: S
     return `MAJOR GOALS (User-defined, highest priority objectives):\n${formattedGoals}`;
 };
 
-const recalculateSkillTree = (
-    currentSkillTree: { [id: string]: Skill }, 
-    currentKnowledgeBase: { [id: string]: KnowledgeTopic }
-): { [id: string]: Skill } => {
-    const newSkillTree = JSON.parse(JSON.stringify(currentSkillTree)); // Deep copy
-    // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
-    const topicsBySkill = (Object.values(currentKnowledgeBase) as KnowledgeTopic[]).reduce((acc, topic) => {
-        if (!acc[topic.skillId]) acc[topic.skillId] = [];
-        acc[topic.skillId].push(topic);
-        return acc;
-    }, {} as Record<string, KnowledgeTopic[]>);
+// Moved to utils/calculations.ts
 
-    for (const skillId in newSkillTree) {
-        const skill = newSkillTree[skillId];
-        const skillTopics = topicsBySkill[skillId] || [];
-        
-        const totalXp = skillTopics.reduce((sum, topic) => sum + (TOPIC_XP_MAP[topic.difficulty] || 0), 0);
-        
-        let remainingXp = totalXp;
-        let newLevel = 1;
-        let xpForNextLevel = getXpThresholdForSkillLevel(1, skill.xpScale);
-
-        while (remainingXp >= xpForNextLevel) {
-            remainingXp -= xpForNextLevel;
-            newLevel++;
-            xpForNextLevel = getXpThresholdForSkillLevel(newLevel, skill.xpScale);
-        }
-
-        newSkillTree[skillId] = {
-            ...skill,
-            level: newLevel,
-            xp: Math.floor(remainingXp),
-            xpToNextLevel: xpForNextLevel,
-        };
-    }
-    return newSkillTree;
-};
 
 
 const App: React.FC = () => {
@@ -524,10 +505,13 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user.level_overall > previousLevel.current) {
         setLevelUpData({ level: user.level_overall, rank: user.rank });
-        let sound = new Audio('/src/assets/audio/level_up.mp3');
-        if (sound) {
+        try {
+            // Production path fix: use /assets instead of /src/assets
+            const sound = new Audio('/assets/audio/level_up.mp3');
             sound.volume = 0.5;
-            sound.play().catch(e => console.log("Audio play blocked by browser:", e));
+            sound.play().catch(e => console.log("Audio play blocked/failed:", e));
+        } catch (err) {
+            console.log("Audio initialization failed:", err);
         }
     }
     previousLevel.current = user.level_overall;
