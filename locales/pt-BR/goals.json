@@ -1,7 +1,7 @@
 {
   "major_goals": "Objetivos Principais",
   "major_goals_subtitle": "Metas e marcos de longo prazo",
-  "add_goal": "Adicionar Objetivo",
+  "add_goal": "ADICIONAR OBJETIVO",
   "edit_goal": "Editar Objetivo",
   "bulk_add_goals": "Adicionar Objetivos em Lote",
   "complete_goal": "Concluir Objetivo",
@@ -15,7 +15,7 @@
   "goal_deadline": "Prazo",
   "goal_xp_reward": "Recompensa XP",
   "goal_credit_reward": "Recompensa em Créditos",
-  "goal_skill": "Habilidade Vinculada",
+  "goal_skill": "Domínio/Área",
   "goal_syllabus": "Syllabus (opcional)",
   "goal_penalty": "Penalidade",
   "days_until": "{{days}} dias",
@@ -23,10 +23,9 @@
   "today": "Hoje",
   "tomorrow": "Amanhã",
   "types": {
-    "Siege": "Cerco",
-    "Gauntlet": "Gauntlet",
-    "Project": "Projeto",
-    "Exam": "Exame",
+    "Forge": "Forge (Projeto)",
+    "Siege": "Siege (Exame)",
+    "Gauntlet": "Gauntlet (Evento)",
     "Custom": "Personalizado"
   },
   "goal_completed": "Objetivo Principal Concluído: {{title}}! Recompensas concedidas.",

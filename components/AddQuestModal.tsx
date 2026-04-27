@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Quest, Realm, Difficulty, QuestStatus } from '../types';
 import { SKILL_REALMS } from '../constants';
 import AiTextGenerator from './AiTextGenerator';
+import { useTranslation } from 'react-i18next';
 
 interface AddQuestModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddQuestModalProps {
 }
 
 const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQuest, apiKey }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [realm, setRealm] = useState<Realm>(SKILL_REALMS[0]);
@@ -45,11 +47,11 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-white">
           <X className="w-6 h-6" />
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-text-primary">Add Personal Quest</h2>
+        <h2 className="text-2xl font-bold mb-6 text-text-primary">{t('dashboard:quest.add_personal_quest')}</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-text-secondary mb-1">Title</label>
+            <label htmlFor="title" className="block text-sm font-medium text-text-secondary mb-1">{t('dashboard:quest.title')}</label>
             <div className="relative">
                 <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" />
                 <AiTextGenerator
@@ -61,7 +63,7 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
             </div>
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-1">Description</label>
+            <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-1">{t('dashboard:quest.description')}</label>
             <div className="relative">
                 <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm pr-10" />
                  <AiTextGenerator
@@ -75,37 +77,37 @@ const AddQuestModal: React.FC<AddQuestModalProps> = ({ isOpen, onClose, onAddQue
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="realm" className="block text-sm font-medium text-text-secondary">Realm</label>
+              <label htmlFor="realm" className="block text-sm font-medium text-text-secondary">{t('dashboard:quest.realm')}</label>
               <select id="realm" value={realm} onChange={e => setRealm(e.target.value as Realm)} className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm">
-                {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
+                {SKILL_REALMS.map(r => <option key={r} value={r}>{t(`common:realm.${r}`)}</option>)}
               </select>
             </div>
             <div>
-              <label htmlFor="difficulty" className="block text-sm font-medium text-text-secondary">Difficulty</label>
+              <label htmlFor="difficulty" className="block text-sm font-medium text-text-secondary">{t('dashboard:quest.difficulty')}</label>
               <select id="difficulty" value={difficulty} onChange={e => setDifficulty(e.target.value as Difficulty)} className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm">
-                {Object.values(Difficulty).map(d => <option key={d} value={d}>{d}</option>)}
+                {Object.values(Difficulty).map(d => <option key={d} value={d}>{t(`common:difficulty.${d}`)}</option>)}
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
              <div>
-                <label htmlFor="xp" className="block text-sm font-medium text-text-secondary">XP Reward</label>
+                <label htmlFor="xp" className="block text-sm font-medium text-text-secondary">{t('common:xp')}</label>
                 <input type="number" id="xp" value={xp} onChange={e => setXp(Number(e.target.value))} min="0" className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm" />
             </div>
              <div>
-                <label htmlFor="credits" className="block text-sm font-medium text-text-secondary">Credit Reward</label>
+                <label htmlFor="credits" className="block text-sm font-medium text-text-secondary">{t('common:credits')}</label>
                 <input type="number" id="credits" value={credits} onChange={e => setCredits(Number(e.target.value))} min="0" className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm" />
             </div>
             <div>
-                <label htmlFor="duration" className="block text-sm font-medium text-text-secondary">Est. Mins</label>
+                <label htmlFor="duration" className="block text-sm font-medium text-text-secondary">{t('common:minutes')}</label>
                 <input type="number" id="duration" value={duration} onChange={e => setDuration(Number(e.target.value))} min="0" className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary focus:border-accent-primary sm:text-sm" />
             </div>
           </div>
           
           <div className="pt-4 flex justify-end">
-            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded mr-2">Cancel</button>
-            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">Add Quest</button>
+            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded mr-2">{t('common:buttons.cancel')}</button>
+            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">{t('common:buttons.add')}</button>
           </div>
         </form>
       </div>

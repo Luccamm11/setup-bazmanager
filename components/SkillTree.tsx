@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe, Palette, Coins, MessageSquare, Activity, Milestone } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
@@ -32,7 +32,13 @@ const realmConfig = {
   [Realm.Programming]:      { icon: <Code size={20} />,        color: "text-blue-400" },
   [Realm.Engineering]:      { icon: <Hammer size={20} />,      color: "text-orange-400" },
   [Realm.FirstCulture]:     { icon: <Globe size={20} />,       color: "text-cyan-400" },
-  [Realm.Meta]:             { icon: <Sparkles size={20} />,    color: "text-text-secondary" },
+  [Realm.Mind]:             { icon: <BrainCircuit size={20} />, color: "text-indigo-400" },
+  [Realm.Body]:             { icon: <Activity size={20} />,     color: "text-red-400" },
+  [Realm.Creation]:         { icon: <Palette size={20} />,      color: "text-pink-400" },
+  [Realm.Spirit]:           { icon: <Milestone size={20} />,    color: "text-yellow-400" },
+  [Realm.Finance]:          { icon: <Coins size={20} />,        color: "text-green-400" },
+  [Realm.Social]:           { icon: <MessageSquare size={20} />, color: "text-teal-400" },
+  [Realm.Meta]:             { icon: <Sparkles size={20} />,    color: "text-slate-200" },
 };
 
 const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficulty; label: string; colorClass: string; onClick: () => void }> = ({ level, current, label, colorClass, onClick }) => {

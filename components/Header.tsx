@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Realm, SyncStatus } from '../types';
 import XpBar from './XpBar';
-import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer } from 'lucide-react';
+import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer, Activity, Palette, Coins, MessageSquare, Milestone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const realmStatsConfig: { [key in Realm]?: { icon: React.ReactNode; color: string; bg: string } } = {
@@ -13,6 +13,13 @@ const realmStatsConfig: { [key in Realm]?: { icon: React.ReactNode; color: strin
   [Realm.Oratory]: { icon: <Mic2 size={14} />, color: "text-rose-400", bg: "bg-rose-500/10" },
   [Realm.Creativity]: { icon: <Zap size={14} />, color: "text-violet-400", bg: "bg-violet-500/10" },
   [Realm.FirstCulture]: { icon: <Globe size={14} />, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+  [Realm.Mind]: { icon: <BrainCircuit size={14} />, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  [Realm.Body]: { icon: <Activity size={14} />, color: "text-red-400", bg: "bg-red-500/10" },
+  [Realm.Creation]: { icon: <Palette size={14} />, color: "text-pink-400", bg: "bg-pink-500/10" },
+  [Realm.Spirit]: { icon: <Milestone size={14} />, color: "text-yellow-400", bg: "bg-yellow-500/10" },
+  [Realm.Finance]: { icon: <Coins size={14} />, color: "text-green-400", bg: "bg-green-500/10" },
+  [Realm.Social]: { icon: <MessageSquare size={14} />, color: "text-teal-400", bg: "bg-teal-500/10" },
+  [Realm.Meta]: { icon: <Sparkles size={14} />, color: "text-slate-200", bg: "bg-slate-500/10" },
 };
 
 interface HeaderProps {
@@ -22,7 +29,7 @@ interface HeaderProps {
   syncStatus: SyncStatus;
 }
 
-const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: string; bgClass: string; label: string }> = ({ icon, value, colorClass, bgClass, label }) => (
+const StatDisplay = React.memo<{ icon: React.ReactNode; value: number; colorClass: string; bgClass: string; label: string }>(({ icon, value, colorClass, bgClass, label }) => (
   <div className={`flex items-center space-x-1 sm:space-x-2 px-1.5 py-1 sm:px-3 sm:py-2 rounded-lg border border-white/[0.03] ${bgClass} transition-all duration-300 hover:bg-white/[0.08] group`}>
     <div className={`p-0.5 sm:p-1.5 rounded-md bg-black/20 ${colorClass}`}>
       {icon}
@@ -32,7 +39,9 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: 
         <span className={`text-[11px] sm:text-base font-black ${colorClass} leading-none`}>{value}</span>
     </div>
   </div>
-);
+));
+
+StatDisplay.displayName = 'StatDisplay';
 
 const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
     const { t } = useTranslation();
@@ -57,7 +66,7 @@ const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
 };
 
 const LanguageToggle: React.FC = () => {
-    const { i18n } = useTranslation();
+    const { i18n, t } = useTranslation();
     const currentLang = i18n.language;
 
     const toggleLanguage = () => {
@@ -70,7 +79,7 @@ const LanguageToggle: React.FC = () => {
     return (
         <button
             onClick={toggleLanguage}
-            title={isPtBR ? 'Switch to English' : 'Mudar para Português'}
+            title={t(isPtBR ? 'common:switch_to_english' : 'common:switch_to_portuguese')}
             className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-text-secondary hover:text-white transition-all text-xs font-bold"
         >
             <Globe size={13} />
@@ -79,7 +88,7 @@ const LanguageToggle: React.FC = () => {
     );
 };
 
-const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ user, userPicture, onSettingsClick, syncStatus }) => {
     const { t } = useTranslation();
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
   return (
@@ -199,6 +208,8 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
       </div>
     </header>
   );
-};
+});
+
+Header.displayName = 'Header';
 
 export default Header;

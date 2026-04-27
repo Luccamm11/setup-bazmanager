@@ -51,9 +51,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
 
     let hasChanges = false;
     const newTasks: KanbanTask[] = [];
+    const currentTaskIds = new Set(tasks.map(t => `${t.assignee}-${t.missionId}`));
 
     // For all missions, we need to ensure every assigned member has a task
-    // If it's assigned to ALL (empty array), we create for all TEAM_MEMBERS
     missions.forEach(m => {
       const targetMembers = m.assignedTo.length === 0 ? TEAM_MEMBERS : m.assignedTo;
       
@@ -61,9 +61,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
         // Skip if member has completed it
         if (m.completedBy.includes(member)) return;
 
-        // Skip if already exists
-        const exists = tasks.some(t => t.assignee === member && t.missionId === m.id);
-        if (!exists) {
+        // Skip if already exists using optimized set lookup
+        if (!currentTaskIds.has(`${member}-${m.id}`)) {
           newTasks.push({
             id: Math.random().toString(36).substring(2, 9),
             title: `[Missão] ${m.title}`,
@@ -81,17 +80,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
 
     if (hasChanges && newTasks.length > 0) {
       const updatedTasks = [...tasks, ...newTasks];
-      setTasks(updatedTasks); // update UI immediately
+      setTasks(updatedTasks);
       
-      // We only save to backend if we are actually viewing the Kanban, to prevent multiple clients saving at once?
-      // Well, it's fine.
       fetch('/api/kanban', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tasks: updatedTasks })
       }).catch(err => console.error('Auto-sync failed:', err));
     }
-  }, [missions, isLoading]);
+  }, [missions, isLoading, tasks.length]); // Optimized dependencies
 
   const fetchTasks = async () => {
     try {

@@ -22,6 +22,12 @@ export const SKILL_REALMS: Realm[] = [
   Realm.Engineering,
   Realm.FirstCulture,
   Realm.Meta,
+  Realm.Mind,
+  Realm.Body,
+  Realm.Creation,
+  Realm.Spirit,
+  Realm.Finance,
+  Realm.Social,
 ];
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
@@ -125,6 +131,12 @@ export const INITIAL_USER: User = {
     [Realm.Engineering]: 10,
     [Realm.FirstCulture]: 10,
     [Realm.Meta]: 1,
+    [Realm.Mind]: 10,
+    [Realm.Body]: 10,
+    [Realm.Creation]: 10,
+    [Realm.Spirit]: 10,
+    [Realm.Finance]: 10,
+    [Realm.Social]: 10,
   },
   wallet: {
     credits: 100,
@@ -194,6 +206,14 @@ export const STORE_ITEMS: StoreItem[] = [
         name: "Prioridade na Impressora 3D",
         description: "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste.",
         cost: 300,
+        category: 'Reward',
+        effect: { type: 'REAL_WORLD_REWARD' }
+    },
+    {
+        id: 'coffee_reward',
+        name: "Café do Treinador",
+        description: "Um café especial para recuperar energias durante a maratona de robótica.",
+        cost: 100,
         category: 'Reward',
         effect: { type: 'REAL_WORLD_REWARD' }
     },

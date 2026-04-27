@@ -579,7 +579,7 @@ const App: React.FC = () => {
                 if (q.penalty.type === 'xp') {
                     totalUserXpPenalty += q.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-${q.id}`, text: `Time-driven quest "${q.title}" failed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-${q.id}`, text: t('common:messages.quest_deadline_missed', { title: q.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
             }
         });
 
@@ -591,7 +591,7 @@ const App: React.FC = () => {
                 if (g.penalty.type === 'xp') {
                     totalUserXpPenalty += g.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: `Major Goal "${g.title}" deadline missed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: t('common:messages.goal_deadline_missed', { title: g.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
             }
         });
         
@@ -663,7 +663,7 @@ const App: React.FC = () => {
             contextualData['Google Calendar'] = formatEventsForPrompt(events);
           } catch (e) {
              const errorMessage = e instanceof Error ? e.message : "Unknown error.";
-             setSystemMessages(prev => [{id: `gcal-err-${Date.now()}`, text: `Google Calendar Sync Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+             setSystemMessages(prev => [{id: `gcal-err-${Date.now()}`, text: t('common:messages.gcal_sync_failed', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
           }
       }
       if (integrations.find(i => i.id === 'github' && i.connected)) {
@@ -732,7 +732,7 @@ const App: React.FC = () => {
              setRewardNotifications(prev => [...prev, { id: `reward-cr-${Date.now()}`, type: 'credits', originalAmount: baseCredits, finalAmount: finalCredits }]);
         }
 
-        // --- 3. Calculate level up
+        // --- 3. Calculate Global level up
         let newXpTotal = prevUser.xp_total + finalXp;
         let newLevel = prevUser.level_overall;
         let newRank = prevUser.rank;
@@ -745,24 +745,47 @@ const App: React.FC = () => {
             newRank = getRankForLevel(newLevel);
         }
         
-        // --- 4. Log Activity
+        // --- 4. Update Skill Tree (Synchronization Core)
+        // Since we refactored Skill IDs to be the Realm name, we can access directly.
+        const newSkillTree = { ...prevUser.skill_tree };
+        const realmSkillId = realm as string;
+        let updatedSkillLevel = prevUser.stats[realm] || 1;
+
+        if (newSkillTree[realmSkillId]) {
+            const skill = { ...newSkillTree[realmSkillId] };
+            skill.xp += finalXp;
+            
+            // Handle Skill Level Ups
+            while (skill.xp >= skill.xpToNextLevel) {
+                skill.xp -= skill.xpToNextLevel;
+                skill.level++;
+                skill.xpToNextLevel = getXpThresholdForSkillLevel(skill.level, skill.xpScale);
+            }
+            
+            newSkillTree[realmSkillId] = skill;
+            updatedSkillLevel = skill.level;
+        }
+
+        // --- 5. Log Activity
         const todayStr = getCurrentDate().toISOString().split('T')[0];
         if (finalXp > 0) {
             setActivityLog(prev => [...prev, { date: todayStr, skillId: activitySource, xp: finalXp }]);
         }
         
-        // --- 5. Construct the new user state
+        // --- 6. Construct the new user state
         let updatedUser: User = {
             ...prevUser,
             level_overall: newLevel,
             rank: newRank,
             xp_total: newXpTotal,
             xpToNextLevel: xpForNext,
-            stats: { ...prevUser.stats, [realm]: prevUser.stats[realm] + 1 },
+            skill_tree: newSkillTree,
+            // Sync stats to the Skill Level (The "Same Value" request)
+            stats: { ...prevUser.stats, [realm]: updatedSkillLevel },
             wallet: { ...prevUser.wallet, credits: prevUser.wallet.credits + finalCredits },
         };
 
-        // --- 6. Apply any additional updates
+        // --- 7. Apply any additional updates
         if (userUpdateFn) {
             const additionalUpdates = userUpdateFn(updatedUser);
             updatedUser = { ...updatedUser, ...additionalUpdates };
@@ -809,7 +832,7 @@ const App: React.FC = () => {
           `Participação na missão de equipe focada em ${mission.realmRewards.map(r => r.realm).join(', ')}. Contribuição registrada com sucesso.`
         );
 
-        setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: `Missão da equipe "${mission.title}" completada!`, timestamp: 'Just now', type: 'reward' }, ...prev]);
+        setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: t('common:messages.team_mission_completed', { title: mission.title }), timestamp: t('common:states.just_now'), type: 'reward' }, ...prev]);
       }
     } catch (err) {
       console.error('Failed to complete team mission:', err);
@@ -886,25 +909,25 @@ const handleOpenLootbox = useCallback(() => {
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 credits
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
         handleGrantReward(0, finalAmount, Realm.Meta, 'lootbox-credits');
-        rewardText = `You found ${finalAmount} Credits!`;
+        rewardText = t('dashboard:lootbox.found_credits', { amount: finalAmount });
         if (streak > 0) {
-            rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
+            rewardText += ` ${t('dashboard:lootbox.streak_bonus', { percent: ((streakBonusMultiplier - 1) * 100).toFixed(0) })}`;
         }
     } else if (rewardRoll < 0.75) { // 25% chance for XP
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 XP
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
         handleGrantReward(finalAmount, 0, Realm.Meta, 'lootbox-xp');
-        rewardText = `You gained ${finalAmount} bonus XP!`;
+        rewardText = t('dashboard:lootbox.found_xp', { amount: finalAmount });
         if (streak > 0) {
-            rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
+            rewardText += ` ${t('dashboard:lootbox.streak_bonus', { percent: ((streakBonusMultiplier - 1) * 100).toFixed(0) })}`;
         }
     } else if (rewardRoll < 0.85) { // 10% chance for gems
         const baseAmount = Math.floor(Math.random() * 2) + 1; // 1-2 gems
         const finalAmount = baseAmount + Math.floor(streak / 10); // +1 gem every 10 streak days
         setUser(prev => ({ ...prev, wallet: { ...prev.wallet, gems: prev.wallet.gems + finalAmount }}));
-        rewardText = `RARE DROP! You found ${finalAmount} Gem(s)!`;
+        rewardText = t('dashboard:lootbox.found_gems', { amount: finalAmount });
         if (streak >= 10) {
-            rewardText += ` (includes bonus from streak)`;
+            rewardText += ` ${t('dashboard:lootbox.streak_bonus_short')}`; // Need to add this
         }
     } else { // 15% chance for an item
         const potentialItems = storeItems.filter(item => item.category === 'Utility' || item.category === 'Buff');
@@ -920,17 +943,17 @@ const handleOpenLootbox = useCallback(() => {
                 }
                 return { ...prev, inventory: newInventory };
             });
-            rewardText = `EPIC DROP! You found a "${droppedItem.name}"! It has been added to your inventory.`;
+            rewardText = t('dashboard:lootbox.found_item', { item: droppedItem.name });
         } else {
             // Fallback to credits if no items are available
             const amount = 50;
             handleGrantReward(0, amount, Realm.Meta, 'lootbox-credits-fallback');
-            rewardText = `You found a fallback reward of ${amount} Credits!`;
+            rewardText = t('dashboard:lootbox.found_credits', { amount });
         }
     }
 
     setLastLootboxClaim(today);
-    setSystemMessages(prev => [{id: `loot-reward-${Date.now()}`, text: rewardText, timestamp: 'Just now', type: 'reward'}, ...prev]);
+    setSystemMessages(prev => [{id: `loot-reward-${Date.now()}`, text: rewardText, timestamp: t('common:states.just_now'), type: 'reward'}, ...prev]);
 }, [lastLootboxClaim, getCurrentDate, setUser, handleGrantReward, user.streaks.daily_streak, storeItems]);
 
 const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty: TopicDifficulty) => {
@@ -1527,7 +1550,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       } catch (err) {
         console.error("Failed to parse backup file:", err);
         const errorMessage = err instanceof Error ? err.message : "Unknown error.";
-        setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: `Failed to restore backup: ${errorMessage}`, timestamp: 'Just now', type: 'warning' }, ...prev]);
+        setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: t('common:messages.restore_error', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning' }, ...prev]);
       }
     };
 
@@ -1928,7 +1951,12 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 h-full min-w-0">
           <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
-            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
+            <Header 
+              user={user} 
+              userPicture={userPicture} 
+              onSettingsClick={useCallback(() => setIsSettingsOpen(true), [])} 
+              syncStatus={syncStatus} 
+            />
             <div className="flex-1 w-full relative">
               <AnimatePresence mode="wait">
                 <motion.div
