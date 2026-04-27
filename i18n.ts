@@ -64,7 +64,7 @@ i18n
       },
     },
     defaultNS: 'common',
-    fallbackLng: 'en',
+    fallbackLng: 'pt-BR',
     detection: {
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'bazManagerLanguage',

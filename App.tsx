@@ -84,6 +84,15 @@ const migrateLoadedState = (loadedState: any): any => {
         migratedUser.activeArc = INITIAL_USER.activeArc;
     }
     
+    // Patch missing realm stats
+    if (migratedUser.stats) {
+        Object.values(Realm).forEach((realm: any) => {
+            if (migratedUser.stats[realm as Realm] === undefined) {
+                migratedUser.stats[realm as Realm] = 0;
+            }
+        });
+    }
+    
     return { ...loadedState, user: migratedUser };
 };
 
@@ -789,6 +798,15 @@ const App: React.FC = () => {
         if (userUpdateFn) {
             const additionalUpdates = userUpdateFn(updatedUser);
             updatedUser = { ...updatedUser, ...additionalUpdates };
+        }
+
+        // Patch missing realm stats
+        if (updatedUser.stats) {
+            Object.values(Realm).forEach((realm: any) => {
+                if (updatedUser.stats[realm as Realm] === undefined) {
+                    updatedUser.stats[realm as Realm] = 0;
+                }
+            });
         }
 
         return updatedUser;
