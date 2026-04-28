@@ -32,21 +32,14 @@ interface BLeedProfileDashboardProps {
 }
 
 const realmOrder: Realm[] = [
-    Realm.Programming,
-    Realm.Engineering,
-    Realm.TechnicalWriting,
-    Realm.Networking,
-    Realm.Planning,
-    Realm.Oratory,
-    Realm.Creativity,
-    Realm.FirstCulture,
-    Realm.Meta,
     Realm.Mind,
     Realm.Body,
     Realm.Creation,
     Realm.Spirit,
+    Realm.Creativity,
     Realm.Finance,
-    Realm.Social
+    Realm.Social,
+    Realm.Meta
 ];
 
 const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({ 

@@ -47,7 +47,6 @@ import JourneyTab from './components/JourneyTab';
 import AttendanceDashboard from './components/tech/AttendanceDashboard';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
-import { recalculateSkillTree } from './utils/calculations';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -84,30 +83,6 @@ const migrateLoadedState = (loadedState: any): any => {
     if (!migratedUser.activeArc || legacyArcIds.includes(migratedUser.activeArc.id) || migratedUser.activeArc.title.includes('Signals Gate')) {
         migratedUser.activeArc = INITIAL_USER.activeArc;
     }
-    
-    // Patch missing realm stats
-    if (migratedUser.stats) {
-        Object.values(Realm).forEach((realm: any) => {
-            if (migratedUser.stats[realm as Realm] === undefined) {
-                migratedUser.stats[realm as Realm] = 0;
-            }
-        });
-    }
-
-    // Patch missing state fields (awardFocus, coreMission, etc)
-    if (!migratedUser.state) {
-        migratedUser.state = { ...INITIAL_USER.state };
-    } else {
-        migratedUser.state = { ...INITIAL_USER.state, ...migratedUser.state };
-    }
-
-    // Ensure awardFocus is present (critical for initialization)
-    if (!migratedUser.awardFocus && migratedUser.state?.awardFocus) {
-        migratedUser.awardFocus = migratedUser.state.awardFocus;
-    } else if (!migratedUser.awardFocus) {
-        migratedUser.awardFocus = 'Supervisão Geral';
-    }
-
     
     return { ...loadedState, user: migratedUser };
 };
@@ -189,8 +164,43 @@ const formatMajorGoalsForPrompt = (goals: MajorGoal[], skills: { [id: string]: S
     return `MAJOR GOALS (User-defined, highest priority objectives):\n${formattedGoals}`;
 };
 
-// Moved to utils/calculations.ts
+const recalculateSkillTree = (
+    currentSkillTree: { [id: string]: Skill }, 
+    currentKnowledgeBase: { [id: string]: KnowledgeTopic }
+): { [id: string]: Skill } => {
+    const newSkillTree = JSON.parse(JSON.stringify(currentSkillTree)); // Deep copy
+    // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
+    const topicsBySkill = (Object.values(currentKnowledgeBase) as KnowledgeTopic[]).reduce((acc, topic) => {
+        if (!acc[topic.skillId]) acc[topic.skillId] = [];
+        acc[topic.skillId].push(topic);
+        return acc;
+    }, {} as Record<string, KnowledgeTopic[]>);
 
+    for (const skillId in newSkillTree) {
+        const skill = newSkillTree[skillId];
+        const skillTopics = topicsBySkill[skillId] || [];
+        
+        const totalXp = skillTopics.reduce((sum, topic) => sum + (TOPIC_XP_MAP[topic.difficulty] || 0), 0);
+        
+        let remainingXp = totalXp;
+        let newLevel = 1;
+        let xpForNextLevel = getXpThresholdForSkillLevel(1, skill.xpScale);
+
+        while (remainingXp >= xpForNextLevel) {
+            remainingXp -= xpForNextLevel;
+            newLevel++;
+            xpForNextLevel = getXpThresholdForSkillLevel(newLevel, skill.xpScale);
+        }
+
+        newSkillTree[skillId] = {
+            ...skill,
+            level: newLevel,
+            xp: Math.floor(remainingXp),
+            xpToNextLevel: xpForNextLevel,
+        };
+    }
+    return newSkillTree;
+};
 
 
 const App: React.FC = () => {
@@ -505,13 +515,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user.level_overall > previousLevel.current) {
         setLevelUpData({ level: user.level_overall, rank: user.rank });
-        try {
-            // Production path fix: use /assets instead of /src/assets
-            const sound = new Audio('/assets/audio/level_up.mp3');
+        let sound = new Audio('/src/assets/audio/level_up.mp3');
+        if (sound) {
             sound.volume = 0.5;
-            sound.play().catch(e => console.log("Audio play blocked/failed:", e));
-        } catch (err) {
-            console.log("Audio initialization failed:", err);
+            sound.play().catch(e => console.log("Audio play blocked by browser:", e));
         }
     }
     previousLevel.current = user.level_overall;
@@ -572,7 +579,7 @@ const App: React.FC = () => {
                 if (q.penalty.type === 'xp') {
                     totalUserXpPenalty += q.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-${q.id}`, text: t('common:messages.quest_deadline_missed', { title: q.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-${q.id}`, text: `Time-driven quest "${q.title}" failed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
             }
         });
 
@@ -584,7 +591,7 @@ const App: React.FC = () => {
                 if (g.penalty.type === 'xp') {
                     totalUserXpPenalty += g.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: t('common:messages.goal_deadline_missed', { title: g.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: `Major Goal "${g.title}" deadline missed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
             }
         });
         
@@ -656,7 +663,7 @@ const App: React.FC = () => {
             contextualData['Google Calendar'] = formatEventsForPrompt(events);
           } catch (e) {
              const errorMessage = e instanceof Error ? e.message : "Unknown error.";
-             setSystemMessages(prev => [{id: `gcal-err-${Date.now()}`, text: t('common:messages.gcal_sync_failed', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
+             setSystemMessages(prev => [{id: `gcal-err-${Date.now()}`, text: `Google Calendar Sync Failed: ${errorMessage}`, timestamp: 'Just now', type: 'warning'}, ...prev]);
           }
       }
       if (integrations.find(i => i.id === 'github' && i.connected)) {
@@ -725,7 +732,7 @@ const App: React.FC = () => {
              setRewardNotifications(prev => [...prev, { id: `reward-cr-${Date.now()}`, type: 'credits', originalAmount: baseCredits, finalAmount: finalCredits }]);
         }
 
-        // --- 3. Calculate Global level up
+        // --- 3. Calculate level up
         let newXpTotal = prevUser.xp_total + finalXp;
         let newLevel = prevUser.level_overall;
         let newRank = prevUser.rank;
@@ -738,59 +745,27 @@ const App: React.FC = () => {
             newRank = getRankForLevel(newLevel);
         }
         
-        // --- 4. Update Skill Tree (Synchronization Core)
-        // Since we refactored Skill IDs to be the Realm name, we can access directly.
-        const newSkillTree = { ...prevUser.skill_tree };
-        const realmSkillId = realm as string;
-        let updatedSkillLevel = prevUser.stats[realm] || 1;
-
-        if (newSkillTree[realmSkillId]) {
-            const skill = { ...newSkillTree[realmSkillId] };
-            skill.xp += finalXp;
-            
-            // Handle Skill Level Ups
-            while (skill.xp >= skill.xpToNextLevel) {
-                skill.xp -= skill.xpToNextLevel;
-                skill.level++;
-                skill.xpToNextLevel = getXpThresholdForSkillLevel(skill.level, skill.xpScale);
-            }
-            
-            newSkillTree[realmSkillId] = skill;
-            updatedSkillLevel = skill.level;
-        }
-
-        // --- 5. Log Activity
+        // --- 4. Log Activity
         const todayStr = getCurrentDate().toISOString().split('T')[0];
         if (finalXp > 0) {
             setActivityLog(prev => [...prev, { date: todayStr, skillId: activitySource, xp: finalXp }]);
         }
         
-        // --- 6. Construct the new user state
+        // --- 5. Construct the new user state
         let updatedUser: User = {
             ...prevUser,
             level_overall: newLevel,
             rank: newRank,
             xp_total: newXpTotal,
             xpToNextLevel: xpForNext,
-            skill_tree: newSkillTree,
-            // Sync stats to the Skill Level (The "Same Value" request)
-            stats: { ...prevUser.stats, [realm]: updatedSkillLevel },
+            stats: { ...prevUser.stats, [realm]: prevUser.stats[realm] + 1 },
             wallet: { ...prevUser.wallet, credits: prevUser.wallet.credits + finalCredits },
         };
 
-        // --- 7. Apply any additional updates
+        // --- 6. Apply any additional updates
         if (userUpdateFn) {
             const additionalUpdates = userUpdateFn(updatedUser);
             updatedUser = { ...updatedUser, ...additionalUpdates };
-        }
-
-        // Patch missing realm stats
-        if (updatedUser.stats) {
-            Object.values(Realm).forEach((realm: any) => {
-                if (updatedUser.stats[realm as Realm] === undefined) {
-                    updatedUser.stats[realm as Realm] = 0;
-                }
-            });
         }
 
         return updatedUser;
@@ -834,7 +809,7 @@ const App: React.FC = () => {
           `Participação na missão de equipe focada em ${mission.realmRewards.map(r => r.realm).join(', ')}. Contribuição registrada com sucesso.`
         );
 
-        setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: t('common:messages.team_mission_completed', { title: mission.title }), timestamp: t('common:states.just_now'), type: 'reward' }, ...prev]);
+        setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: `Missão da equipe "${mission.title}" completada!`, timestamp: 'Just now', type: 'reward' }, ...prev]);
       }
     } catch (err) {
       console.error('Failed to complete team mission:', err);
@@ -911,25 +886,25 @@ const handleOpenLootbox = useCallback(() => {
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 credits
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
         handleGrantReward(0, finalAmount, Realm.Meta, 'lootbox-credits');
-        rewardText = t('dashboard:lootbox.found_credits', { amount: finalAmount });
+        rewardText = `You found ${finalAmount} Credits!`;
         if (streak > 0) {
-            rewardText += ` ${t('dashboard:lootbox.streak_bonus', { percent: ((streakBonusMultiplier - 1) * 100).toFixed(0) })}`;
+            rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
         }
     } else if (rewardRoll < 0.75) { // 25% chance for XP
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 XP
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
         handleGrantReward(finalAmount, 0, Realm.Meta, 'lootbox-xp');
-        rewardText = t('dashboard:lootbox.found_xp', { amount: finalAmount });
+        rewardText = `You gained ${finalAmount} bonus XP!`;
         if (streak > 0) {
-            rewardText += ` ${t('dashboard:lootbox.streak_bonus', { percent: ((streakBonusMultiplier - 1) * 100).toFixed(0) })}`;
+            rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
         }
     } else if (rewardRoll < 0.85) { // 10% chance for gems
         const baseAmount = Math.floor(Math.random() * 2) + 1; // 1-2 gems
         const finalAmount = baseAmount + Math.floor(streak / 10); // +1 gem every 10 streak days
         setUser(prev => ({ ...prev, wallet: { ...prev.wallet, gems: prev.wallet.gems + finalAmount }}));
-        rewardText = t('dashboard:lootbox.found_gems', { amount: finalAmount });
+        rewardText = `RARE DROP! You found ${finalAmount} Gem(s)!`;
         if (streak >= 10) {
-            rewardText += ` ${t('dashboard:lootbox.streak_bonus_short')}`; // Need to add this
+            rewardText += ` (includes bonus from streak)`;
         }
     } else { // 15% chance for an item
         const potentialItems = storeItems.filter(item => item.category === 'Utility' || item.category === 'Buff');
@@ -945,17 +920,17 @@ const handleOpenLootbox = useCallback(() => {
                 }
                 return { ...prev, inventory: newInventory };
             });
-            rewardText = t('dashboard:lootbox.found_item', { item: droppedItem.name });
+            rewardText = `EPIC DROP! You found a "${droppedItem.name}"! It has been added to your inventory.`;
         } else {
             // Fallback to credits if no items are available
             const amount = 50;
             handleGrantReward(0, amount, Realm.Meta, 'lootbox-credits-fallback');
-            rewardText = t('dashboard:lootbox.found_credits', { amount });
+            rewardText = `You found a fallback reward of ${amount} Credits!`;
         }
     }
 
     setLastLootboxClaim(today);
-    setSystemMessages(prev => [{id: `loot-reward-${Date.now()}`, text: rewardText, timestamp: t('common:states.just_now'), type: 'reward'}, ...prev]);
+    setSystemMessages(prev => [{id: `loot-reward-${Date.now()}`, text: rewardText, timestamp: 'Just now', type: 'reward'}, ...prev]);
 }, [lastLootboxClaim, getCurrentDate, setUser, handleGrantReward, user.streaks.daily_streak, storeItems]);
 
 const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty: TopicDifficulty) => {
@@ -1552,7 +1527,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       } catch (err) {
         console.error("Failed to parse backup file:", err);
         const errorMessage = err instanceof Error ? err.message : "Unknown error.";
-        setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: t('common:messages.restore_error', { error: errorMessage }), timestamp: t('common:states.just_now'), type: 'warning' }, ...prev]);
+        setSystemMessages(prev => [{ id: `restore-err-${Date.now()}`, text: `Failed to restore backup: ${errorMessage}`, timestamp: 'Just now', type: 'warning' }, ...prev]);
       }
     };
 
@@ -1953,12 +1928,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 h-full min-w-0">
           <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
-            <Header 
-              user={user} 
-              userPicture={userPicture} 
-              onSettingsClick={() => setIsSettingsOpen(true)} 
-              syncStatus={syncStatus} 
-            />
+            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
             <div className="flex-1 w-full relative">
               <AnimatePresence mode="wait">
                 <motion.div

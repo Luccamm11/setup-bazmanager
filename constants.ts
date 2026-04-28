@@ -22,12 +22,6 @@ export const SKILL_REALMS: Realm[] = [
   Realm.Engineering,
   Realm.FirstCulture,
   Realm.Meta,
-  Realm.Mind,
-  Realm.Body,
-  Realm.Creation,
-  Realm.Spirit,
-  Realm.Finance,
-  Realm.Social,
 ];
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
@@ -80,12 +74,12 @@ SKILL_DEFINITIONS.forEach(skillDef => {
 const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {};
 
 export const RANKS = [
-    { level: 1,  key: "e_rank", title: "Aprendiz Rank-E" },
-    { level: 6,  key: "d_rank", title: "Iniciado Rank-D" },
-    { level: 11, key: "c_rank", title: "Membro Rank-C" },
-    { level: 21, key: "b_rank", title: "Construtor Rank-B" },
-    { level: 31, key: "a_rank", title: "Líder Rank-A" },
-    { level: 41, key: "s_rank", title: "Lenda Rank-S" },
+    { level: 1,  key: "e_rank", title: "Novato" },
+    { level: 6,  key: "d_rank", title: "Aprendiz" },
+    { level: 11, key: "c_rank", title: "Membro Dedicado" },
+    { level: 21, key: "b_rank", title: "Construtor" },
+    { level: 31, key: "a_rank", title: "Líder Técnico" },
+    { level: 41, key: "s_rank", title: "Referência da Equipe" },
 ];
 
 export const KICKOFF_ARC: Arc = {
@@ -131,12 +125,6 @@ export const INITIAL_USER: User = {
     [Realm.Engineering]: 10,
     [Realm.FirstCulture]: 10,
     [Realm.Meta]: 1,
-    [Realm.Mind]: 10,
-    [Realm.Body]: 10,
-    [Realm.Creation]: 10,
-    [Realm.Spirit]: 10,
-    [Realm.Finance]: 10,
-    [Realm.Social]: 10,
   },
   wallet: {
     credits: 100,
@@ -206,14 +194,6 @@ export const STORE_ITEMS: StoreItem[] = [
         name: "Prioridade na Impressora 3D",
         description: "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste.",
         cost: 300,
-        category: 'Reward',
-        effect: { type: 'REAL_WORLD_REWARD' }
-    },
-    {
-        id: 'coffee_reward',
-        name: "Café do Treinador",
-        description: "Um café especial para recuperar energias durante a maratona de robótica.",
-        cost: 100,
         category: 'Reward',
         effect: { type: 'REAL_WORLD_REWARD' }
     },

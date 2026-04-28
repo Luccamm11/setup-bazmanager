@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 // FIX: Replaced BossChallenge with MajorGoal.
 import { MajorGoal, Skill } from '../types';
 import AiTextGenerator from './AiTextGenerator';
-import { useTranslation } from 'react-i18next';
 
 // FIX: Renamed props interface for clarity.
 interface AddEditMajorGoalModalProps {
@@ -17,7 +16,6 @@ interface AddEditMajorGoalModalProps {
 
 // FIX: Renamed component for clarity.
 const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, onClose, onSave, goalToEdit, skills, apiKey }) => {
-  const { t } = useTranslation(['goals', 'common']);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'Siege' | 'Forge' | 'Gauntlet'>('Forge');
@@ -79,15 +77,15 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-primary rounded-2xl p-6 w-full max-w-lg relative border border-border-color shadow-2xl overflow-y-auto max-h-[95vh] custom-scrollbar" onClick={e => e.stopPropagation()}>
+      <div className="bg-primary rounded-lg p-6 w-full max-w-lg relative border border-border-color" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary">
           <X className="w-6 h-6" />
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-text-primary">{goalToEdit ? t('common:edit_major_goal') : t('common:add_major_goal')}</h2>
+        <h2 className="text-2xl font-bold mb-6 text-text-primary">{goalToEdit ? 'Edit Major Goal' : 'Add Major Goal'}</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="challenge-title" className="block text-sm font-medium text-text-secondary mb-1">{t('goal_title')}</label>
+            <label htmlFor="challenge-title" className="block text-sm font-medium text-text-secondary mb-1">Title</label>
              <div className="relative">
                 <input type="text" id="challenge-title" value={title} onChange={e => setTitle(e.target.value)} required className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm pr-10" />
                 <AiTextGenerator
@@ -99,7 +97,7 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
             </div>
           </div>
           <div>
-            <label htmlFor="challenge-description" className="block text-sm font-medium text-text-secondary mb-1">{t('goal_description')}</label>
+            <label htmlFor="challenge-description" className="block text-sm font-medium text-text-secondary mb-1">Description</label>
             <div className="relative">
                 <textarea id="challenge-description" value={description} onChange={e => setDescription(e.target.value)} rows={2} className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm pr-10" />
                  <AiTextGenerator
@@ -113,15 +111,15 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="challenge-type" className="block text-sm font-medium text-text-secondary">{t('goal_type')}</label>
+              <label htmlFor="challenge-type" className="block text-sm font-medium text-text-secondary">Type</label>
               <select id="challenge-type" value={type} onChange={e => setType(e.target.value as 'Siege' | 'Forge' | 'Gauntlet')} className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm">
-                <option value="Forge">{t('types.Forge')}</option>
-                <option value="Siege">{t('types.Siege')}</option>
-                <option value="Gauntlet">{t('types.Gauntlet')}</option>
+                <option value="Forge">Forge (Project)</option>
+                <option value="Siege">Siege (Exam)</option>
+                <option value="Gauntlet">Gauntlet (Event)</option>
               </select>
             </div>
             <div>
-                <label htmlFor="challenge-deadline" className="block text-sm font-medium text-text-secondary">{t('goal_deadline')}</label>
+                <label htmlFor="challenge-deadline" className="block text-sm font-medium text-text-secondary">Deadline</label>
                 <input type="date" id="challenge-deadline" value={deadline} onChange={e => setDeadline(e.target.value)} required className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm" />
             </div>
           </div>
@@ -129,13 +127,13 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
           {type === 'Siege' && (
             <>
               <div>
-                <label htmlFor="challenge-skill" className="block text-sm font-medium text-text-secondary">{t('goal_skill')}</label>
+                <label htmlFor="challenge-skill" className="block text-sm font-medium text-text-secondary">Associated Skill</label>
                 <select id="challenge-skill" value={skillId} onChange={e => setSkillId(e.target.value)} required className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm">
                   {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label htmlFor="challenge-syllabus" className="block text-sm font-medium text-text-secondary">{t('goal_syllabus')}</label>
+                <label htmlFor="challenge-syllabus" className="block text-sm font-medium text-text-secondary">Syllabus / Key Topics</label>
                 <textarea id="challenge-syllabus" value={syllabus} onChange={e => setSyllabus(e.target.value)} rows={4} placeholder="e.g., Chapter 1: Topic A, Chapter 2: Topic B, etc." className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm" />
               </div>
             </>
@@ -143,18 +141,18 @@ const AddEditMajorGoalModal: React.FC<AddEditMajorGoalModalProps> = ({ isOpen, o
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
-                <label htmlFor="challenge-xp" className="block text-sm font-medium text-text-secondary">{t('goal_xp_reward')}</label>
+                <label htmlFor="challenge-xp" className="block text-sm font-medium text-text-secondary">XP Reward</label>
                 <input type="number" id="challenge-xp" value={xpReward} onChange={e => setXpReward(Number(e.target.value))} min="0" className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm" />
             </div>
              <div>
-                <label htmlFor="challenge-credits" className="block text-sm font-medium text-text-secondary">{t('goal_credit_reward')}</label>
+                <label htmlFor="challenge-credits" className="block text-sm font-medium text-text-secondary">Credit Reward</label>
                 <input type="number" id="challenge-credits" value={creditReward} onChange={e => setCreditReward(Number(e.target.value))} min="0" className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary sm:text-sm" />
             </div>
           </div>
           
           <div className="pt-4 flex justify-end">
-            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">{t('common:buttons.cancel')}</button>
-            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">{t('common:buttons.save')}</button>
+            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">Cancel</button>
+            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">Save Goal</button>
           </div>
         </form>
       </div>

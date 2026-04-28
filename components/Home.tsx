@@ -97,7 +97,7 @@ const DailyLootboxDrop: React.FC<{ onOpen: () => void; isClaimed: boolean }> = (
                     : 'bg-accent-secondary/10 border-accent-secondary/30 text-accent-secondary hover:bg-accent-secondary hover:text-background active:scale-95'
                 }`}
         >
-            {isClaimed ? t('common:states.claimed') : t('decrypt')}
+            {isClaimed ? t('..common:states.claimed') : t('decrypt')}
         </button>
     </div>
   );

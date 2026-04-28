@@ -1,11 +1,11 @@
 {
   "ranks": {
-    "e_rank": "APRENDIZ RANK-E",
-    "d_rank": "ESTUDANTE DISCIPLINADO RANK-D",
-    "c_rank": "ENGENHEIRO FOCADO RANK-C",
-    "b_rank": "CONSTRUTOR DE SISTEMAS RANK-B",
-    "a_rank": "CRIADOR DESPERTO RANK-A",
-    "s_rank": "POLÍMATA RANK-S"
+    "e_rank": "Aprendiz Rank-E",
+    "d_rank": "Estudante Disciplinado Rank-D",
+    "c_rank": "Engenheiro Focado Rank-C",
+    "b_rank": "Construtor de Sistemas Rank-B",
+    "a_rank": "Criador Desperto Rank-A",
+    "s_rank": "Polímata Rank-S"
   },
   "arcs": {
     "inspire_arc": {
@@ -59,10 +59,6 @@
     "instant_streak": {
       "name": "Sequência Instantânea",
       "description": "Define instantaneamente sua sequência diária para 3 dias, ativando o bônus de sequência."
-    },
-    "coffee_reward": {
-      "name": "Café do Treinador",
-      "description": "Um café especial para recuperar energias durante a maratona de robótica."
     }
   },
   "badges": {

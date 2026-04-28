@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 
 interface XpBarProps {
   currentXp: number;
@@ -8,13 +7,12 @@ interface XpBarProps {
 }
 
 const XpBar: React.FC<XpBarProps> = ({ currentXp, xpToNextLevel }) => {
-  const { t } = useTranslation();
   const progressPercentage = Math.min((currentXp / xpToNextLevel) * 100, 100);
 
   return (
     <div className="w-full group">
       <div className="flex justify-between items-end mb-1.5">
-        <span className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] text-accent-primary/60 uppercase">{t('common:progress')}</span>
+        <span className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] text-accent-primary/60 uppercase">Progress</span>
         <span className="text-[10px] sm:text-xs font-bold text-white/80 bg-white/[0.03] px-2 py-0.5 rounded border border-white/5">{`${currentXp} / ${xpToNextLevel}`}</span>
       </div>
       <div className="w-full bg-black/20 rounded-full h-1.5 sm:h-2 relative overflow-hidden flex items-center">

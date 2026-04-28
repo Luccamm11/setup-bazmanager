@@ -2,7 +2,6 @@ import React from 'react';
 import { User, Badge, MajorGoal } from '../types';
 import { ICON_MAP } from '../constants';
 import { PlusCircle, Edit, Trash2, Swords, Star, DollarSign } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface BadgesProps {
   user: User;
@@ -13,16 +12,15 @@ interface BadgesProps {
 }
 
 const Badges: React.FC<BadgesProps> = ({ user, allBadges, onAddBadge, onEditBadge, onDeleteBadge }) => {
-  const { t } = useTranslation('common');
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold">{t('nav.badges')}</h2>
-        <p className="text-text-secondary mt-1">{t('awards.record_desc')}</p>
+        <h2 className="text-2xl sm:text-3xl font-bold">Badges & Achievements</h2>
+        <p className="text-text-secondary mt-1">A record of your major accomplishments.</p>
          <div className="flex justify-center gap-4 mt-4">
             <button onClick={onAddBadge} className="flex items-center space-x-2 bg-accent-green hover:bg-accent-green-hover text-white font-semibold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">
                 <PlusCircle size={18} />
-                <span>{t('awards.new_badge')}</span>
+                <span>New Badge</span>
             </button>
         </div>
       </div>
@@ -69,7 +67,7 @@ const Badges: React.FC<BadgesProps> = ({ user, allBadges, onAddBadge, onEditBadg
       </div>
 
       <div className="mt-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6">{t('awards.hall_of_conquests')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6">Hall of Conquests</h2>
         {user.completedMajorGoals && user.completedMajorGoals.length > 0 ? (
             <div className="max-w-3xl mx-auto space-y-4">
                 {user.completedMajorGoals.map(goal => (
@@ -95,8 +93,8 @@ const Badges: React.FC<BadgesProps> = ({ user, allBadges, onAddBadge, onEditBadg
         ) : (
             <div className="text-center py-10 px-4 bg-primary rounded-lg border border-border-color max-w-3xl mx-auto">
                 <Swords className="w-12 h-12 mx-auto text-text-muted mb-4" />
-                <p className="text-text-secondary">{t('awards.no_bosses')}</p>
-                <p className="text-text-muted mt-2">{t('awards.complete_goals_hint')}</p>
+                <p className="text-text-secondary">No bosses defeated yet.</p>
+                <p className="text-text-muted mt-2">Complete Major Goals to see your victories recorded here.</p>
             </div>
         )}
       </div>

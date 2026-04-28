@@ -47,44 +47,33 @@ interface QuestInit {
   source: string;
 }
 
-import { Realm, Skill } from '../types';
-import { SKILL_REALMS, getXpThresholdForSkillLevel } from '../constants';
-
 const generateId = (prefix: string): string =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+const getXpThresholdForSkillLevel = (level: number, xpScale: number = 1.0): number => {
+  if (level < 1) return Math.floor(100 * xpScale);
+  if (level === 1) return Math.floor(100 * xpScale);
+  return Math.floor(getXpThresholdForSkillLevel(level - 1, xpScale) * 1.2);
+};
 
 function buildSkillTree(defs: DefaultSkillDef[]): { skillTree: Record<string, SkillInit>; skillNameToId: Record<string, string> } {
   const skillTree: Record<string, SkillInit> = {};
   const skillNameToId: Record<string, string> = {};
 
-  // 1. Initialize ALL 15 realms in the skill tree as base skills
-  SKILL_REALMS.forEach(realm => {
-    // Skill ID is the Realm enum string itself (e.g. "Programming")
-    const id = realm as string;
+  defs.forEach(def => {
+    const id = generateId('skill');
+    skillNameToId[def.name] = id;
     skillTree[id] = {
       id,
-      name: id, // Will be localized in UI via t(`common:realm.${id}`) or similar
+      name: def.name,
       level: 1,
       xp: 0,
-      xpToNextLevel: getXpThresholdForSkillLevel(1, 1.0),
-      realm: realm,
-      priority: 3, // Default priority
+      xpToNextLevel: getXpThresholdForSkillLevel(1, def.xpScale),
+      realm: def.realm,
+      priority: def.priority,
       isActive: true,
-      xpScale: 1.0,
+      xpScale: def.xpScale,
     };
-  });
-
-  // 2. Overwrite defaults with award profile specifics
-  defs.forEach(def => {
-    const realmKey = def.realm as string;
-    if (skillTree[realmKey]) {
-      // If multiple skills map to the same realm, we take the highest priority/xpScale
-      skillTree[realmKey].priority = Math.max(skillTree[realmKey].priority, def.priority);
-      skillTree[realmKey].xpScale = Math.max(skillTree[realmKey].xpScale, def.xpScale);
-      
-      // Map the original skill name to this realm ID for topic linking
-      skillNameToId[def.name] = realmKey;
-    }
   });
 
   return { skillTree, skillNameToId };
@@ -94,9 +83,8 @@ function buildKnowledgeBase(defs: DefaultTopicDef[], skillNameToId: Record<strin
   const kb: Record<string, TopicInit> = {};
 
   defs.forEach(def => {
-    // Check if the topic's skillName maps to a Realm ID
-    const skillId = skillNameToId[def.skillName] || def.skillName; 
-    
+    const skillId = skillNameToId[def.skillName];
+    if (!skillId) return; // Skip if skill not found
     const id = generateId('topic');
     kb[id] = {
       id,
@@ -219,21 +207,14 @@ export function getInitialUserData(member: MemberProfile): InitialUserData {
       xp_total: 0,
       xpToNextLevel: 130,
       stats: {
-        [Realm.Programming]: 0,
-        [Realm.Engineering]: 0,
-        [Realm.TechnicalWriting]: 0,
-        [Realm.Networking]: 0,
-        [Realm.Planning]: 0,
-        [Realm.Oratory]: 0,
-        [Realm.Creativity]: 5,
-        [Realm.FirstCulture]: 0,
-        [Realm.Meta]: 1,
-        [Realm.Mind]: 10,
-        [Realm.Body]: 10,
-        [Realm.Creation]: 10,
-        [Realm.Spirit]: 10,
-        [Realm.Finance]: 5,
-        [Realm.Social]: 5,
+        Mind: 10,
+        Body: 10,
+        Creation: 10,
+        Spirit: 10,
+        Creativity: 5,
+        Finance: 5,
+        Social: 5,
+        Meta: 1,
       },
       wallet: { credits: 100, gems: 5 },
       skill_tree: skillTree,
@@ -245,7 +226,6 @@ export function getInitialUserData(member: MemberProfile): InitialUserData {
       questsCompleted: 0,
       bossQuestsCompleted: 0,
       unlockedBadges: [],
-      awardFocus: awardLabel,
       staked_credits: 0,
       stakedBuffs: {},
       lastWeeklyBossDate: null,

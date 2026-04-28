@@ -140,13 +140,6 @@
   "goal_desc_placeholder": "What do you want to achieve?",
   "goal_realm": "Realm",
   "goal_difficulty": "Difficulty",
-  "switch_to_english": "Switch to English",
-  "switch_to_portuguese": "Switch to Portuguese",
-  "progress": "PROGRESS",
-  "daily_payload": "DAILY PAYLOAD",
-  "decrypt": "DECRYPT",
-  "new_quests": "New Quests",
-  "active_objectives": "Active Objectives",
   "printer": {
     "title": "3D Printer Queue",
     "desc": "Manage the usage queue for Bazinga! printer.",
