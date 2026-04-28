@@ -6,7 +6,19 @@
     "close": "Fechar",
     "delete": "Excluir",
     "edit": "Editar",
-    "reset": "Resetar"
+    "reset": "Resetar",
+    "add_manual": "Adicionar Manual",
+    "add_quest": "Adicionar Missão",
+    "save_goal": "Salvar Objetivo",
+    "confirm": "Confirmar",
+    "add": "Adicionar",
+    "complete": "Concluir"
+  },
+  "levelup": {
+    "title": "Level Up!",
+    "reached": "Você alcançou",
+    "new_rank": "Novo Rank Desbloqueado",
+    "click_continue": "Clique em qualquer lugar para continuar"
   },
   "enterPasscode": "Digite sua Senha",
   "incorrectPassword": "Senha incorreta.",
@@ -110,6 +122,9 @@
   "days": "dias",
   "hours": "horas",
   "minutes": "minutos",
+  "progress": "PROGRESSO",
+  "switch_to_english": "Mudar para Inglês",
+  "switch_to_portuguese": "Mudar para Português",
   "yes": "Sim",
   "no": "Não",
   "error_unknown": "Ocorreu um erro desconhecido.",
@@ -119,6 +134,35 @@
   "profile_picture_reset": "Foto de perfil redefinida para o padrão.",
   "api_key_saved": "Chave de API salva com sucesso.",
   "language": "Idioma",
+  "forms": {
+    "title": "Título",
+    "description": "Descrição",
+    "realm": "Domínio/Área",
+    "difficulty": "Dificuldade",
+    "deadline": "Prazo Final",
+    "add_personal_quest": "Adicionar Missão Pessoal",
+    "add_major_goal": "Adicionar Objetivo Principal",
+    "edit_major_goal": "Editar Objetivo Principal",
+    "placeholder_title": "Ex: Estudar Capítulo 3",
+    "placeholder_description": "O que você deseja alcançar?",
+    "placeholder_goal_name": "Ex: Dominar Fusion 360",
+    "estimated_time": "Tempo Est. (minutos)",
+    "goal_name": "Nome do Objetivo",
+    "xp_reward": "Recompensa XP",
+    "credits_reward": "Recompensa em Créditos"
+  },
+  "timer_labels": {
+    "timed_quest": "Missão Temporizada",
+    "start_timer": "Iniciar Temporizador",
+    "quest_in_progress": "Missão em Andamento",
+    "complete_quest": "Concluir Missão",
+    "timed_quest_desc": "Inicie um cronômetro para uma tarefa ad-hoc e ganhe recompensas.",
+    "target": "Meta"
+  },
+  "achievements": {
+    "badges_and_achievements": "Emblemas e Conquistas",
+    "new_badge": "Novo Emblema"
+  },
   "messages": {
     "quests_generated": "Novas quests diárias foram geradas.",
     "quest_gen_failed": "Falha na geração das quests: {{error}}",
@@ -142,7 +186,15 @@
     "topic_deleted": "O tópico de conhecimento \"{{name}}\" foi excluído.",
     "skill_deleted": "A habilidade \"{{name}}\" e seus {{count}} tópicos foram excluídos.",
     "related_quests_removed": "{{count}} quest(s) relacionada(s) foram removida(s).",
-    "anomaly_induced": "Anomalia induzida: Quantidade de item negativa."
+    "anomaly_induced": "Anomalia induzida: Quantidade de item negativa.",
+    "achievement_unlocked": "Conquista Desbloqueada: {{name}}!",
+    "buff_expired": "Buff expirado: {{name}}.",
+    "quest_failed": "Missão temporária \"{{title}}\" falhou. Penalidade aplicada.",
+    "goal_failed": "Prazo do Objetivo Principal \"{{title}}\" expirou. Penalidade aplicada."
+  },
+  "quest_board": {
+    "generating": "Gerando...",
+    "new_quests": "Novas Missões"
   },
   "time": {
     "days": "Dias",

@@ -444,13 +444,13 @@ const App: React.FC = () => {
   }, []);
   
   const handleResetData = useCallback(() => {
-    if (window.confirm("Are you sure you want to delete all your progress? This action cannot be undone.")) {
+    if (window.confirm(t('common:confirm_reset'))) {
       localStorage.removeItem(`${SAVE_DATA_PREFIX}${LOCAL_USER_ID}`);
       localStorage.removeItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`);
       localStorage.removeItem('googleAiApiKey');
       window.location.reload();
     }
-  }, []);
+  }, [t]);
 
   const getCurrentDate = useCallback(() => {
     const date = new Date();
@@ -498,8 +498,8 @@ const App: React.FC = () => {
         newlyUnlocked.forEach(badge => {
             setSystemMessages(prev => [{
                 id: `badge-${badge.id}-${Date.now()}`,
-                text: `Achievement Unlocked: ${badge.name}!`,
-                timestamp: 'Just now',
+                text: t('common:messages.achievement_unlocked', { name: badge.name }),
+                timestamp: t('common:states.just_now'),
                 type: 'reward'
             }, ...prev]);
         });
@@ -548,8 +548,8 @@ const App: React.FC = () => {
             expiredBuffs.forEach(buff => {
                 setSystemMessages(prevMessages => [{
                     id: `buff-expire-${buff.itemId}-${now}`,
-                    text: `Buff expired: ${buff.itemName}.`,
-                    timestamp: 'Just now',
+                    text: t('common:messages.buff_expired', { name: buff.itemName }),
+                    timestamp: t('common:states.just_now'),
                     type: 'info'
                 }, ...prevMessages]);
             });
@@ -579,7 +579,7 @@ const App: React.FC = () => {
                 if (q.penalty.type === 'xp') {
                     totalUserXpPenalty += q.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-${q.id}`, text: `Time-driven quest "${q.title}" failed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-${q.id}`, text: t('common:messages.quest_failed', { title: q.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
             }
         });
 
@@ -591,7 +591,7 @@ const App: React.FC = () => {
                 if (g.penalty.type === 'xp') {
                     totalUserXpPenalty += g.penalty.amount;
                 }
-                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: `Major Goal "${g.title}" deadline missed. Penalty applied.`, timestamp: 'Just now', type: 'warning'}, ...prev]);
+                setSystemMessages(prev => [{id: `fail-goal-${g.id}`, text: t('common:messages.goal_failed', { title: g.title }), timestamp: t('common:states.just_now'), type: 'warning'}, ...prev]);
             }
         });
         

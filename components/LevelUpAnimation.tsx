@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface LevelUpAnimationProps {
   level: number;
@@ -285,6 +286,7 @@ const digitalRain = (ctx: CanvasRenderingContext2D, width: number, height: numbe
 // =================================================================
 
 const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank, onClose }) => {
+    const { t } = useTranslation('common');
     const canvasRef = useRef<HTMLCanvasElement>(null);
     // FIX: Changed useRef type to be nullable and initialized with null.
     // Calling useRef<T>() with no argument implicitly initializes it with `undefined`, which is a type error if T is not assignable from `undefined`.
@@ -380,12 +382,12 @@ const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank, onClos
             className="text-5xl md:text-6xl font-black text-accent-secondary uppercase tracking-wider"
             style={{ animation: 'text-glow 2s infinite ease-in-out' }}
           >
-            Level Up!
+            {t('levelup.title')}
           </h1>
           <p 
             className="text-text-secondary mt-4 text-lg"
           >
-            You have reached
+            {t('levelup.reached')}
           </p>
           <p 
             className="text-8xl font-bold text-text-primary my-2"
@@ -396,7 +398,7 @@ const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank, onClos
             <p 
                 className="text-sm text-accent-secondary"
             >
-                New Rank Unlocked
+                {t('levelup.new_rank')}
             </p>
             <p 
                 className="text-xl font-semibold text-text-primary"
@@ -405,7 +407,7 @@ const LevelUpAnimation: React.FC<LevelUpAnimationProps> = ({ level, rank, onClos
             </p>
           </div>
           <p className="absolute bottom-[-4rem] text-sm text-text-muted animate-pulse">
-            Click anywhere to continue
+            {t('levelup.click_continue')}
           </p>
         </div>
       </div>

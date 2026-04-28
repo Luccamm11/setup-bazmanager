@@ -57,7 +57,7 @@ const SyncIndicator: React.FC<{ status: SyncStatus }> = ({ status }) => {
 };
 
 const LanguageToggle: React.FC = () => {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const currentLang = i18n.language;
 
     const toggleLanguage = () => {
@@ -70,7 +70,7 @@ const LanguageToggle: React.FC = () => {
     return (
         <button
             onClick={toggleLanguage}
-            title={isPtBR ? 'Switch to English' : 'Mudar para Português'}
+            title={isPtBR ? t('common:switch_to_english') : t('common:switch_to_portuguese')}
             className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-text-secondary hover:text-white transition-all text-xs font-bold"
         >
             <Globe size={13} />
@@ -123,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                   alt="User profile"
                   className="relative w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-primary border-2 border-background object-cover"
                 />
-                <span className="absolute -bottom-1 -right-1 sm:-right-2 text-[8px] sm:text-xs bg-gradient-to-r from-accent-tertiary to-accent-primary text-white font-black px-1.5 py-0.5 rounded-full shadow-lg border border-white/20 z-10">LVL {user.level_overall}</span>
+                <span className="absolute -bottom-1 -right-1 sm:-right-2 text-[8px] sm:text-xs bg-gradient-to-r from-accent-tertiary to-accent-primary text-white font-black px-1.5 py-0.5 rounded-full shadow-lg border border-white/20 z-10">{t('common:level_short')} {user.level_overall}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">

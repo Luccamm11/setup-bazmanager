@@ -1,14 +1,14 @@
 {
-  "major_goals": "Objetivos Principais",
+  "major_goals": "OBJETIVOS PRINCIPAIS",
   "major_goals_subtitle": "Metas e marcos de longo prazo",
-  "add_goal": "Adicionar Objetivo",
-  "edit_goal": "Editar Objetivo",
+  "add_goal": "ADICIONAR OBJETIVO",
+  "edit_goal": "EDITAR OBJETIVO",
   "bulk_add_goals": "Adicionar Objetivos em Lote",
   "complete_goal": "Concluir Objetivo",
   "delete_goal": "Excluir Objetivo",
-  "syllabus_breakdown": "Divisão do Syllabus",
+  "syllabus_breakdown": "Gerar Cronograma",
   "generate_goals": "Gerar Objetivos com IA",
-  "no_goals": "Nenhum objetivo principal definido. Adicione um para começar!",
+  "no_goals": "Nenhum objetivo principal definido.",
   "goal_title": "Título",
   "goal_description": "Descrição",
   "goal_type": "Tipo",
@@ -18,7 +18,7 @@
   "goal_skill": "Habilidade Vinculada",
   "goal_syllabus": "Syllabus (opcional)",
   "goal_penalty": "Penalidade",
-  "days_until": "{{days}} dias",
+  "days_until": "{{days}} dias restantes",
   "overdue": "ATRASADO",
   "today": "Hoje",
   "tomorrow": "Amanhã",
@@ -27,8 +27,23 @@
     "Gauntlet": "Gauntlet",
     "Project": "Projeto",
     "Exam": "Exame",
-    "Custom": "Personalizado"
+    "Custom": "Personalizado",
+    "Forge (Project)": "Forge (Projeto)",
+    "Siege (Exam)": "Siege (Prova)",
+    "Gauntlet (Event)": "Gauntlet (Evento)"
   },
   "goal_completed": "Objetivo Principal Concluído: {{title}}! Recompensas concedidas.",
-  "deadline_missed": "Prazo do Objetivo \"{{title}}\" expirou. Penalidade aplicada."
+  "deadline_missed": "Prazo do Objetivo \"{{title}}\" expirou. Penalidade aplicada.",
+  "bulk_modal": {
+    "title": "Adicionar Objetivos em Lote",
+    "generate_with_ai": "Gerar com IA",
+    "ai_desc": "Descreva seus exames, projetos ou eventos futuros, e a IA criará objetivos estruturados para você.",
+    "ai_placeholder": "Ex: Tenho uma prova final de Microprocessadores em 2 semanas cobrindo os capítulos 1-5. Também preciso terminar meu projeto de estação meteorológica IoT até o final do mês.",
+    "generate_button": "Gerar Objetivos",
+    "generating": "Gerando...",
+    "generated_goals": "Objetivos Gerados",
+    "reward": "Recompensa",
+    "add_selected": "Adicionar Selecionados",
+    "manual_desc": "Adicione títulos separados por vírgula para criação rápida."
+  }
 }

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Wand2, Loader2, Layers } from 'lucide-react';
-// FIX: Replaced BossChallenge with MajorGoal.
 import { MajorGoal, User } from '../types';
-// FIX: Renamed aliased import for clarity.
 import { generateMajorGoals } from '../services/geminiService';
+import { useTranslation } from 'react-i18next';
 
 // FIX: Renamed props interface.
 interface BulkAddMajorGoalsModalProps {
@@ -22,6 +21,7 @@ interface GeneratedGoal extends Omit<MajorGoal, 'id'> {
 
 // FIX: Renamed component.
 const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen, onClose, onSave, user, xpForNextSixLevels, apiKey }) => {
+  const { t } = useTranslation(['goals', 'common']);
   const [manualInput, setManualInput] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [generatedGoals, setGeneratedGoals] = useState<GeneratedGoal[]>([]);
@@ -109,17 +109,17 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
         <button onClick={handleClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary">
           <X className="w-6 h-6" />
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-text-primary flex items-center"><Layers className="mr-3"/>Bulk Add Major Goals</h2>
+        <h2 className="text-2xl font-bold mb-4 text-text-primary flex items-center"><Layers className="mr-3"/>{t('bulk_modal.title')}</h2>
         
         {/* AI Generation Section */}
         <div className="bg-background/50 p-4 rounded-lg mb-6">
-             <h3 className="text-lg font-semibold mb-2 text-text-primary">Generate with AI</h3>
-             <p className="text-xs text-text-secondary mb-2">Describe your upcoming exams, projects, or events, and the AI will create structured goals for you.</p>
+             <h3 className="text-lg font-semibold mb-2 text-text-primary">{t('bulk_modal.generate_with_ai')}</h3>
+             <p className="text-xs text-text-secondary mb-2">{t('bulk_modal.ai_desc')}</p>
              <textarea
                 value={aiPrompt}
                 onChange={e => setAiPrompt(e.target.value)}
                 rows={4}
-                placeholder="e.g., I have a final exam for Microprocessors in 2 weeks covering chapters 1-5. I also need to finish my IoT weather station project by the end of the month."
+                placeholder={t('bulk_modal.ai_placeholder')}
                 className="w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-accent-primary"
             />
              <button
@@ -128,7 +128,7 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
                 className="mt-2 w-full flex items-center justify-center space-x-2 bg-accent-tertiary hover:bg-opacity-80 disabled:bg-accent-tertiary/50 text-white font-bold py-2 px-4 rounded"
              >
                 {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />}
-                <span>{isGenerating ? 'Generating...' : 'Generate Goals'}</span>
+                <span>{isGenerating ? t('bulk_modal.generating') : t('bulk_modal.generate_button')}</span>
              </button>
         </div>
 
@@ -136,7 +136,7 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
         
         {generatedGoals.length > 0 && (
             <>
-            <h3 className="text-lg font-semibold mb-2 text-text-primary">Generated Goals</h3>
+            <h3 className="text-lg font-semibold mb-2 text-text-primary">{t('bulk_modal.generated_goals')}</h3>
             <div className="space-y-2 max-h-64 overflow-y-auto bg-background/50 p-3 rounded-md mb-4">
                 {generatedGoals.map((goal, index) => (
                     <label key={index} className="flex items-start space-x-3 p-2 rounded hover:bg-border-color/50 cursor-pointer">
@@ -147,9 +147,9 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
                             className="h-5 w-5 rounded bg-background border-border-color text-accent-tertiary focus:ring-accent-tertiary mt-1"
                         />
                         <div className="flex-1">
-                            <p className="text-text-primary font-semibold">{goal.title} <span className="text-xs font-mono text-text-secondary">({goal.type})</span></p>
+                            <p className="text-text-primary font-semibold">{goal.title} <span className="text-xs font-mono text-text-secondary">({t(`types.${goal.type}`)})</span></p>
                             <p className="text-xs text-text-secondary">{goal.description}</p>
-                            <p className="text-xs text-accent-primary mt-1">Reward: {goal.xp_reward} XP, {goal.credit_reward} Credits | Deadline: {new Date(goal.deadline).toLocaleDateString()}</p>
+                            <p className="text-xs text-accent-primary mt-1">{t('bulk_modal.reward')}: {goal.xp_reward} XP, {goal.credit_reward} CR | {t('goal_deadline')}: {new Date(goal.deadline).toLocaleDateString()}</p>
                         </div>
                     </label>
                 ))}
@@ -158,13 +158,13 @@ const BulkAddMajorGoalsModal: React.FC<BulkAddMajorGoalsModalProps> = ({ isOpen,
         )}
         
         <div className="pt-4 flex justify-end">
-          <button type="button" onClick={handleClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">Cancel</button>
+          <button type="button" onClick={handleClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">{t('common:buttons.cancel')}</button>
           <button 
             onClick={handleAddGenerated}
             disabled={generatedGoals.filter(g => g.checked).length === 0}
             className="bg-accent-green hover:bg-accent-green-hover disabled:bg-border-color disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
           >
-            Add Selected ({generatedGoals.filter(g => g.checked).length})
+            {t('bulk_modal.add_selected')} ({generatedGoals.filter(g => g.checked).length})
           </button>
         </div>
       </div>

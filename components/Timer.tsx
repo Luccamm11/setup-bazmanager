@@ -3,6 +3,7 @@ import { Timer as TimerIcon, Play, CheckCircle } from 'lucide-react';
 import { Realm, ActiveTimedQuest } from '../types';
 import { SKILL_REALMS } from '../constants';
 import AiTextGenerator from './AiTextGenerator';
+import { useTranslation } from 'react-i18next';
 
 interface TimerProps {
   activeQuest: ActiveTimedQuest | null;
@@ -12,6 +13,7 @@ interface TimerProps {
 }
 
 const TimerDisplay: React.FC<{ startTime: string, targetMinutes: number }> = ({ startTime, targetMinutes }) => {
+  const { t } = useTranslation(['common']);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
@@ -35,12 +37,13 @@ const TimerDisplay: React.FC<{ startTime: string, targetMinutes: number }> = ({ 
       <p className={`font-mono text-7xl md:text-8xl font-bold transition-colors ${isOvertime ? 'text-accent-red' : 'text-text-primary'}`}>
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </p>
-      <p className="text-lg text-text-secondary">Target: {targetMinutes}:00</p>
+      <p className="text-lg text-text-secondary">{t('common:timer_labels.target')}: {targetMinutes}:00</p>
     </div>
   );
 };
 
 const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQuest, apiKey }) => {
+  const { t } = useTranslation(['common']);
   const [title, setTitle] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState(25);
   const [realm, setRealm] = useState<Realm>(SKILL_REALMS[0]);
@@ -56,7 +59,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
     return (
       <div className="max-w-xl mx-auto flex flex-col items-center justify-center text-center h-full py-8">
         <div className="bg-primary p-8 rounded-lg border border-border-color w-full">
-          <p className="text-text-secondary text-lg">Quest in Progress</p>
+          <p className="text-text-secondary text-lg">{t('common:timer_labels.quest_in_progress')}</p>
           <h2 className="text-3xl font-bold text-accent-primary my-4">{activeQuest.title}</h2>
           <TimerDisplay startTime={activeQuest.startTime} targetMinutes={activeQuest.estimatedMinutes} />
           <button
@@ -64,7 +67,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
             className="mt-8 w-full flex items-center justify-center space-x-3 bg-accent-green hover:bg-accent-green-hover text-white font-bold py-4 px-6 rounded-lg transition-transform transform hover:scale-105 text-xl"
           >
             <CheckCircle size={24} />
-            <span>Complete Quest</span>
+            <span>{t('common:timer_labels.complete_quest')}</span>
           </button>
         </div>
       </div>
@@ -76,14 +79,14 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
       <div className="text-center mb-8">
         <h2 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-3">
             <TimerIcon className="w-8 h-8"/>
-            Timed Quest
+            {t('common:timer_labels.timed_quest')}
         </h2>
-        <p className="text-text-secondary mt-1">Start a timer for an ad-hoc task and earn rewards.</p>
+        <p className="text-text-secondary mt-1">{t('common:timer_labels.timed_quest_desc')}</p>
       </div>
       <div className="bg-primary p-6 rounded-lg border border-border-color">
         <form onSubmit={handleStart} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-text-secondary mb-1">Quest Title</label>
+            <label htmlFor="title" className="block text-sm font-medium text-text-secondary mb-1">{t('common:forms.title')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -91,7 +94,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 required
-                placeholder="e.g., Study Chapter 3"
+                placeholder={t('common:forms.placeholder_title')}
                 className="block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary sm:text-sm pr-10"
               />
               <AiTextGenerator
@@ -104,7 +107,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="minutes" className="block text-sm font-medium text-text-secondary">Est. Time (minutes)</label>
+              <label htmlFor="minutes" className="block text-sm font-medium text-text-secondary">{t('common:forms.estimated_time')}</label>
               <input
                 type="number"
                 id="minutes"
@@ -116,14 +119,14 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
               />
             </div>
             <div>
-              <label htmlFor="realm" className="block text-sm font-medium text-text-secondary">Realm</label>
+              <label htmlFor="realm" className="block text-sm font-medium text-text-secondary">{t('common:forms.realm')}</label>
               <select
                 id="realm"
                 value={realm}
                 onChange={e => setRealm(e.target.value as Realm)}
                 className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-white focus:outline-none focus:ring-accent-primary sm:text-sm"
               >
-                {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
+                {SKILL_REALMS.map(r => <option key={r} value={r}>{t(`common:realm.${r}`)}</option>)}
               </select>
             </div>
           </div>
@@ -133,7 +136,7 @@ const Timer: React.FC<TimerProps> = ({ activeQuest, onStartQuest, onCompleteQues
               className="w-full flex items-center justify-center space-x-2 bg-accent-primary hover:bg-opacity-80 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105"
             >
               <Play size={20} />
-              <span>Start Timer</span>
+              <span>{t('common:timer_labels.start_timer')}</span>
             </button>
           </div>
         </form>
