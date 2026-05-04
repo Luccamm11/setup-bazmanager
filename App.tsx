@@ -13,7 +13,7 @@ import StoryLog from './components/StoryLog';
 import Analytics from './components/Analytics';
 import Store from './components/Store';
 import Staking from './components/Staking';
-import Inventory from './components/Inventory';
+import RoboticsInventory from './components/RoboticsInventory';
 import SettingsModal from './components/SettingsModal';
 import MyState from './components/MyState';
 import LoginModal from './components/LoginModal';
@@ -1812,7 +1812,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
       case 'skill_tree': return <SkillTree user={user} onUpdateTopicDifficulty={handleUpdateTopicDifficulty} onAddSkill={() => setIsSkillModalOpen(true)} onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} onDeleteSkill={handleDeleteSkill} onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} onDeleteTopic={handleDeleteTopic} onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} onUpdateSkillPriority={handleUpdateSkillPriority} onToggleSkillActive={handleToggleSkillActive} onGenerateRecommendations={handleGenerateRecommendations} />;
       case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} completedMajorGoals={user.completedMajorGoals || []} onJournalSubmit={handleJournalSubmit} />;
-      case 'inventory': return <Inventory inventory={user.inventory} storeItems={storeItems} onUseItem={handleUseItem} />;
+      case 'inventory': return <RoboticsInventory />;
       case 'store': return <Store items={storeItems} onBuyItem={handleBuyItem} userCredits={user.wallet.credits} onAddItem={() => setIsStoreItemModalOpen(true)} onEditItem={(item) => { setEditingStoreItem(item); setIsStoreItemModalOpen(true); }} onDeleteItem={handleDeleteStoreItem} />;
       case 'staking': return <Staking user={user} storeItems={storeItems} onStakeCredits={handleStakeCredits} onWithdrawCredits={handleWithdrawCredits} onStakeBuff={handleStakeBuff} />;
       case 'system_log': return <SystemLog messages={systemMessages} />;

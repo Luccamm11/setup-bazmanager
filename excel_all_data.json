@@ -1,0 +1,1558 @@
+{
+  "Inicio": [
+    {
+      "Inventário de Bazinga! 73": " VALOR TOTAL ESTIMADO DE TODOS OS ITENS:",
+      "__EMPTY_3": 63088.540000000015,
+      "__EMPTY_6": "DATA DO INVENTÁRIO:",
+      "__EMPTY_7": 46080,
+      "__EMPTY_9": "Versão 1.0"
+    },
+    {
+      "__EMPTY_2": "Preço estimado",
+      "__EMPTY_3": "Preço de compra",
+      "__EMPTY_7": "Preço estimado",
+      "__EMPTY_9": "Preço de compra"
+    },
+    {
+      "__EMPTY_1": "Máquinas",
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_6": "EPIs",
+      "__EMPTY_7": 0,
+      "__EMPTY_9": 0
+    },
+    {
+      "__EMPTY_1": "Ferramentas",
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_6": "Total Investido",
+      "__EMPTY_7": 0
+    },
+    {
+      "__EMPTY_1": "Insumos",
+      "__EMPTY_2": 63088.540000000015,
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_7": "Valores"
+    },
+    {
+      "__EMPTY_7": "Estimado",
+      "__EMPTY_8": "Investido",
+      "__EMPTY_9": "Diferença"
+    },
+    {
+      "__EMPTY_7": 63088.540000000015,
+      "__EMPTY_8": 0,
+      "__EMPTY_9": 63088.540000000015
+    },
+    {
+      "__EMPTY_13": "Estimado",
+      "__EMPTY_14": "Investido"
+    },
+    {
+      "__EMPTY_12": "Máquinas",
+      "__EMPTY_13": 0,
+      "__EMPTY_14": 0
+    },
+    {
+      "__EMPTY_12": "Ferramentas",
+      "__EMPTY_13": 0,
+      "__EMPTY_14": 0
+    },
+    {
+      "__EMPTY_12": "Insumos",
+      "__EMPTY_13": 0,
+      "__EMPTY_14": 0
+    },
+    {
+      "Inventário de Bazinga! 73": "TOTAIS",
+      "__EMPTY_12": "EPIs",
+      "__EMPTY_13": 0,
+      "__EMPTY_14": 0
+    }
+  ],
+  "Maquinas": [
+    {
+      "Máquinas": "Para adicionar uma entrada a esta lista, digite-a diretamente abaixo da última linha da tabela."
+    },
+    {
+      "Máquinas": "Nome da máquina",
+      "__EMPTY": "Quantidade",
+      "__EMPTY_1": "Valor unitário",
+      "__EMPTY_2": "Subtotal",
+      "__EMPTY_3": "Adquirido",
+      "__EMPTY_4": "Valor Pago"
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "Máquinas": "Total",
+      "__EMPTY_2": 0,
+      "__EMPTY_4": 0
+    }
+  ],
+  "Ferramentas": [
+    {
+      "Ferramentas": "Para adicionar uma entrada a esta lista, digite-a diretamente abaixo da última linha da tabela."
+    },
+    {
+      "Ferramentas": "Nome da ferramenta",
+      "__EMPTY_1": "Quantidade",
+      "__EMPTY_2": "Valor unitário",
+      "__EMPTY_3": "Subtotal",
+      "__EMPTY_4": "Adquirido",
+      "__EMPTY_5": "Valor Pago"
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "Ferramentas": "Total",
+      "__EMPTY_3": 0,
+      "__EMPTY_5": 0
+    }
+  ],
+  "Insumos": [
+    {
+      "Insumos": "Para adicionar uma entrada a esta lista, digite-a diretamente abaixo da última linha da tabela."
+    },
+    {
+      "__EMPTY": "Foto",
+      "Insumos": "Nome do insumo",
+      "__EMPTY_1": "Quantidade",
+      "__EMPTY_2": "Valor unitário",
+      "__EMPTY_3": "Subtotal",
+      "__EMPTY_4": "Adquirido pela FIEMG",
+      "__EMPTY_5": "Código do Produto"
+    },
+    {
+      "Insumos": "Ultra 90 Degree Gearbox",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 788,
+      "__EMPTY_3": 1576,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-2080"
+    },
+    {
+      "Insumos": "Control Hub",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 6294,
+      "__EMPTY_3": 6294,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1595"
+    },
+    {
+      "Insumos": "REV Expansion Hub",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 3903,
+      "__EMPTY_3": 3903,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1153"
+    },
+    {
+      "Insumos": "Smart Robot Servo",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 668,
+      "__EMPTY_3": 1336,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1097"
+    },
+    {
+      "Insumos": "Servo Taura BL35",
+      "__EMPTY_1": 6,
+      "__EMPTY_2": 999,
+      "__EMPTY_3": 5994,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "22040101 Stem"
+    },
+    {
+      "Insumos": "Core Hex Motor",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 697,
+      "__EMPTY_3": 1394,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1300"
+    },
+    {
+      "Insumos": "Programador de servo ",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 226,
+      "__EMPTY_3": 226,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "3102-0001-0001"
+    },
+    {
+      "Insumos": "Computador de Odometria Pinpoint",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 1397,
+      "__EMPTY_3": 1397,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "3110-0002-0002"
+    },
+    {
+      "Insumos": "Power Distribution Block",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 319,
+      "__EMPTY_3": 319,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1293"
+    },
+    {
+      "Insumos": "Driver Hub",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 3990,
+      "__EMPTY_3": 3990,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1596"
+    },
+    {
+      "Insumos": "Slim Battery",
+      "__EMPTY_1": 3,
+      "__EMPTY_2": 1215,
+      "__EMPTY_3": 3645,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1302"
+    },
+    {
+      "Insumos": "Limelight 3A",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 3899,
+      "__EMPTY_3": 3899,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "22036390 Steam"
+    },
+    {
+      "Insumos": "Through Bore Encoder V1",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-11-1271"
+    },
+    {
+      "Insumos": "Servo Hub",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 1842,
+      "__EMPTY_3": 1842,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV- 11-1855"
+    },
+    {
+      "Insumos": "Digital LED Indicator - Red/Green",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 75.75,
+      "__EMPTY_3": 303,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-2010"
+    },
+    {
+      "Insumos": "2m Distance Sensor",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 610,
+      "__EMPTY_3": 610,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1505"
+    },
+    {
+      "Insumos": "Color Sensor V3",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 325,
+      "__EMPTY_3": 325,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-1557"
+    },
+    {
+      "Insumos": "Sushi Roller, eixo hexagonal 5mm, dureza 35A",
+      "__EMPTY_1": 3,
+      "__EMPTY_2": 99.25,
+      "__EMPTY_3": 297.75,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Andy Mark"
+    },
+    {
+      "Insumos": "96mm Mecanum Wheel Set ",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 3755,
+      "__EMPTY_3": 3755,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": " 3213-3606-0002"
+    },
+    {
+      "Insumos": "Kit 4 Rodas Mecanum REV 75 mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 2790,
+      "__EMPTY_3": 2790,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-45-1655"
+    },
+    {
+      "Insumos": "Roda Flexível 4″, 35A, eixo hexagonal 5mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 172,
+      "__EMPTY_3": 344,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Andy Mark"
+    },
+    {
+      "Insumos": "Roda Stealth 2″, eixo hexagonal 5mm, dureza 60A",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 150,
+      "__EMPTY_3": 600,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Andy Mark"
+    },
+    {
+      "Insumos": "Rodas flexíveis 2″ REV, 30A, eixo hexagonal 5mm",
+      "__EMPTY_1": 3,
+      "__EMPTY_2": 109.75,
+      "__EMPTY_3": 329.25,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-2035"
+    },
+    {
+      "Insumos": "Rodas flexíveis 2″ REV, 60A, eixo hexagonal 5mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 109.75,
+      "__EMPTY_3": 219.5,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-2034"
+    },
+    {
+      "Insumos": "Roda Flexível 2,25″, 35A, eixo hexagonal 5mm - 2 inteiras",
+      "__EMPTY_1": 7,
+      "__EMPTY_2": 150,
+      "__EMPTY_3": 1050,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Andy Mark"
+    },
+    {
+      "Insumos": "Roda Grip 90mm",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 175,
+      "__EMPTY_3": 700,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1267"
+    },
+    {
+      "Insumos": "Roda Omni 90mm REV ",
+      "__EMPTY_1": 6,
+      "__EMPTY_2": 361.5,
+      "__EMPTY_3": 2169,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1190"
+    },
+    {
+      "Insumos": "100mm Mecanum Wheel Right w/Bearing Rollers",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Studica"
+    },
+    {
+      "Insumos": "TETRIX® MAX Wheels",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "39055 S"
+    },
+    {
+      "Insumos": "TETRIX® MAX Omni Wheel Packs ",
+      "__EMPTY_1": 8,
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "36466 S"
+    },
+    {
+      "Insumos": "TETRIX® MAX All-Terrain Tire",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 0,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "39282 S"
+    },
+    {
+      "Insumos": "Roda Stealth 3″, eixo hexagonal 5mm, dureza 80A",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 162.25,
+      "__EMPTY_3": 649,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "Andy Mark"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 15 dentes",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1331"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 30 dentes ",
+      "__EMPTY_1": 9,
+      "__EMPTY_2": 21,
+      "__EMPTY_3": 189,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1332"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 45 dentes",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1334"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 60 dentes ",
+      "__EMPTY_1": 5,
+      "__EMPTY_2": 32.25,
+      "__EMPTY_3": 161.25,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1335"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 72 dentes",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 37.25,
+      "__EMPTY_3": 149,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1336"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 90 dentes ",
+      "__EMPTY_1": 6,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1337"
+    },
+    {
+      "Insumos": "Engrenagem Eixo Hexagonal 5mm, plástico 125 dentes ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 74.5,
+      "__EMPTY_3": 149,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1333"
+    },
+    {
+      "Insumos": "Adaptador para Servo REV ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 66,
+      "__EMPTY_3": 132,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1364"
+    },
+    {
+      "Insumos": "Coroa #25 plástica 10 dentes",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 21,
+      "__EMPTY_3": 84,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1338"
+    },
+    {
+      "Insumos": "Coroa #25 plástica 15 dentes",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 25.5,
+      "__EMPTY_3": 102,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1339"
+    },
+    {
+      "Insumos": "Coroa #25 plástica 20 dentes",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 25.5,
+      "__EMPTY_3": 102,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1340"
+    },
+    {
+      "Insumos": "Coroa #25 plástica 40 dentes",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 64.5,
+      "__EMPTY_3": 129,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1343"
+    },
+    {
+      "Insumos": "SpinTake",
+      "__EMPTY_1": 7,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "am-4623"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 50mm ",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 85mm ",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 88mm ",
+      "__EMPTY_1": 3,
+      "__EMPTY_2": 75,
+      "__EMPTY_3": 225,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1772"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 92mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 125mm ",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 152mm ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 118,
+      "__EMPTY_3": 236,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1770"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 245mm ",
+      "__EMPTY_1": 8,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 292mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 376mm ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 270,
+      "__EMPTY_3": 540,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1763"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 408mm ",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 272,
+      "__EMPTY_3": 1088,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1762"
+    },
+    {
+      "Insumos": "45mm x 15mm C Channels - 440mm ",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 297,
+      "__EMPTY_3": 1188,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1761"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 150mm, pontas 45°",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 63.5,
+      "__EMPTY_3": 127,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1430"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 40mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 59mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 64mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 80mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 96mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 106mm",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 110mm",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 198mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 205mm",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_5": "Cortada"
+    },
+    {
+      "Insumos": "Perfil 15x15mm, 225mm",
+      "__EMPTY_1": 10,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1432"
+    },
+    {
+      "Insumos": "Battery Holder Plate ",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1166"
+    },
+    {
+      "Insumos": "U Channel Endcap ",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1687"
+    },
+    {
+      "Insumos": "Suporte plástico de 90 graus, 15mm",
+      "__EMPTY_1": 18,
+      "__EMPTY_2": 19.375,
+      "__EMPTY_3": 348.75,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1305"
+    },
+    {
+      "Insumos": "15mm Plastic Variable Angle Bracket ",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1318"
+    },
+    {
+      "Insumos": "15mm Plastic 120 Degree Bracket ",
+      "__EMPTY_1": 4,
+      "__EMPTY_2": 15.2,
+      "__EMPTY_3": 60.8,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1311"
+    },
+    {
+      "Insumos": "15mm Plastic 60 Degree Bracket ",
+      "__EMPTY_1": 8,
+      "__EMPTY_2": 10.1,
+      "__EMPTY_3": 80.8,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1306"
+    },
+    {
+      "Insumos": " 15mm Plastic 45 Degree Bracket ",
+      "__EMPTY_1": 8,
+      "__EMPTY_2": 11.3,
+      "__EMPTY_3": 90.4,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1307"
+    },
+    {
+      "Insumos": "15mm Plastic 30 Degree Bracket ",
+      "__EMPTY_1": 8,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1308"
+    },
+    {
+      "Insumos": "Suporte de canto",
+      "__EMPTY_1": 14,
+      "__EMPTY_2": 18.75,
+      "__EMPTY_3": 262.5,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1321"
+    },
+    {
+      "Insumos": "Suporte de canto interno",
+      "__EMPTY_1": 19,
+      "__EMPTY_2": 18.75,
+      "__EMPTY_3": 356.25,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1320"
+    },
+    {
+      "Insumos": "Suporte plástico terminal, 15mm",
+      "__EMPTY_1": 6,
+      "__EMPTY_2": 17.87,
+      "__EMPTY_3": 107.22,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1304"
+    },
+    {
+      "Insumos": " 15mm Plastic Motion Bracket ",
+      "__EMPTY_1": 16,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1303"
+    },
+    {
+      "Insumos": "15mm Plastic Motion Brackets",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1315"
+    },
+    {
+      "Insumos": "15mm Plastic Motion Brackets",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1313"
+    },
+    {
+      "Insumos": "15mm Pillow Blocks",
+      "__EMPTY_1": 31,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1317"
+    },
+    {
+      "Insumos": "15mm Hex Pillow Block",
+      "__EMPTY_1": 3,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1316"
+    },
+    {
+      "Insumos": "5mm Hex Shaft Spacer - 1.5mm",
+      "__EMPTY_1": 11,
+      "__EMPTY_2": 6.64,
+      "__EMPTY_3": 73.03999999999999,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1325"
+    },
+    {
+      "Insumos": "5mm Hex Shaft Spacer - 3mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 9.68,
+      "__EMPTY_3": 19.36,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1324"
+    },
+    {
+      "Insumos": "5mm Hex Shaft Spacer - 15mm",
+      "__EMPTY_1": 6,
+      "__EMPTY_2": 11.91,
+      "__EMPTY_3": 71.46000000000001,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1323"
+    },
+    {
+      "Insumos": "Through Bore Bearing - Short",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1326"
+    },
+    {
+      "Insumos": "Through Bore Bearing - Long",
+      "__EMPTY_1": 6,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1329"
+    },
+    {
+      "Insumos": " #10 Spacer - 2in ",
+      "__EMPTY_1": 7,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-21-2092"
+    },
+    {
+      "Insumos": "Servo Shaft Adapter ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 25.5,
+      "__EMPTY_3": 51,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1328"
+    },
+    {
+      "Insumos": "End Cap Bearing",
+      "__EMPTY_1": 31,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1322"
+    },
+    {
+      "Insumos": " Through Bore Encoder Insert (contagem em kits + 2 soltas) ",
+      "__EMPTY_1": 5,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-25-1870"
+    },
+    {
+      "Insumos": "Suporte metálico de servomotor",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 29,
+      "__EMPTY_3": 29,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1475"
+    },
+    {
+      "Insumos": "UltraPlanetary Brackets",
+      "__EMPTY_1": 5,
+      "__EMPTY_2": 37.5,
+      "__EMPTY_3": 187.5,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "REV-41-1621"
+    },
+    {
+      "Insumos": "TETRIX® MAX Gears",
+      "__EMPTY_1": 9,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "39086 P"
+    },
+    {
+      "Insumos": "TETRIX® PRIME Aluminum Gusset 60 degree angle",
+      "__EMPTY_1": 11,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "41264 P"
+    },
+    {
+      "Insumos": "120 Graus Aluminum Gusset Peças",
+      "__EMPTY_1": 4,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": "41266 P"
+    },
+    {
+      "Insumos": "Polia Sincronizadora GT2 em Alumínio com 36 dentes",
+      "__EMPTY_1": 3,
+      "__EMPTY_2": 27.72,
+      "__EMPTY_3": 83.16,
+      "__EMPTY_4": "sim",
+      "__EMPTY_5": " PGT236-XXX-XX"
+    },
+    {
+      "Insumos": "TETRIX® MAX Flats 96mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "39273 P"
+    },
+    {
+      "Insumos": "TETRIX® MAX Flats  160mm",
+      "__EMPTY_1": 2,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "39272 P"
+    },
+    {
+      "Insumos": "TETRIX® MAX Flat Building Plate",
+      "__EMPTY_1": 3,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "39073 P"
+    },
+    {
+      "Insumos": "5mm x 75mm Hex Shaft ",
+      "__EMPTY_1": 6,
+      "__EMPTY_2": 60.25,
+      "__EMPTY_3": 361.5,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1347"
+    },
+    {
+      "Insumos": "5mm x 90mm Hex Shaft ",
+      "__EMPTY_1": 5,
+      "__EMPTY_2": 67.5,
+      "__EMPTY_3": 337.5,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1348"
+    },
+    {
+      "Insumos": " 5mm x 135mm Hex Shaft ",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 84.25,
+      "__EMPTY_3": 168.5,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1349"
+    },
+    {
+      "Insumos": "5mm x 400mm Hex Shaft ",
+      "__EMPTY_1": 9,
+      "__EMPTY_2": 103.25,
+      "__EMPTY_3": 929.25,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-41-1362"
+    },
+    {
+      "Insumos": "5mm x 11mm Ate 5mm x 184mm Hex Shaft ",
+      "__EMPTY_1": 15,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Parcial",
+      "__EMPTY_5": "Cortadas"
+    },
+    {
+      "Insumos": "REV USB PS4 Compatible Gamepad",
+      "__EMPTY_1": 2,
+      "__EMPTY_2": 754,
+      "__EMPTY_3": 1508,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "REV-31-2983"
+    },
+    {
+      "Insumos": "Linear Actuator Kit",
+      "__EMPTY_1": 1,
+      "__EMPTY_2": 3218,
+      "__EMPTY_3": 3218,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "3212-0001-0001"
+    },
+    {
+      "Insumos": "Low-Side Cascading Kit",
+      "__EMPTY_1": 1,
+      "__EMPTY_3": 0,
+      "__EMPTY_4": "Sim",
+      "__EMPTY_5": "3210-0001-0003"
+    },
+    {
+      "Insumos": "Corrediça Telescópica larga 250mm 30KG ",
+      "__EMPTY_1": 8,
+      "__EMPTY_2": 10,
+      "__EMPTY_3": 80,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "5091767 Leo"
+    },
+    {
+      "Insumos": "Corrediça Telescópica Estreita 250mm 25KG",
+      "__EMPTY_1": 12,
+      "__EMPTY_2": 8.9,
+      "__EMPTY_3": 106.80000000000001,
+      "__EMPTY_4": "Não",
+      "__EMPTY_5": "5051689 Leo"
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "__EMPTY_3": 0
+    },
+    {
+      "Insumos": "Total",
+      "__EMPTY_3": 63088.540000000015
+    }
+  ],
+  "EPIs": [
+    {
+      "EPIs": "Para adicionar uma entrada a esta lista, digite-a diretamente abaixo da última linha da tabela."
+    },
+    {
+      "EPIs": "Nome do EPI",
+      "__EMPTY": "Quantidade",
+      "__EMPTY_1": "Valor unitário",
+      "__EMPTY_2": "Subtotal",
+      "__EMPTY_3": "Adquirido",
+      "__EMPTY_4": "Valor Pago"
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "__EMPTY_2": 0
+    },
+    {
+      "EPIs": "Total",
+      "__EMPTY_2": 0,
+      "__EMPTY_4": 0
+    }
+  ],
+  "Sobre": []
+}
