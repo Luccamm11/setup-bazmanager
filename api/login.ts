@@ -1,22 +1,22 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Centralized member data — single source of truth
-const TECHNICIAN_USERNAMES = ['Jonas', 'Gustavo'];
+const TECHNICIAN_USERNAMES = ['Jonas', 'Ramon'];
 const ALL_VALID_USERNAMES = [
-  'Jonas', 'Gustavo',
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 'Ana Luisa',
+  'Jonas', 'Ramon',
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo',
   'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
 ];
 
 // Award focus per member (for API response enrichment)
 const AWARD_FOCUS: Record<string, string | null> = {
   'Jonas': null,
-  'Gustavo': null,
+  'Ramon': null,
   'Lucca': 'Sustentabilidade',
   'Clarice': 'PensamentoCriativo',
   'Ana Clara': 'PensamentoCriativo',
   'Bernardo': 'Conexao',
-  'Ana Luisa': 'Alcance',
+
   'Enzo Soares': 'Controle',
   'Pedro': 'Controle',
   'Yan': 'Inovacao',

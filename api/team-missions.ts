@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
-const TECHNICIANS = ['Jonas', 'Gustavo'];
+const TECHNICIANS = ['Jonas', 'Ramon'];
 const REDIS_KEY = 'levelup_team_missions';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

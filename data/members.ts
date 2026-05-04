@@ -31,7 +31,7 @@ export interface MemberProfile {
 const JONAS: MemberProfile = {
   username: 'Jonas',
   displayName: 'Jonas',
-  fullName: 'Jonas de Souza',
+  fullName: 'Jonas Lemos',
   role: 'technician',
   grade: 'Técnico / Mentor',
   seasons: ['Centerstage', 'PowerPlay', 'Freight Frenzy'],
@@ -44,26 +44,26 @@ const JONAS: MemberProfile = {
   shortTermGoal: 'Estruturar o plano de desenvolvimento individual de cada membro para os próximos 2 meses',
 };
 
-const GUSTAVO: MemberProfile = {
-  username: 'Gustavo',
-  displayName: 'Gustavo',
+const RAMON: MemberProfile = {
+  username: 'Ramon',
+  displayName: 'Ramon Montorri',
   role: 'technician',
   awardFocus: null,
-  coreMission: 'Apoiar a evolução dos membros e garantir a excelência técnica e organizacional da equipe',
-  seasonGoal: 'Garantir que todos os membros evoluam suas competências individuais e coletivas até o final da temporada',
-  shortTermGoal: 'Acompanhar e dar feedback sobre as metas de curto prazo de cada membro',
+  coreMission: 'Orientar a excelência técnica e estratégica da equipe, focando na evolução constante dos membros.',
+  seasonGoal: 'Garantir que a equipe atinja seu potencial máximo técnico e organizacional nesta temporada.',
+  shortTermGoal: 'Avaliar o status atual dos projetos e definir as prioridades para o próximo ciclo de desenvolvimento.',
 };
 
 // --- Members ---
 const LUCCA: MemberProfile = {
   username: 'Lucca',
   displayName: 'Lucca',
-  fullName: 'Lucca Marques Mello',
+  fullName: 'Lucca Menezes Miranda',
   role: 'member',
-  grade: '3º Ano Médio',
-  seasons: ['Centerstage', 'PowerPlay'],
-  entryDate: '10/02/2022',
-  birthDate: '05/08/2007',
+  grade: '9º Ano Ensino Fundamental',
+  seasons: ['Decode', 'Biobuzz'],
+  entryDate: '16/04/2025',
+  birthDate: '11/11/2011',
   bio: 'Focado em sustentabilidade e eficiência mecânica. Busco transformar problemas em soluções inovadoras.',
   awardFocus: 'Sustentabilidade',
   coreMission: 'Garantir a sustentabilidade operacional e financeira da Bazinga! ao longo de toda a temporada',
@@ -101,15 +101,7 @@ const BERNARDO: MemberProfile = {
   shortTermGoal: 'Mapear potenciais parceiros na região e preparar material de apresentação da equipe',
 };
 
-const ANA_LUISA: MemberProfile = {
-  username: 'Ana Luisa',
-  displayName: 'Ana Luisa',
-  role: 'member',
-  awardFocus: 'Alcance',
-  coreMission: 'Ampliar o impacto social da Bazinga! através da divulgação da FIRST e ações comunitárias',
-  seasonGoal: 'Realizar pelo menos 4 ações de outreach e recrutar novos interessados em robótica na comunidade',
-  shortTermGoal: 'Planejar e executar a primeira oficina de robótica aberta para a comunidade local',
-};
+
 
 const ENZO_SOARES: MemberProfile = {
   username: 'Enzo Soares',
@@ -163,8 +155,8 @@ const ENZO_RESENDE: MemberProfile = {
 
 // --- Exports ---
 export const ALL_MEMBERS: MemberProfile[] = [
-  JONAS, GUSTAVO,
-  LUCCA, CLARICE, ANA_CLARA, BERNARDO, ANA_LUISA,
+  JONAS, RAMON,
+  LUCCA, CLARICE, ANA_CLARA, BERNARDO,
   ENZO_SOARES, PEDRO, YAN, GUILHERME, ENZO_RESENDE,
 ];
 

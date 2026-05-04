@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'POST') {
     const { username, member } = req.body;
     // Check if technician (simplified check)
-    if (!username || !['Jonas', 'Gustavo'].includes(username)) {
+    if (!username || !['Jonas', 'Ramon'].includes(username)) {
       return res.status(403).json({ error: 'Apenas técnicos podem adicionar legado.' });
     }
 

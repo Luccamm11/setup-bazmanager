@@ -18,8 +18,8 @@ const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
 
 export const TEAM_MEMBERS = [
   'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Ana Luisa', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
-  'Jonas', 'Gustavo'
+  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
+  'Jonas', 'Ramon'
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missions, onCompleteMission }) => {

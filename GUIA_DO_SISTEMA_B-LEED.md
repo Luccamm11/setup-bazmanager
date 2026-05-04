@@ -35,7 +35,7 @@ O sistema organiza o conhecimento em **Trilhas** (Programação, Mecânica, Enge
 ## 🛠️ Funcionalidades Principais
 
 ### 1. 🎯 Missões e Desafios (Quests)
-- **Missions da Equipe:** Atribuídas pelos técnicos (Jonas/Gustavo). Alinhadas às necessidades da temporada.
+- **Missions da Equipe:** Atribuídas pelos técnicos (Jonas/Ramon). Alinhadas às necessidades da temporada.
 - **Desafios Práticos:** Mini-projetos e tarefas para consolidar o que você aprendeu autonomamente.
 - **Quests Diárias:** Geradas automaticamente por IA para manter seu aprendizado contínuo.
 

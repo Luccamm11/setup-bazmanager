@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
-const TECHNICIANS = ['Jonas', 'Gustavo'];
+const TECHNICIANS = ['Jonas', 'Ramon'];
 const ALL_MEMBERS = [
-  'Jonas', 'Gustavo', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Ana Luisa', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
+  'Jonas', 'Ramon', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

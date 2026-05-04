@@ -17,7 +17,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
     const [selectedMember, setSelectedMember] = useState<any | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const isTechnician = ['Jonas', 'Gustavo'].includes(currentUser);
+    const isTechnician = ['Jonas', 'Ramon'].includes(currentUser);
 
     useEffect(() => {
         const fetchData = async () => {

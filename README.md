@@ -65,7 +65,7 @@ setup-bazmanager/
 | **Clarice** | 💡 Pensamento Criativo (AE) | Documentação, Engineering Portfolio |
 | **Ana Clara** | 💡 Pensamento Criativo (MCI) | Documentação técnica, análise crítica |
 | **Bernardo** | 🤝 Conexão | Networking, parcerias, comunicação institucional |
-| **Ana Luisa** | 📢 Alcance | Outreach, impacto social, eventos |
+
 | **Enzo Soares** | 🤖 Controle | Programação FTC, sensores, autônomo |
 | **Pedro** | 🤖 Controle | Software, arquitetura de código |
 | **Yan** | 🔧 Design e Inovação | CAD, projeto mecânico, prototipagem |
@@ -76,7 +76,7 @@ setup-bazmanager/
 | Nome | Função |
 |------|--------|
 | **Jonas** | Orientador técnico e pedagógico |
-| **Gustavo** | Apoio ao desenvolvimento e gestão |
+| **Ramon Montorri** | Orientador técnico e estratégico |
 
 ---
 
@@ -160,7 +160,7 @@ npm run dev
 O sistema utiliza autenticação simples:
 - **Seletor de membro:** dropdown com todos os membros cadastrados
 - **Senha compartilhada:** todos usam a mesma senha
-- **Roles:** `member` (membros) e `technician` (Jonas, Gustavo)
+- **Roles:** `member` (membros) e `technician` (Jonas, Ramon)
 
 > **Nota:** Este sistema de autenticação é adequado para uso interno da equipe. Não é recomendado para produção com dados sensíveis.
 
