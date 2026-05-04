@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
-import defaultInventory from '../data/robotics_inventory.json';
+import { defaultInventory } from '../data/robotics_inventory.js';
 
 const INVENTORY_KEY = 'levelup_robotics_inventory';
 
@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let items = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
       
       if (!items || items.length === 0) {
-        // Fallback to initial JSON file if Redis is empty
+        // Fallback to initial JS file if Redis is empty
         items = defaultInventory;
         await redis.set(INVENTORY_KEY, JSON.stringify(items));
       }
