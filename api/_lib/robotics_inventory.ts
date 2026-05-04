@@ -1,4 +1,4 @@
-[
+export const defaultInventory = [
   {
     "id": "Insumos-2",
     "category": "Insumos",
@@ -1109,4 +1109,4 @@
     "acquiredByFIEMG": "Não",
     "productCode": "5051689 Leo"
   }
-]
+];

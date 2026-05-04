@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
-import defaultInventory from './_lib/robotics_inventory.json';
+import { defaultInventory } from './_lib/robotics_inventory.js';
 
 const INVENTORY_KEY = 'levelup_robotics_inventory';
 
