@@ -392,7 +392,7 @@ const App: React.FC = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = window.setTimeout(() => {
         setSyncStatus('syncing');
-        fetch('/api/save', {
+        fetch('/api/persistence', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: currentUser, data: stateToSave })
@@ -1860,7 +1860,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
           
           // Load user data and team missions in parallel
           Promise.all([
-            fetch(`/api/load?username=${username}`).then(res => res.json()),
+            fetch(`/api/persistence?username=${username}`).then(res => res.json()),
             fetch(`/api/team-missions?member=${username}`).then(res => res.json()),
           ])
             .then(([userData, missionsData]) => {
