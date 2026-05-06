@@ -220,5 +220,15 @@
     "empty_queue": "Nenhum pedido pendente.",
     "tip_title": "Dica B-LEED",
     "tip_desc": "O item Prioridade 3D na Loja permite pular para o topo da fila instantaneamente!"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "empty": "Nenhuma notificação por aqui.",
+    "mark_all_read": "Marcar todas como lidas",
+    "clear_all": "Limpar todas",
+    "new_mission": "Nova Missão",
+    "5w2h_submitted": "Novo Plano 5W2H",
+    "5w2h_reviewed": "Plano 5W2H Avaliado",
+    "mission_completed": "Missão Concluída"
   }
 }

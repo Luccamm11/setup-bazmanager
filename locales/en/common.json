@@ -158,5 +158,15 @@
     "empty_queue": "No pending orders.",
     "tip_title": "B-LEED Tip",
     "tip_desc": "The 3D Priority item in the Store lets you skip to the top!"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "mark_all_read": "Mark all as read",
+    "clear_all": "Clear all",
+    "new_mission": "New Mission",
+    "5w2h_submitted": "New 5W2H Plan",
+    "5w2h_reviewed": "5W2H Plan Reviewed",
+    "mission_completed": "Mission Completed"
   }
 }

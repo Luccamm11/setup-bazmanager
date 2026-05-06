@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest, UserRole, TeamMission } from './types';
+import { User, Quest, StoryLogEntry, Integration, Realm, Arc, SystemMessage, TopicDifficulty, StoreItem, QuestStatus, Difficulty, ChatMessage, Badge, Skill, WeeklyProgress, KnowledgeTopic, ActivityData, MajorGoal, ActiveBuff, InventoryItem, RewardNotification, UserState, AiRecommendations, SyncStatus, JournalEntry, ActiveTimedQuest, UserRole, TeamMission, AppNotification } from './types';
 import { INITIAL_USER, INITIAL_QUESTS, INITIAL_STORY_LOG, INITIAL_INTEGRATIONS, RANKS, INITIAL_SYSTEM_MESSAGES, STORE_ITEMS, ALL_ARCS, BADGE_DEFINITIONS, INITIAL_WEEKLY_PROGRESS, INITIAL_ACTIVITY_DATA, INITIAL_MAJOR_GOALS, getXpThresholdForSkillLevel, TOPIC_XP_MAP, getTotalXpForSkill, INITIAL_JOURNAL_ENTRIES, TECHNICIANS } from './constants';
 import { getMemberByUsername } from './data/members';
 import { getInitialUserData } from './data/initialData';
@@ -279,6 +279,122 @@ const App: React.FC = () => {
   const [isArcModalOpen, setIsArcModalOpen] = useState(false);
   const [rewardNotifications, setRewardNotifications] = useState<RewardNotification[]>([]);
 
+  // --- Notification State ---
+  const [appNotifications, setAppNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`/api/notifications?username=${currentUser}`);
+      const data = await res.json();
+      if (data.success) {
+        const prevUnread = unreadCount;
+        setAppNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+        if (data.unreadCount > prevUnread && prevUnread >= 0) {
+          const newNotifs = data.notifications.filter((n: AppNotification) => !n.read);
+          newNotifs.forEach((n: AppNotification) => {
+            fireBrowserNotification(n.title, n.message);
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [currentUser, unreadCount]);
+
+  const fireBrowserNotification = (title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/favicon.ico' });
+    }
+  };
+
+  const requestNotificationPermission = useCallback(async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }, []);
+
+  const handleMarkNotificationRead = useCallback(async (notificationId: string) => {
+    if (!currentUser) return;
+    setAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, notificationId }),
+      });
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  }, [currentUser]);
+
+  const handleMarkAllNotificationsRead = useCallback(async () => {
+    if (!currentUser) return;
+    setAppNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, markAllRead: true }),
+      });
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  }, [currentUser]);
+
+  const handleClearAllNotifications = useCallback(async () => {
+    if (!currentUser) return;
+    setAppNotifications([]);
+    setUnreadCount(0);
+    try {
+      await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, clearAll: true }),
+      });
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
+    }
+  }, [currentUser]);
+
+  const handleNotificationClick = useCallback((notification: AppNotification) => {
+    if (notification.type === 'new_mission' || notification.type === 'mission_completed') {
+      setView('team_missions');
+    } else if (notification.type === '5w2h_submitted' || notification.type === '5w2h_reviewed') {
+      setView('5w2h');
+    }
+  }, []);
+
+  const sendNotifications = useCallback(async (notifs: Omit<AppNotification, 'id' | 'read' | 'createdAt'>[]) => {
+    if (notifs.length === 0) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notifications: notifs }),
+      });
+      fetchNotifications();
+    } catch (err) {
+      console.error('Failed to send notifications:', err);
+    }
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (currentUser) {
+      requestNotificationPermission();
+      fetchNotifications();
+      notifPollRef.current = setInterval(fetchNotifications, 30000);
+      return () => {
+        if (notifPollRef.current) clearInterval(notifPollRef.current);
+      };
+    }
+  }, [currentUser, fetchNotifications, requestNotificationPermission]);
+
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [editingBadge, setEditingBadge] = useState<Badge | null>(null);
 
@@ -320,11 +436,32 @@ const App: React.FC = () => {
       if (data.success) {
         setTeamMissions(prev => [...prev, data.mission]);
         setSystemMessages(prev => [{ id: `tm-create-${Date.now()}`, text: `Missão da equipe "${data.mission.title}" criada com sucesso!`, timestamp: 'Just now', type: 'system' }, ...prev]);
+
+        const recipients = data.mission.assignedTo.length > 0
+          ? data.mission.assignedTo
+          : TECHNICIANS.filter(t => t !== currentUser).length > 0
+            ? [] // will be resolved below
+            : [];
+
+        let targets: string[] = recipients;
+        if (recipients.length === 0) {
+          const { ALL_MEMBERS } = await import('./data/members');
+          targets = ALL_MEMBERS.filter(m => m.role === 'member').map(m => m.username);
+        }
+
+        const notifs = targets.map((member: string) => ({
+          recipientUsername: member,
+          type: 'new_mission' as const,
+          title: 'Nova Missão de Equipe',
+          message: `"${data.mission.title}" foi atribuída a você por ${currentUser}.`,
+          relatedId: data.mission.id,
+        }));
+        sendNotifications(notifs);
       }
     } catch (err) {
       console.error('Failed to create team mission:', err);
     }
-  }, [currentUser]);
+  }, [currentUser, sendNotifications]);
 
   const handleDeleteTeamMission = useCallback(async (missionId: string) => {
     if (!currentUser) return;
@@ -811,11 +948,20 @@ const App: React.FC = () => {
         );
 
         setSystemMessages(prev => [{ id: `tm-complete-${Date.now()}`, text: `Missão da equipe "${mission.title}" completada!`, timestamp: 'Just now', type: 'reward' }, ...prev]);
+
+        const techNotifs = TECHNICIANS.filter(t => t !== currentUser).map(tech => ({
+          recipientUsername: tech,
+          type: 'mission_completed' as const,
+          title: 'Missão Concluída',
+          message: `${currentUser} completou a missão "${mission.title}".`,
+          relatedId: mission.id,
+        }));
+        sendNotifications(techNotifs);
       }
     } catch (err) {
       console.error('Failed to complete team mission:', err);
     }
-  }, [currentUser, teamMissions, handleGrantReward, addDevelopmentLog]);
+  }, [currentUser, teamMissions, handleGrantReward, addDevelopmentLog, sendNotifications]);
 
 
 const handleCompleteQuest = useCallback((questId: string) => {
@@ -1830,7 +1976,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
-      case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} />;
+      case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} onNotify={sendNotifications} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }
@@ -1930,7 +2076,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 h-full min-w-0">
           <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
-            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} />
+            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} notifications={appNotifications} unreadCount={unreadCount} onMarkNotificationRead={handleMarkNotificationRead} onMarkAllNotificationsRead={handleMarkAllNotificationsRead} onClearAllNotifications={handleClearAllNotifications} onNotificationClick={handleNotificationClick} />
             <div className="flex-1 w-full relative">
               <AnimatePresence mode="wait">
                 <motion.div

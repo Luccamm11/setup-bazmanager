@@ -18,6 +18,7 @@ type PlanDraft = Omit<FiveW2HPlan, 'id' | 'createdBy' | 'status' | 'createdAt' |
 interface Props {
   currentUser: string;
   userRole: 'member' | 'technician';
+  onNotify?: (notifications: { recipientUsername: string; type: '5w2h_submitted' | '5w2h_reviewed'; title: string; message: string; relatedId?: string }[]) => void;
 }
 
 const isTech = (username: string) => TECHNICIAN_USERNAMES.includes(username);
@@ -189,7 +190,7 @@ const PlanCard: React.FC<CardProps> = ({ plan, currentUser, isTechnician, onEdit
 
 // ─── Main Board ───────────────────────────────────────────────────────────────
 
-const FiveW2HBoard: React.FC<Props> = ({ currentUser, userRole }) => {
+const FiveW2HBoard: React.FC<Props> = ({ currentUser, userRole, onNotify }) => {
   const [plans, setPlans] = useState<FiveW2HPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [targetMember, setTargetMember] = useState<string>('');
@@ -232,11 +233,33 @@ const FiveW2HBoard: React.FC<Props> = ({ currentUser, userRole }) => {
         ...draft,
         assignedTo: draft.isGroup ? draft.assignedTo : (isTechnician && targetMember ? [targetMember] : []),
       };
-      await fetch('/api/5w2h', {
+      const res = await fetch('/api/5w2h', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser, plan: planPayload }),
       });
+      const data = await res.json();
+      if (data.success && onNotify) {
+        if (!isTechnician) {
+          const techNotifs = TECHNICIAN_USERNAMES.map(tech => ({
+            recipientUsername: tech,
+            type: '5w2h_submitted' as const,
+            title: 'Novo Plano 5W2H para Avaliar',
+            message: `${currentUser} criou o plano "${draft.title}" e está aguardando sua aprovação.`,
+            relatedId: data.plan.id,
+          }));
+          onNotify(techNotifs);
+        } else if (planPayload.assignedTo.length > 0) {
+          const memberNotifs = planPayload.assignedTo.map(member => ({
+            recipientUsername: member,
+            type: '5w2h_reviewed' as const, // We can reuse this or create '5w2h_assigned'
+            title: 'Novo Plano 5W2H Atribuído',
+            message: `O técnico ${currentUser} atribuiu o plano "${draft.title}" a você.`,
+            relatedId: data.plan.id,
+          }));
+          onNotify(memberNotifs);
+        }
+      }
     }
     setEditingPlan(null);
     fetchPlans();
@@ -253,7 +276,7 @@ const FiveW2HBoard: React.FC<Props> = ({ currentUser, userRole }) => {
 
   const handleReview = async (realmRewards: RealmXpReward[], creditReward: number, note: string) => {
     if (!reviewingPlan) return;
-    await fetch('/api/5w2h', {
+    const res = await fetch('/api/5w2h', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -263,6 +286,16 @@ const FiveW2HBoard: React.FC<Props> = ({ currentUser, userRole }) => {
         updates: { realmRewards, creditReward, reviewNote: note },
       }),
     });
+    const data = await res.json();
+    if (data.success && onNotify) {
+      onNotify([{
+        recipientUsername: reviewingPlan.createdBy,
+        type: '5w2h_reviewed',
+        title: 'Plano 5W2H Avaliado',
+        message: `Seu plano "${reviewingPlan.title}" foi avaliado por ${currentUser}.`,
+        relatedId: reviewingPlan.id,
+      }]);
+    }
     setReviewingPlan(null);
     fetchPlans();
   };

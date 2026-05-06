@@ -306,6 +306,21 @@ export interface AiRecommendations {
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 
+// ─── Notification Types ──────────────────────────────────────────────────────
+
+export type NotificationType = 'new_mission' | '5w2h_submitted' | '5w2h_reviewed' | 'mission_completed';
+
+export interface AppNotification {
+  id: string;
+  recipientUsername: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  relatedId?: string;
+}
+
 export interface PrinterQueueItem {
     id: string;
     filename: string;

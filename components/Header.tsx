@@ -1,6 +1,7 @@
 import React from 'react';
-import { User, Realm, SyncStatus } from '../types';
+import { User, Realm, SyncStatus, AppNotification } from '../types';
 import XpBar from './XpBar';
+import NotificationBell from './NotificationBell';
 import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +21,12 @@ interface HeaderProps {
   userPicture?: string | null;
   onSettingsClick: () => void;
   syncStatus: SyncStatus;
+  notifications: AppNotification[];
+  unreadCount: number;
+  onMarkNotificationRead: (id: string) => void;
+  onMarkAllNotificationsRead: () => void;
+  onClearAllNotifications: () => void;
+  onNotificationClick: (notification: AppNotification) => void;
 }
 
 const StatDisplay: React.FC<{ icon: React.ReactNode; value: number; colorClass: string; bgClass: string; label: string }> = ({ icon, value, colorClass, bgClass, label }) => (
@@ -79,7 +86,7 @@ const LanguageToggle: React.FC = () => {
     );
 };
 
-const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus }) => {
+const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus, notifications, unreadCount, onMarkNotificationRead, onMarkAllNotificationsRead, onClearAllNotifications, onNotificationClick }) => {
     const { t } = useTranslation();
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
   return (
@@ -149,6 +156,14 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
                 <div className="flex items-center space-x-2 sm:space-x-3 bg-white/[0.03] p-1 rounded-xl border border-white/5 backdrop-blur-md">
                     <SyncIndicator status={syncStatus} />
                     <LanguageToggle />
+                    <NotificationBell
+                        notifications={notifications}
+                        unreadCount={unreadCount}
+                        onMarkRead={onMarkNotificationRead}
+                        onMarkAllRead={onMarkAllNotificationsRead}
+                        onClearAll={onClearAllNotifications}
+                        onNotificationClick={onNotificationClick}
+                    />
                     <button onClick={onSettingsClick} className="p-1 sm:p-2 rounded-lg text-text-secondary hover:text-white transition-all">
                         <Settings className="w-4 h-4 sm:w-5 sm:h-5 opacity-60 group-hover:opacity-100" />
                     </button>
