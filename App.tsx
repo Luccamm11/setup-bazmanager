@@ -17,6 +17,7 @@ import RoboticsInventory from './components/RoboticsInventory';
 import SettingsModal from './components/SettingsModal';
 import MyState from './components/MyState';
 import LoginModal from './components/LoginModal';
+import FiveW2HBoard from './components/FiveW2H';
 
 import LevelUpAnimation from './components/LevelUpAnimation';
 import Chatbot from './components/Chatbot';
@@ -47,7 +48,6 @@ import JourneyTab from './components/JourneyTab';
 import AttendanceDashboard from './components/tech/AttendanceDashboard';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
-import FiveW2HBoard from './components/FiveW2H/index';
 import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, generateKnowledgeTopics, generateTopicsFromSyllabus, generateMajorGoals, generateShortText, generateArc, generateBadge, generateStoreItem, getAiRecommendations, generateJournalChecklist } from './services/geminiService';
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
@@ -1829,8 +1829,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'attendance': return userRole === 'technician' ? <AttendanceDashboard /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
-      case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
+      case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }

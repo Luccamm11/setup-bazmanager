@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, FileText } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
@@ -15,7 +15,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean }[] = [
     { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
-    { view: '5w2h' as View,     label: '5W2H',                                       desc: 'Crie e acompanhe planos de ação estruturados', icon: FileText },
+    { view: '5w2h',             label: t('nav.5w2h', 'Planejamento 5W2H'),        desc: t('nav.5w2h_desc', 'Crie planos de ação individuais ou em grupo'), icon: BookText },
     ...(userRole === 'technician' ? [
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
       { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },

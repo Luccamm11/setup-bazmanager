@@ -69,7 +69,9 @@
     "journey": "B-LEED Journey",
     "journey_desc": "Export your Portfolio (B-LEED)",
     "printer_queue": "3D Printer Queue",
-    "printer_queue_desc": "Manage usage queue for our 3D printer"
+    "printer_queue_desc": "Manage usage queue for our 3D printer",
+    "5w2h": "5W2H Planning",
+    "5w2h_desc": "Create individual or group action plans"
   },
   "awards": {
     "Sustainability": "Sustainability",
