@@ -85,7 +85,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
       
       // We only save to backend if we are actually viewing the Kanban, to prevent multiple clients saving at once?
       // Well, it's fine.
-      fetch('/api/kanban', {
+      fetch('/api/crud?type=kanban', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tasks: updatedTasks })
@@ -95,10 +95,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch('/api/kanban');
+      const res = await fetch('/api/crud?type=kanban');
       const data = await res.json();
-      if (data.success && data.tasks) {
-        setTasks(data.tasks);
+      if (data.success && data.kanban) {
+        setTasks(data.kanban);
       }
     } catch (err) {
       console.error('Failed to load kanban tasks:', err);
@@ -110,7 +110,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
   const saveTasks = async (newTasks: KanbanTask[]) => {
     setTasks(newTasks);
     try {
-      await fetch('/api/kanban', {
+      await fetch('/api/crud?type=kanban', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tasks: newTasks })

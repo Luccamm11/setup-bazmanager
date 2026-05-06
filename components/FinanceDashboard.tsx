@@ -54,10 +54,10 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch('/api/finance');
+      const res = await fetch('/api/crud?type=finance');
       const data = await res.json();
-      if (data.success && data.records) {
-        setTransactions(data.records);
+      if (data.success && data.finance) {
+        setTransactions(data.finance);
       }
     } catch (err) {
       console.error('Failed to load finance records:', err);
@@ -68,7 +68,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
   const saveTransactions = async (newTransactions: FinanceTransaction[]) => {
     try {
-      await fetch('/api/finance', {
+      await fetch('/api/crud?type=finance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ records: newTransactions })

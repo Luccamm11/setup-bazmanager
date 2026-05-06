@@ -30,10 +30,10 @@ const AttendanceDashboard: React.FC = () => {
         const fetchAttendance = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/attendance');
+                const res = await fetch('/api/crud?type=attendance');
                 const data = await res.json();
                 if (data.success) {
-                    setAttendance(data.records || {});
+                    setAttendance(data.attendance || {});
                 }
             } catch (err) {
                 console.error('Error fetching attendance:', err);
@@ -67,7 +67,7 @@ const AttendanceDashboard: React.FC = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await fetch('/api/attendance', {
+            await fetch('/api/crud?type=attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ records: attendance })
