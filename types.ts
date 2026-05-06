@@ -322,3 +322,39 @@ export interface PrinterQueueItem {
     problemDescription?: string;
     completedAt?: string;
 }
+
+// ─── 5W2H Types ───────────────────────────────────────────────────────────────
+
+export type FiveW2HPlanStatus = 'pending_review' | 'approved' | 'in_progress' | 'done';
+
+export interface FiveW2HPlan {
+  id: string;
+
+  // 5W2H Fields
+  what: string;       // O quê?
+  why: string;        // Por quê?
+  who: string;        // Quem?
+  where: string;      // Onde?
+  when: string;       // Quando? (ISO date string)
+  how: string;        // Como?
+  howMuch: string;    // Quanto custa / quanto tempo?
+
+  // Metadata
+  title: string;
+  createdBy: string;         // username of creator
+  assignedTo: string[];      // usernames – empty = only creator
+  isGroup: boolean;
+
+  status: FiveW2HPlanStatus;
+  createdAt: string;         // ISO
+  updatedAt: string;         // ISO
+
+  // XP rewards (filled by technician review)
+  realmRewards: RealmXpReward[];  // reusing existing type
+  creditReward: number;
+
+  // Technician review
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+}
