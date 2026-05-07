@@ -97,18 +97,14 @@ const Store: React.FC<StoreProps> = ({ items, onBuyItem, userCredits, onAddItem,
                                 {itemIcons[item.effect.type] || itemIcons['DEFAULT']}
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-text-primary tracking-tight leading-tight mb-1">
-                                    {t(`constants:store_items.${item.id}.name`, { defaultValue: item.name })}
-                                </h3>
+                                <h3 className="text-xl font-bold text-text-primary tracking-tight leading-tight mb-1">{item.name}</h3>
                                 <div className="flex items-center space-x-1 text-accent-green font-black bg-accent-green/10 inline-flex px-2 py-0.5 rounded-lg border border-accent-green/20">
                                 <DollarSign className="w-4 h-4" />
                                 <span>{item.cost} CR</span>
                                 </div>
                             </div>
                             </div>
-                            <p className="text-text-secondary mt-5 text-sm leading-relaxed">
-                                {t(`constants:store_items.${item.id}.description`, { defaultValue: item.description })}
-                            </p>
+                            <p className="text-text-secondary mt-5 text-sm leading-relaxed">{item.description}</p>
                         </div>
                         <button 
                             onClick={() => onBuyItem(item)}

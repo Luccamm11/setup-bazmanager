@@ -1,7 +1,6 @@
 import { MEMBER_USERNAMES as ALL_MEMBERS } from '../../data/members';
 import React, { useState, useEffect } from 'react';
 import { Calendar, CheckSquare, XSquare, BriefcaseMedical, Clock, Plane, Loader2, Save, ListTodo } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 type AttendanceStatus = 'Atestado Medico' | 'Itinerario' | 'Falta' | 'Presenca' | 'Ferias';
 
@@ -12,7 +11,6 @@ interface AttendanceRecord {
 }
 
 const AttendanceDashboard: React.FC = () => {
-    const { t } = useTranslation(['analytics']);
     const [attendance, setAttendance] = useState<AttendanceRecord>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -107,8 +105,8 @@ const AttendanceDashboard: React.FC = () => {
         <div className="space-y-6 max-w-7xl mx-auto px-4 pb-20">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-white uppercase tracking-wider">{t('analytics:attendance.title')}</h2>
-                    <p className="text-text-secondary text-sm">{t('analytics:attendance.subtitle')}</p>
+                    <h2 className="text-3xl font-black text-white uppercase tracking-wider">Controle de Presença</h2>
+                    <p className="text-text-secondary text-sm">Gerencie o histórico de presença e atividades externas dos membros.</p>
                 </div>
                 
                 <div className="flex bg-primary/50 p-1 rounded-xl border border-white/10">
@@ -116,13 +114,13 @@ const AttendanceDashboard: React.FC = () => {
                         onClick={() => setViewMode('daily')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'daily' ? 'bg-accent-primary text-white shadow-lg' : 'text-text-secondary hover:text-white'}`}
                     >
-                        <ListTodo size={16} /> {t('analytics:attendance.daily_view')}
+                        <ListTodo size={16} /> Presença do Dia
                     </button>
                     <button
                         onClick={() => setViewMode('calendar')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'calendar' ? 'bg-accent-primary text-white shadow-lg' : 'text-text-secondary hover:text-white'}`}
                     >
-                        <Calendar size={16} /> {t('analytics:attendance.calendar_view')}
+                        <Calendar size={16} /> Ver Calendário
                     </button>
                 </div>
             </div>
@@ -135,7 +133,7 @@ const AttendanceDashboard: React.FC = () => {
                 <div className="bg-primary/30 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/5">
                         <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-text-muted uppercase tracking-wider">{t('analytics:attendance.date_label')}</span>
+                            <span className="text-sm font-bold text-text-muted uppercase tracking-wider">Data do Registro:</span>
                             <input 
                                 type="date" 
                                 value={selectedDate}
@@ -149,7 +147,7 @@ const AttendanceDashboard: React.FC = () => {
                             className="bg-accent-primary text-white font-bold py-2 px-6 rounded-xl shadow-glow-primary hover:bg-blue-500 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                         >
                             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                            {t('analytics:attendance.save_list')}
+                            Salvar Lista
                         </button>
                     </div>
 
@@ -157,11 +155,11 @@ const AttendanceDashboard: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-white/5 border-b border-white/10 uppercase text-[10px] font-black tracking-widest text-text-muted">
                                 <tr>
-                                    <th className="p-4 pl-6 whitespace-nowrap">{t('analytics:attendance.member_header')}</th>
-                                    <th className="p-4 text-center whitespace-nowrap">{t('analytics:attendance.present_header')}</th>
-                                    <th className="p-4 text-center whitespace-nowrap">{t('analytics:attendance.absent_header')}</th>
+                                    <th className="p-4 pl-6 whitespace-nowrap">Membro</th>
+                                    <th className="p-4 text-center whitespace-nowrap">Presenças</th>
+                                    <th className="p-4 text-center whitespace-nowrap">Faltas</th>
                                     <th className="p-4 text-center whitespace-nowrap border-l border-white/10 bg-white/[0.02]">
-                                        {t('analytics:attendance.status_header')}
+                                        Definir Status
                                     </th>
                                 </tr>
                             </thead>
@@ -184,31 +182,31 @@ const AttendanceDashboard: React.FC = () => {
                                                         onClick={() => handleStatusChange(member, 'Presenca')}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentStatus === 'Presenca' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-transparent text-text-muted hover:text-white border-white/10 hover:border-white/30'}`}
                                                     >
-                                                        <CheckSquare size={14} className="inline mr-1" /> {t('analytics:attendance.status.present')}
+                                                        <CheckSquare size={14} className="inline mr-1" /> Presença
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusChange(member, 'Falta')}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentStatus === 'Falta' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-transparent text-text-muted hover:text-white border-white/10 hover:border-white/30'}`}
                                                     >
-                                                        <XSquare size={14} className="inline mr-1" /> {t('analytics:attendance.status.absent')}
+                                                        <XSquare size={14} className="inline mr-1" /> Falta
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusChange(member, 'Itinerario')}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentStatus === 'Itinerario' ? 'bg-orange-500 text-white border-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-transparent text-text-muted hover:text-white border-white/10 hover:border-white/30'}`}
                                                     >
-                                                        <Clock size={14} className="inline mr-1" /> {t('analytics:attendance.status.itinerary')}
+                                                        <Clock size={14} className="inline mr-1" /> Itinerário
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusChange(member, 'Atestado Medico')}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentStatus === 'Atestado Medico' ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.4)]' : 'bg-transparent text-text-muted hover:text-white border-white/10 hover:border-white/30'}`}
                                                     >
-                                                        <BriefcaseMedical size={14} className="inline mr-1" /> {t('analytics:attendance.status.medical')}
+                                                        <BriefcaseMedical size={14} className="inline mr-1" /> Atestado
                                                     </button>
                                                     <button
                                                         onClick={() => handleStatusChange(member, 'Ferias')}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentStatus === 'Ferias' ? 'bg-blue-500 text-white border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-transparent text-text-muted hover:text-white border-white/10 hover:border-white/30'}`}
                                                     >
-                                                        <Plane size={14} className="inline mr-1" /> {t('analytics:attendance.status.vacation')}
+                                                        <Plane size={14} className="inline mr-1" /> Férias
                                                     </button>
                                                 </div>
                                             </td>
@@ -223,7 +221,7 @@ const AttendanceDashboard: React.FC = () => {
                 <div className="bg-primary/30 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/5">
                         <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-text-muted uppercase tracking-wider">{t('analytics:attendance.month_label')}</span>
+                            <span className="text-sm font-bold text-text-muted uppercase tracking-wider">Mês Base:</span>
                             <input 
                                 type="month" 
                                 value={calendarMonth}
@@ -233,11 +231,11 @@ const AttendanceDashboard: React.FC = () => {
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-4 text-xs font-bold">
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span> {t('analytics:attendance.status.present')}</div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span> {t('analytics:attendance.status.absent')}</div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span> {t('analytics:attendance.status.medical')}</div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span> {t('analytics:attendance.status.itinerary')}</div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"></span> {t('analytics:attendance.status.vacation')}</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span> Presente</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500"></span> Falta</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500"></span> Atestado</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-500"></span> Itinerário</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Férias</div>
                         </div>
                     </div>
 
@@ -245,7 +243,7 @@ const AttendanceDashboard: React.FC = () => {
                         <table className="w-full text-left border-collapse table-auto">
                             <thead className="bg-white/5 border-b border-white/10 text-[10px] font-black text-text-muted">
                                 <tr>
-                                    <th className="p-3 whitespace-nowrap tracking-widest uppercase border-r border-white/5 w-40">{t('analytics:attendance.member_header')}</th>
+                                    <th className="p-3 whitespace-nowrap tracking-widest uppercase border-r border-white/5 w-40">Membros</th>
                                     {daysArray.map(day => (
                                         <th key={day} className="p-1 min-w-[28px] text-center">{day}</th>
                                     ))}
@@ -266,7 +264,7 @@ const AttendanceDashboard: React.FC = () => {
                                                     <div className="flex justify-center items-center h-full">
                                                         <div 
                                                             className={`w-5 h-5 rounded-md ${getStatusColor(status)} shadow-sm relative overflow-hidden`}
-                                                            title={`${member} | ${targetDate}${status ? ` | ${t(`analytics:attendance.status.${status === 'Presenca' ? 'present' : status === 'Falta' ? 'absent' : status === 'Atestado Medico' ? 'medical' : status === 'Itinerario' ? 'itinerary' : 'vacation'}`)}` : ` | ${t('analytics:attendance.status.no_record')}`}${weekend ? ` | ${t('analytics:attendance.status.weekend')}` : ''}`}
+                                                            title={`${member} | ${targetDate}${status ? ` | ${status}` : ' | Sem registro'}${weekend ? ' | Final de Semana' : ''}`}
                                                         >
                                                             {weekend && (
                                                                 <div className="absolute inset-0 flex items-center justify-center text-white/40 pointer-events-none">

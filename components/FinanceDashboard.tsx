@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
@@ -33,7 +32,6 @@ interface FinanceDashboardProps {
 }
 
 const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
-  const { t } = useTranslation(['analytics']);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -110,7 +108,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm(t('analytics:finance.delete_confirm'))) return;
+    if (!confirm('Tem certeza que deseja excluir este registro?')) return;
     const updatedTx = transactions.filter(t => t.id !== id);
     saveTransactions(updatedTx);
   };
@@ -181,7 +179,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-white">{t('analytics:finance.loading')}</div>;
+    return <div className="flex items-center justify-center h-64 text-white">Carregando financeiro...</div>;
   }
 
   return (
@@ -190,9 +188,9 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
             <Wallet className="w-8 h-8 text-accent-primary" />
-            {t('analytics:finance.title')}
+            Financeiro da Equipe
           </h2>
-          <p className="text-text-secondary mt-1">{t('analytics:finance.subtitle')}</p>
+          <p className="text-text-secondary mt-1">Gerencie os gastos, ganhos e investimentos</p>
         </div>
         {canEdit && (
           <button
@@ -200,7 +198,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-secondary text-white font-bold rounded-xl transition-colors shadow-glow-primary"
           >
             <Plus size={20} />
-            {t('analytics:finance.new_record')}
+            Novo Registro
           </button>
         )}
       </div>
@@ -211,7 +209,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <Wallet className="w-5 h-5 text-blue-400" />
             </div>
-            <h3 className="text-text-secondary font-semibold">{t('analytics:finance.balance')}</h3>
+            <h3 className="text-text-secondary font-semibold">Saldo Atual</h3>
           </div>
           <p className={`text-3xl font-black ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatCurrency(balance)}
@@ -223,7 +221,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-green-400" />
             </div>
-            <h3 className="text-text-secondary font-semibold">{t('analytics:finance.income')}</h3>
+            <h3 className="text-text-secondary font-semibold">Total Ganhos</h3>
           </div>
           <p className="text-3xl font-black text-white">
             {formatCurrency(totalIncome)}
@@ -235,7 +233,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
               <TrendingDown className="w-5 h-5 text-red-400" />
             </div>
-            <h3 className="text-text-secondary font-semibold">{t('analytics:finance.expense')}</h3>
+            <h3 className="text-text-secondary font-semibold">Total Gastos</h3>
           </div>
           <p className="text-3xl font-black text-white">
             {formatCurrency(totalExpense)}
@@ -247,7 +245,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-purple-400" />
             </div>
-            <h3 className="text-text-secondary font-semibold">{t('analytics:finance.investments')}</h3>
+            <h3 className="text-text-secondary font-semibold">Lucro Investimentos</h3>
           </div>
           <p className={`text-3xl font-black ${investmentsProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatCurrency(investmentsProfit)}
@@ -260,21 +258,21 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white/5 border-b border-white/10 text-sm font-semibold text-text-secondary">
-                <th className="p-4 whitespace-nowrap">{t('analytics:finance.table.date')}</th>
-                <th className="p-4 whitespace-nowrap">{t('analytics:finance.table.description')}</th>
-                <th className="p-4 whitespace-nowrap">{t('analytics:finance.table.category')}</th>
-                <th className="p-4 whitespace-nowrap">{t('analytics:finance.table.type')}</th>
-                <th className="p-4 whitespace-nowrap text-right">{t('analytics:finance.table.amount')}</th>
-                <th className="p-4 whitespace-nowrap text-right">{t('analytics:finance.table.return')}</th>
-                <th className="p-4 whitespace-nowrap text-right">{t('analytics:finance.table.profit')}</th>
-                {canEdit && <th className="p-4 whitespace-nowrap text-center">{t('analytics:finance.table.actions')}</th>}
+                <th className="p-4 whitespace-nowrap">Data</th>
+                <th className="p-4 whitespace-nowrap">Descrição</th>
+                <th className="p-4 whitespace-nowrap">Categoria</th>
+                <th className="p-4 whitespace-nowrap">Tipo</th>
+                <th className="p-4 whitespace-nowrap text-right">Valor</th>
+                <th className="p-4 whitespace-nowrap text-right">Retorno</th>
+                <th className="p-4 whitespace-nowrap text-right">Lucro/Prej</th>
+                {canEdit && <th className="p-4 whitespace-nowrap text-center">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan={canEdit ? 8 : 7} className="p-8 text-center text-text-secondary">
-                    {t('analytics:finance.table.no_records')}
+                    Nenhum registro encontrado.
                   </td>
                 </tr>
               ) : (
@@ -301,11 +299,11 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                         </span>
                       </td>
                       <td className="p-4">
-                        {isIncome && <span className="text-green-400 text-sm font-bold bg-green-400/10 px-2 py-1 rounded">{t('analytics:finance.types.income')}</span>}
-                        {isExpense && <span className="text-red-400 text-sm font-bold bg-red-400/10 px-2 py-1 rounded">{t('analytics:finance.types.expense')}</span>}
+                        {isIncome && <span className="text-green-400 text-sm font-bold bg-green-400/10 px-2 py-1 rounded">Ganho</span>}
+                        {isExpense && <span className="text-red-400 text-sm font-bold bg-red-400/10 px-2 py-1 rounded">Gasto</span>}
                         {isInvestment && (
                           <span className={`text-sm font-bold px-2 py-1 rounded ${tx.status === 'closed' ? 'text-purple-400 bg-purple-400/10' : 'text-yellow-400 bg-yellow-400/10'}`}>
-                            {t('analytics:finance.types.investment_short')}: {tx.status === 'closed' ? t('analytics:finance.status.closed') : t('analytics:finance.status.open')}
+                            Inv: {tx.status === 'closed' ? 'Fechado' : 'Aberto'}
                           </span>
                         )}
                       </td>
@@ -328,11 +326,11 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                         <td className="p-4">
                           <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
-                                onClick={() => openModal(tx)}
-                                className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md transition-colors text-xs font-bold"
-                              >
-                                {t('analytics:finance.table.edit')}
-                              </button>
+                              onClick={() => openModal(tx)}
+                              className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md transition-colors"
+                            >
+                              Editar
+                            </button>
                             <button 
                               onClick={() => handleDelete(tx.id)}
                               className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md transition-colors"
@@ -359,14 +357,14 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
           >
             <h3 className="text-xl font-bold text-white mb-4">
-              {editingTx ? t('analytics:finance.edit_record') : t('analytics:finance.new_record')}
+              {editingTx ? 'Editar Registro' : 'Novo Registro'}
             </h3>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                    {t('analytics:finance.form.type')}
+                    Tipo
                   </label>
                   <select
                     value={type}
@@ -374,14 +372,14 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-accent-primary transition-colors appearance-none"
                     required
                   >
-                    <option value="income">{t('analytics:finance.types.income')}s</option>
-                    <option value="expense">{t('analytics:finance.types.expense')}s</option>
-                    <option value="investment">{t('analytics:finance.types.investment')}</option>
+                    <option value="income">Ganhos</option>
+                    <option value="expense">Gastos</option>
+                    <option value="investment">Investimento</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                    {t('analytics:finance.form.date')}
+                    Data
                   </label>
                   <input
                     type="date"
@@ -395,11 +393,11 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                  {t('analytics:finance.form.description')}
+                  Descrição
                 </label>
                 <input
                   type="text"
-                  placeholder={t('analytics:finance.form.description_placeholder')}
+                  placeholder="Ex: Compra de Filamento PETG"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-accent-primary transition-colors"
@@ -410,11 +408,11 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                    {t('analytics:finance.form.category')}
+                    Categoria
                   </label>
                   <input
                     type="text"
-                    placeholder={t('analytics:finance.form.category_placeholder')}
+                    placeholder="Ex: Materiais"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-accent-primary transition-colors"
@@ -423,7 +421,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                    {t('analytics:finance.form.value')}
+                    Valor (Custo/Ganho)
                   </label>
                   <input
                     type="number"
@@ -440,30 +438,30 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
               {type === 'investment' && (
                 <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl space-y-4">
-                  <h4 className="text-purple-400 font-semibold text-sm">{t('analytics:finance.form.investment_details')}</h4>
+                  <h4 className="text-purple-400 font-semibold text-sm">Detalhes do Investimento</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1">
-                        {t('analytics:finance.form.investment_status')}
+                        Status
                       </label>
                       <select
                         value={status}
                         onChange={(e) => setStatus(e.target.value as 'open' | 'closed')}
                         className="w-full bg-black/40 border border-purple-500/20 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-400 transition-colors appearance-none"
                       >
-                        <option value="open">{t('analytics:finance.status.open')} ({t('analytics:finance.status.in_progress')})</option>
-                        <option value="closed">{t('analytics:finance.status.closed')} ({t('analytics:finance.status.completed')})</option>
+                        <option value="open">Aberto (Em andamento)</option>
+                        <option value="closed">Fechado (Concluído)</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1">
-                        {t('analytics:finance.form.investment_return')}
+                        Retorno Obtido
                       </label>
                       <input
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder={t('analytics:finance.form.investment_return_placeholder')}
+                        placeholder="Opcional"
                         value={actualReturn}
                         onChange={(e) => setActualReturn(e.target.value)}
                         className="w-full bg-black/40 border border-purple-500/20 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-400 transition-colors"
@@ -471,7 +469,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                     </div>
                   </div>
                   <p className="text-xs text-purple-300/70">
-                    {t('analytics:finance.form.investment_hint')}
+                    O retorno obtido é o valor total que voltou para a equipe com este investimento.
                   </p>
                 </div>
               )}
@@ -482,13 +480,13 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                   onClick={closeModal}
                   className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium"
                 >
-                  {t('analytics:finance.form.cancel')}
+                  Cancelar
                 </button>
                 <button
                   type="submit"
                   className="px-6 py-2 bg-accent-primary hover:bg-accent-secondary text-white rounded-xl transition-colors font-bold shadow-glow-primary"
                 >
-                  {t('analytics:finance.form.save')}
+                  Salvar
                 </button>
               </div>
             </form>

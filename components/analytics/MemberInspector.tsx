@@ -221,8 +221,8 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                         <Plus size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-white">{t('analytics:profile.add_legacy_title', 'Adicionar Legado')}</h3>
-                                        <p className="text-xs text-text-secondary font-medium">{t('analytics:profile.add_legacy_subtitle', 'Cadastre mentores ou membros históricos da equipe.')}</p>
+                                        <h3 className="text-xl font-black text-white">Adicionar Legado</h3>
+                                        <p className="text-xs text-text-secondary font-medium">Cadastre mentores ou membros históricos da equipe.</p>
                                     </div>
                                     <button onClick={() => setIsAddModalOpen(false)} className="ml-auto p-2 hover:bg-white/5 rounded-xl transition-all" >
                                         <X size={20} className="text-text-muted" />
@@ -232,18 +232,18 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.legacy_type', 'Tipo')}</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Tipo</label>
                                             <select 
                                                 value={newLegacy.legacyType}
                                                 onChange={(e) => setNewLegacy({...newLegacy, legacyType: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all appearance-none"
                                             >
-                                                <option value="mentor" className="bg-primary">{t('analytics:profile.mentor', 'Mentor')}</option>
-                                                <option value="former" className="bg-primary">{t('analytics:profile.former_member', 'Membro Anterior')}</option>
+                                                <option value="mentor" className="bg-primary">Mentor</option>
+                                                <option value="former" className="bg-primary">Membro Anterior</option>
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.fullName', 'Nome Completo')}</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Nome Completo</label>
                                             <input 
                                                 type="text" 
                                                 value={newLegacy.name}
@@ -256,33 +256,33 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
 
                                     {newLegacy.legacyType === 'mentor' ? (
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.how_helps', 'Como ajuda a equipe?')}</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Como ajuda a equipe?</label>
                                             <textarea 
                                                 value={newLegacy.howHelps}
                                                 onChange={(e) => setNewLegacy({...newLegacy, howHelps: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all h-24 resize-none"
-                                                placeholder={t('analytics:profile.how_helps_placeholder', 'Responsabilidades, mentorias, etc...')}
+                                                placeholder="Responsabilidades, mentorias, etc..."
                                             />
                                         </div>
                                     ) : (
                                         <>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.how_helped', 'Como ajudava a equipe?')}</label>
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Como ajudava a equipe?</label>
                                                 <textarea 
                                                     value={newLegacy.howHelps}
                                                     onChange={(e) => setNewLegacy({...newLegacy, howHelps: e.target.value})}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all h-20 resize-none"
-                                                    placeholder={t('analytics:profile.how_helped_placeholder', 'Papel que exercia na época...')}
+                                                    placeholder="Papel que exercia na época..."
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.leaving_reason_label', 'Por que saiu?')}</label>
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Por que saiu?</label>
                                                 <input 
                                                     type="text" 
                                                     value={newLegacy.reasonForLeaving}
                                                     onChange={(e) => setNewLegacy({...newLegacy, reasonForLeaving: e.target.value})}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all"
-                                                    placeholder={t('analytics:profile.leaving_reason_placeholder', 'Motivo da saída...')}
+                                                    placeholder="Motivo da saída..."
                                                 />
                                             </div>
                                         </>
@@ -290,7 +290,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.birthDate', 'Data de Nascimento')}</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Data de Nascimento</label>
                                             <input 
                                                 type="text" 
                                                 value={newLegacy.birthDate}
@@ -300,24 +300,24 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons', 'Temporadas')}</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Temporadas</label>
                                             <input 
                                                 type="text" 
                                                 value={newLegacy.seasons}
                                                 onChange={(e) => setNewLegacy({...newLegacy, seasons: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all"
-                                                placeholder={t('analytics:profile.seasons_placeholder', 'Ex: 2022, 2023')}
+                                                placeholder="Ex: 2022, 2023"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.bio_label', 'Dados Pessoais / Bio')}</label>
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Dados Pessoais / Bio</label>
                                         <textarea 
                                             value={newLegacy.bio}
                                             onChange={(e) => setNewLegacy({...newLegacy, bio: e.target.value})}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all h-20 resize-none"
-                                            placeholder={t('analytics:profile.bio_placeholder', 'Informações adicionais...')}
+                                            placeholder="Informações adicionais..."
                                         />
                                     </div>
                                 </div>
@@ -329,7 +329,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                     className="w-full py-4 bg-accent-secondary text-white rounded-2xl font-black uppercase tracking-widest shadow-glow-secondary hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                 >
                                     <CheckCircle2 size={20} />
-                                    {t('analytics:profile.register_legacy', 'Cadastrar no Sistema')}
+                                    Cadastrar no Sistema
                                 </button>
                             </div>
                         </motion.div>

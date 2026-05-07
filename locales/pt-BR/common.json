@@ -77,24 +77,23 @@
     "5w2h_desc": "Crie planos de ação individuais ou em grupo"
   },
   "awards": {
-    "Sustentabilidade": "🌱 Sustentabilidade",
-    "PensamentoCriativo": "💡 Pensamento Criativo",
-    "Conexao": "🤝 Conexão",
-    "Alcance": "📢 Alcance",
-    "Controle": "🤖 Controle",
-    "Inovacao": "🚀 Inovação",
-    "Design": "🔧 Design Industrial"
+    "Sustentabilidade": "Sustentabilidade",
+    "PensamentoCriativo": "Pensamento Criativo",
+    "Conexao": "Conexão",
+    "Alcance": "Alcance",
+    "Controle": "Controle",
+    "Inovacao": "Inovação",
+    "Design": "Design Industrial"
   },
   "realm": {
-    "TechnicalWriting": "📝 Escrita Técnica",
-    "Networking": "🤝 Conexões",
-    "Oratory": "🎤 Oratória",
-    "Planning": "📋 Planejamento",
-    "Creativity": "🎨 Criatividade",
-    "Programming": "💻 Programação",
-    "Engineering": "⚙️ Engenharia",
-    "FirstCulture": "🌐 Cultura FIRST",
-    "Meta": "✨ Meta"
+    "TechnicalWriting": "Escrita Técnica",
+    "Networking": "Networking",
+    "Oratory": "Oratória",
+    "Planning": "Planejamento",
+    "Creativity": "Criatividade",
+    "Programming": "Programação",
+    "Engineering": "Engenharia",
+    "FirstCulture": "Cultura FIRST"
   },
   "difficulty": {
     "Easy": "Fácil",
@@ -106,14 +105,7 @@
     "easy": "Fácil",
     "medium": "Médio",
     "hard": "Difícil",
-    "super_hard": "Muito Difícil"
-  },
-  "badges_ui": {
-    "title": "Badges e Conquistas",
-    "subtitle": "Um registro das suas maiores realizações.",
-    "hall_of_conquests": "Salão de Conquistas",
-    "no_bosses_defeated": "Nenhum chefe derrotado ainda.",
-    "complete_major_goals": "Complete Objetivos Maiores para ver suas vitórias registradas aqui."
+    "super_hard": "Super Difícil"
   },
   "xp": "XP",
   "credits": "Créditos",
