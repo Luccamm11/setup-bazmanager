@@ -9,7 +9,7 @@ export const REALM_LABELS: Record<Realm, string> = {
   [Realm.Creativity]: 'Criatividade',
   [Realm.Programming]: 'Programação',
   [Realm.Engineering]: 'Engenharia',
-  [Realm.FirstCulture]: 'FIRST Culture',
+  [Realm.FirstCulture]: 'Cultura FIRST',
   [Realm.Meta]: 'Meta',
 };
 

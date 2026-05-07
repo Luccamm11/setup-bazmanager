@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Skill, Realm } from '../types';
 import { SKILL_REALMS } from '../constants';
 import AiTextGenerator from './AiTextGenerator';
+import { useTranslation } from 'react-i18next';
 
 interface AddEditSkillModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface AddEditSkillModalProps {
 }
 
 const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, onSave, skillToEdit, apiKey }) => {
+  const { t } = useTranslation(['common']);
   const [name, setName] = useState(skillToEdit?.name || '');
   const [realm, setRealm] = useState<Realm>(skillToEdit?.realm || SKILL_REALMS[0]);
 
@@ -44,11 +46,11 @@ const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, 
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary">
           <X className="w-6 h-6" />
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-text-primary">{skillToEdit ? 'Edit Skill' : 'Add New Skill'}</h2>
+        <h2 className="text-2xl font-bold mb-6 text-text-primary">{skillToEdit ? t('common:forms.edit_skill') : t('common:forms.add_new_skill')}</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="skill-name" className="block text-sm font-medium text-text-secondary mb-1">Skill Name</label>
+            <label htmlFor="skill-name" className="block text-sm font-medium text-text-secondary mb-1">{t('common:forms.skill_name')}</label>
              <div className="relative">
                 <input 
                     type="text" 
@@ -68,20 +70,20 @@ const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, 
           </div>
           
           <div>
-            <label htmlFor="skill-realm" className="block text-sm font-medium text-text-secondary">Realm</label>
+            <label htmlFor="skill-realm" className="block text-sm font-medium text-text-secondary">{t('common:forms.realm')}</label>
             <select 
                 id="skill-realm" 
                 value={realm} 
                 onChange={e => setRealm(e.target.value as Realm)} 
                 className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary sm:text-sm"
             >
-              {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
+              {SKILL_REALMS.map(r => <option key={r} value={r}>{t(`common:realm.${r}`)}</option>)}
             </select>
           </div>
           
           <div className="pt-4 flex justify-end">
-            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">Cancel</button>
-            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">Save Skill</button>
+            <button type="button" onClick={onClose} className="bg-border-color hover:bg-opacity-80 text-text-primary font-bold py-2 px-4 rounded mr-2">{t('common:buttons.cancel')}</button>
+            <button type="submit" className="bg-accent-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded">{t('common:buttons.save_skill')}</button>
           </div>
         </form>
       </div>

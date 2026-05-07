@@ -2,6 +2,7 @@ import React from 'react';
 import { TeamMission, Realm } from '../types';
 import { motion } from 'framer-motion';
 import { CheckCircle, Clock, Zap, Coins, Users, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMissionsProps {
   missions: TeamMission[];
@@ -36,6 +37,7 @@ const REALM_BG_COLORS: { [key in Realm]?: string } = {
 };
 
 const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCompleteMission, onRefresh, isLoading }) => {
+  const { t } = useTranslation(['common']);
   const now = new Date();
 
   const myMissions = missions.filter(m =>
@@ -99,7 +101,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                   <div className="flex flex-wrap items-center gap-1.5 mt-3">
                     {mission.realmRewards.map(rr => (
                       <span key={rr.realm} className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${REALM_BG_COLORS[rr.realm] || 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
-                        {rr.realm} +{rr.xp} XP
+                        {t(`common:realm.${rr.realm}`)} +{rr.xp} XP
                       </span>
                     ))}
                     {mission.credit_reward > 0 && (
@@ -158,7 +160,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                   <h4 className="text-white/70 font-bold text-sm truncate">{mission.title}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     {mission.realmRewards.map(rr => (
-                      <span key={rr.realm} className="text-[10px] text-zinc-500 font-bold">{rr.realm} +{rr.xp}</span>
+                      <span key={rr.realm} className="text-[10px] text-zinc-500 font-bold">{t(`common:realm.${rr.realm}`)} +{rr.xp}</span>
                     ))}
                   </div>
                 </div>

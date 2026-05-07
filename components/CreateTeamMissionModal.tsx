@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Realm, Difficulty, RealmXpReward, TeamMission } from '../types';
 import { ALL_MEMBERS, SKILL_REALMS } from '../constants';
 
@@ -11,6 +12,7 @@ interface CreateTeamMissionModalProps {
 }
 
 const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen, onClose, onSave, missionToEdit }) => {
+  const { t } = useTranslation(['common']);
   const [title, setTitle] = useState(missionToEdit?.title || '');
   const [description, setDescription] = useState(missionToEdit?.description || '');
   const [difficulty, setDifficulty] = useState<Difficulty>(missionToEdit?.difficulty || Difficulty.Medium);
@@ -143,7 +145,7 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
                   >
                     {SKILL_REALMS.map(r => (
                       <option key={r} value={r} disabled={realmRewards.some((rr2, i2) => i2 !== index && rr2.realm === r)}>
-                        {r}
+                        {t(`common:realm.${r}`)}
                       </option>
                     ))}
                   </select>
@@ -176,7 +178,11 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
                 onChange={e => setDifficulty(e.target.value as Difficulty)}
                 className="w-full bg-background border border-border-color rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
               >
-                {Object.values(Difficulty).map(d => <option key={d} value={d}>{d}</option>)}
+                {Object.values(Difficulty).map(d => (
+                  <option key={d} value={d}>
+                    {t(`common:difficulty.${d}`)}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

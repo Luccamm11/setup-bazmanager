@@ -1,5 +1,6 @@
 import React from 'react';
 import { Realm } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 interface RealmDistributionPieChartProps {
     stats: { [key in Realm]: number };
@@ -56,6 +57,7 @@ const PieChartSlice: React.FC<{
 
 
 const RealmDistributionPieChart: React.FC<RealmDistributionPieChartProps> = ({ stats }) => {
+    const { t } = useTranslation(['common']);
     const size = 300;
     const center = size / 2;
     const radius = center - 50;
@@ -102,7 +104,7 @@ const RealmDistributionPieChart: React.FC<RealmDistributionPieChartProps> = ({ s
                 {slices.map(slice => (
                     <div key={slice.realm} className="flex items-center text-sm">
                         <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: slice.color }}></span>
-                        <span className="text-text-secondary font-semibold w-24">{slice.realm}</span>
+                        <span className="text-text-secondary font-semibold w-24">{t(`common:realm.${slice.realm}`)}</span>
                         <span className="text-text-primary font-mono">{ (slice.percentage * 100).toFixed(1) }%</span>
                     </div>
                 ))}
