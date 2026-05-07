@@ -32,7 +32,6 @@ const realmConfig = {
   [Realm.Programming]:      { icon: <Code size={20} />,        color: "text-blue-400" },
   [Realm.Engineering]:      { icon: <Hammer size={20} />,      color: "text-orange-400" },
   [Realm.FirstCulture]:     { icon: <Globe size={20} />,       color: "text-cyan-400" },
-  [Realm.Meta]:             { icon: <Sparkles size={20} />,    color: "text-text-secondary" },
 };
 
 const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficulty; label: string; colorClass: string; onClick: () => void }> = ({ level, current, label, colorClass, onClick }) => {
@@ -64,7 +63,7 @@ interface SkillCardProps {
 const SkillCard: React.FC<SkillCardProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
   const { skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive } = props;
-  const config = realmConfig[skill.realm] || realmConfig[Realm.Meta];
+  const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
   const progress = (skill.xp / skill.xpToNextLevel) * 100;
 
   const difficultyConfig: { level: TopicDifficulty; label: string; colorClass: string }[] = [
@@ -170,7 +169,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
-    const realm = skill.realm || Realm.Meta;
+    const realm = skill.realm || Realm.Planning;
     if (!acc[realm]) acc[realm] = [];
     acc[realm].push(skill);
     return acc;

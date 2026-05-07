@@ -14,8 +14,7 @@ const realmOrder: Realm[] = [
   Realm.Planning, 
   Realm.Oratory, 
   Realm.Creativity, 
-  Realm.FirstCulture,
-  Realm.Meta
+  Realm.FirstCulture
 ];
 
 const realmColors: { [key in Realm]: string } = {
@@ -27,7 +26,6 @@ const realmColors: { [key in Realm]: string } = {
   [Realm.Oratory]: "#F85149",
   [Realm.Creativity]: "#BC8CFF",
   [Realm.FirstCulture]: "#38D39F",
-  [Realm.Meta]: "#8B949E",
 };
 
 const PieChartSlice: React.FC<{

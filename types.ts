@@ -45,7 +45,6 @@ export enum Realm {
   Programming = "Programming",
   Engineering = "Engineering",
   FirstCulture = "FirstCulture",
-  Meta = "Meta",
 }
 
 export enum Difficulty {

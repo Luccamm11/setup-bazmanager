@@ -39,7 +39,6 @@ const realmOrder: Realm[] = [
     Realm.Creativity,
     Realm.Finance,
     Realm.Social,
-    Realm.Meta
 ];
 
 const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({ 

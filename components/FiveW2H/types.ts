@@ -10,7 +10,6 @@ export const REALM_LABELS: Record<Realm, string> = {
   [Realm.Programming]: 'Programação',
   [Realm.Engineering]: 'Engenharia',
   [Realm.FirstCulture]: 'Cultura FIRST',
-  [Realm.Meta]: 'Meta',
 };
 
 export const REALM_COLORS: Record<Realm, string> = {
@@ -22,7 +21,6 @@ export const REALM_COLORS: Record<Realm, string> = {
   [Realm.Programming]:      'bg-green-500/15 text-green-400 border-green-500/25',
   [Realm.Engineering]:      'bg-red-500/15 text-red-400 border-red-500/25',
   [Realm.FirstCulture]:     'bg-teal-500/15 text-teal-400 border-teal-500/25',
-  [Realm.Meta]:             'bg-violet-500/15 text-violet-400 border-violet-500/25',
 };
 
 export const STATUS_META = {

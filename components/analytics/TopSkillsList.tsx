@@ -11,7 +11,6 @@ const realmConfig = {
   [Realm.Creativity]: { icon: <Sparkles size={18} />, color: "bg-accent-primary" },
   [Realm.Finance]: { icon: <Sparkles size={18} />, color: "bg-accent-green" },
   [Realm.Social]: { icon: <Sparkles size={18} />, color: "bg-accent-primary" },
-  [Realm.Meta]: { icon: <Sparkles size={18} />, color: "bg-text-secondary" },
 };
 
 interface TopSkillsListProps {
@@ -32,7 +31,7 @@ const TopSkillsList: React.FC<TopSkillsListProps> = ({ skills }) => {
     return (
         <div className="space-y-3">
             {topSkills.map((skill: Skill) => {
-                 const config = realmConfig[skill.realm] || realmConfig[Realm.Meta];
+                 const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
                  const progress = (skill.xp / skill.xpToNextLevel) * 100;
                 return (
                     <div key={skill.id} className="bg-background p-3 rounded-lg border border-border-color">

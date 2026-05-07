@@ -938,7 +938,7 @@ const App: React.FC = () => {
           handleGrantReward(rr.xp, 0, rr.realm, `team-mission-${missionId}-${rr.realm}`);
         });
         if (mission.credit_reward > 0) {
-          handleGrantReward(0, mission.credit_reward, Realm.Meta, `team-mission-credits-${missionId}`);
+          handleGrantReward(0, mission.credit_reward, Realm.Planning, `team-mission-credits-${missionId}`);
         }
 
         // Factual development logging
@@ -994,7 +994,7 @@ const handleCompleteQuest = useCallback((questId: string) => {
 }, [quests, getCurrentDate, handleGrantReward, addDevelopmentLog]);
 
 const handleCompleteMajorGoal = useCallback((goal: MajorGoal) => {
-    const realm = goal.skillId ? user.skill_tree[goal.skillId]?.realm || Realm.Meta : Realm.Meta;
+    const realm = goal.skillId ? user.skill_tree[goal.skillId]?.realm || Realm.Planning : Realm.Planning;
     
     const goalCompleter = (user: User): Partial<User> => {
         const updatedCompletedGoals = [...(user.completedMajorGoals || []), goal];
@@ -1032,7 +1032,7 @@ const handleOpenLootbox = useCallback(() => {
     if (rewardRoll < 0.50) { // 50% chance for credits
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 credits
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
-        handleGrantReward(0, finalAmount, Realm.Meta, 'lootbox-credits');
+        handleGrantReward(0, finalAmount, Realm.Planning, 'lootbox-credits');
         rewardText = `You found ${finalAmount} Credits!`;
         if (streak > 0) {
             rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
@@ -1040,7 +1040,7 @@ const handleOpenLootbox = useCallback(() => {
     } else if (rewardRoll < 0.75) { // 25% chance for XP
         const baseAmount = Math.floor(Math.random() * 51) + 25; // 25-75 XP
         const finalAmount = Math.floor(baseAmount * streakBonusMultiplier);
-        handleGrantReward(finalAmount, 0, Realm.Meta, 'lootbox-xp');
+        handleGrantReward(finalAmount, 0, Realm.Planning, 'lootbox-xp');
         rewardText = `You gained ${finalAmount} bonus XP!`;
         if (streak > 0) {
             rewardText += ` (includes +${((streakBonusMultiplier - 1) * 100).toFixed(0)}% streak bonus)`;
@@ -1071,7 +1071,7 @@ const handleOpenLootbox = useCallback(() => {
         } else {
             // Fallback to credits if no items are available
             const amount = 50;
-            handleGrantReward(0, amount, Realm.Meta, 'lootbox-credits-fallback');
+            handleGrantReward(0, amount, Realm.Planning, 'lootbox-credits-fallback');
             rewardText = `You found a fallback reward of ${amount} Credits!`;
         }
     }
@@ -1278,7 +1278,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                         const newQuestData: Omit<Quest, 'id' | 'status' | 'source'> = {
                           title: questArgs.title || 'AI Generated Quest',
                           description: questArgs.description || '',
-                          realm: questArgs.realm || Realm.Programming,
+                          realm: questArgs.realm || Realm.Planning,
                           knowledgeTopics: [],
                           xp_reward: questArgs.xp_reward || 20,
                           credit_reward: questArgs.credit_reward || 10,
@@ -1835,11 +1835,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
   // --- START: HANDLERS FOR TESTING PANEL ---
   const handleAddXp = (amount: number) => {
-    handleGrantReward(amount, 0, Realm.Meta, 'dev-xp');
+    handleGrantReward(amount, 0, Realm.Planning, 'dev-xp');
   };
 
   const handleAddCredits = (amount: number) => {
-    handleGrantReward(0, amount, Realm.Meta, 'dev-credits');
+    handleGrantReward(0, amount, Realm.Planning, 'dev-credits');
   };
 
   const handleAddGems = (amount: number) => {
@@ -1910,7 +1910,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         id: `dev-quest-${Date.now()}`,
         title: type === 'mystery' ? 'A Mysterious Objective' : 'A Time-Sensitive Task',
         description: `This is a developer-generated quest.`,
-        realm: Realm.Meta,
+        realm: Realm.Planning,
         knowledgeTopics: [],
         xp_reward: 50,
         credit_reward: 25,

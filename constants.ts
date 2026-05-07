@@ -20,8 +20,7 @@ export const SKILL_REALMS: Realm[] = [
   Realm.Creativity,
   Realm.Programming,
   Realm.Engineering,
-  Realm.FirstCulture,
-  Realm.Meta,
+  Realm.FirstCulture
 ];
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
@@ -124,7 +123,6 @@ export const INITIAL_USER: User = {
     [Realm.Programming]: 10,
     [Realm.Engineering]: 10,
     [Realm.FirstCulture]: 10,
-    [Realm.Meta]: 1,
   },
   wallet: {
     credits: 100,

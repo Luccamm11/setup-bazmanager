@@ -21,7 +21,6 @@ const REALM_COLORS: { [key in Realm]?: string } = {
   [Realm.Programming]: 'from-blue-500 to-indigo-600',
   [Realm.Engineering]: 'from-orange-500 to-red-600',
   [Realm.FirstCulture]: 'from-cyan-500 to-sky-600',
-  [Realm.Meta]: 'from-zinc-500 to-slate-500',
 };
 
 const REALM_BG_COLORS: { [key in Realm]?: string } = {
@@ -33,7 +32,6 @@ const REALM_BG_COLORS: { [key in Realm]?: string } = {
   [Realm.Programming]: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   [Realm.Engineering]: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
   [Realm.FirstCulture]: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  [Realm.Meta]: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
 };
 
 const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCompleteMission, onRefresh, isLoading }) => {
