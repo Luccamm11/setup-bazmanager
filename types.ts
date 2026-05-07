@@ -177,7 +177,9 @@ export interface User {
   fullName?: string;
   role?: string;
   grade?: string;        // Série (ex: 3º Ano Médio)
-  seasons?: string[];    // Temporadas (ex: PowerPlay, Centerstage)
+  seasons?: string[];            // Temporadas como competidor
+  mentorSeasons?: string[];      // Temporadas como mentor
+  volunteerSeasons?: string[];   // Temporadas como voluntário
   entryDate?: string;    // Data de entrada na equipe
   birthDate?: string;    // Data de nascimento
   bio?: string;          // Breve descrição / Quem sou eu

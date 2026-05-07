@@ -78,6 +78,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         entryDate: user.entryDate || '',
         birthDate: user.birthDate || '',
         seasons: user.seasons?.join(', ') || '',
+        mentorSeasons: user.mentorSeasons?.join(', ') || '',
+        volunteerSeasons: user.volunteerSeasons?.join(', ') || '',
         bio: user.bio || ''
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -92,6 +94,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                 entryDate: setupData.entryDate,
                 birthDate: setupData.birthDate,
                 seasons: setupData.seasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                mentorSeasons: setupData.mentorSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                volunteerSeasons: setupData.volunteerSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
                 bio: setupData.bio,
                 profileSetup: true
             };
@@ -239,15 +243,39 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     </div>
                                 </div>
                             )}
-                            <div className="p-3 bg-white/5 rounded-2xl">
-                                <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-2">{t('analytics:profile.seasons')}</p>
-                                {user.seasons ? (
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {(Array.isArray(user.seasons) ? user.seasons : String(user.seasons).split(',')).map((s, i) => (
-                                            <span key={i} className="text-[9px] font-bold text-text-secondary bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{s}</span>
-                                        ))}
+                            <div className="p-3 bg-white/5 rounded-2xl space-y-3">
+                                <div>
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-2">{t('analytics:profile.seasons')}</p>
+                                    {user.seasons && user.seasons.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {(Array.isArray(user.seasons) ? user.seasons : String(user.seasons).split(',')).map((s, i) => (
+                                                <span key={i} className="text-[9px] font-bold text-text-secondary bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{s}</span>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-[10px] text-text-muted italic">{t('analytics:profile.not_informed')}</p>}
+                                </div>
+
+                                {user.mentorSeasons && user.mentorSeasons.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-accent-tertiary uppercase tracking-wider mb-2">{t('analytics:profile.mentor_seasons')}</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {user.mentorSeasons.map((s, i) => (
+                                                <span key={i} className="text-[9px] font-bold text-accent-tertiary bg-accent-tertiary/10 px-2 py-0.5 rounded-md border border-accent-tertiary/20">{s}</span>
+                                            ))}
+                                        </div>
                                     </div>
-                                ) : <p className="text-xs text-text-muted italic">{t('analytics:profile.no_seasons')}</p>}
+                                )}
+
+                                {user.volunteerSeasons && user.volunteerSeasons.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-accent-red uppercase tracking-wider mb-2">{t('analytics:profile.volunteer_seasons')}</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {user.volunteerSeasons.map((s, i) => (
+                                                <span key={i} className="text-[9px] font-bold text-accent-red bg-accent-red/10 px-2 py-0.5 rounded-md border border-accent-red/20">{s}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -433,7 +461,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 value={setupData.grade}
                                                 onChange={(e) => setSetupData({...setupData, grade: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                                                placeholder="Ex: 3º Ano Médio"
+                                                placeholder="Ex: 3º Ano / Crescendo"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -459,6 +487,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 placeholder="Ex: 24/05/2008"
                                             />
                                         </div>
+                                    <div className="space-y-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
                                             <input 
@@ -466,9 +495,30 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 value={setupData.seasons}
                                                 onChange={(e) => setSetupData({...setupData, seasons: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                                                placeholder="Ex: 2023, 2024"
+                                                placeholder="Ex: Charged Up, Crescendo"
                                             />
                                         </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-accent-tertiary uppercase tracking-widest ml-1">{t('analytics:profile.mentor_seasons')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.mentorSeasons}
+                                                onChange={(e) => setSetupData({...setupData, mentorSeasons: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-tertiary/50 outline-none transition-all"
+                                                placeholder="Ex: PowerPlay, Centerstage"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-accent-red uppercase tracking-widest ml-1">{t('analytics:profile.volunteer_seasons')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={setupData.volunteerSeasons}
+                                                onChange={(e) => setSetupData({...setupData, volunteerSeasons: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-red/50 outline-none transition-all"
+                                                placeholder="Ex: Rapid React"
+                                            />
+                                        </div>
+                                    </div>
                                     </div>
 
                                     <div className="space-y-2">

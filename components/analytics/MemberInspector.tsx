@@ -72,6 +72,8 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
         birthDate: '',
         entryDate: '',
         seasons: '',
+        mentorSeasons: '',
+        volunteerSeasons: '',
         bio: ''
     });
 
@@ -82,7 +84,12 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     username: currentUser, 
-                    member: newLegacy 
+                    member: {
+                        ...newLegacy,
+                        seasons: newLegacy.seasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                        mentorSeasons: newLegacy.mentorSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                        volunteerSeasons: newLegacy.volunteerSeasons.split(',').map(s => s.trim()).filter(s => s !== '')
+                    } 
                 })
             });
             const data = await res.json();
@@ -97,6 +104,8 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                     birthDate: '',
                     entryDate: '',
                     seasons: '',
+                    mentorSeasons: '',
+                    volunteerSeasons: '',
                     bio: ''
                 });
             }
@@ -299,16 +308,38 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                                 placeholder="DD/MM/AAAA"
                                             />
                                         </div>
+                                    <div className="space-y-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Temporadas</label>
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
                                             <input 
                                                 type="text" 
                                                 value={newLegacy.seasons}
                                                 onChange={(e) => setNewLegacy({...newLegacy, seasons: e.target.value})}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all"
-                                                placeholder="Ex: 2022, 2023"
+                                                placeholder="Ex: Charged Up, Crescendo"
                                             />
                                         </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-accent-tertiary uppercase tracking-widest ml-1">{t('analytics:profile.mentor_seasons')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={newLegacy.mentorSeasons}
+                                                onChange={(e) => setNewLegacy({...newLegacy, mentorSeasons: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-tertiary/50 outline-none transition-all"
+                                                placeholder="Ex: PowerPlay, Centerstage"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-accent-red uppercase tracking-widest ml-1">{t('analytics:profile.volunteer_seasons')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={newLegacy.volunteerSeasons}
+                                                onChange={(e) => setNewLegacy({...newLegacy, volunteerSeasons: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-red/50 outline-none transition-all"
+                                                placeholder="Ex: Rapid React"
+                                            />
+                                        </div>
+                                    </div>
                                     </div>
 
                                     <div className="space-y-2">
