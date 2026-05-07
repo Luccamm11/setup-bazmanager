@@ -23,6 +23,15 @@ export const SKILL_REALMS: Realm[] = [
   Realm.FirstCulture
 ];
 
+export const FTC_SEASONS = [
+  "2021/2022 - Freight Frenzy",
+  "2022/2023 - Power Play",
+  "2023/2024 - Centerstage",
+  "2024/2025 - Into The Deep",
+  "2025/2026 - Decode",
+  "2026/2027 - Biobuzz"
+];
+
 export const ICON_MAP: { [key: string]: React.ElementType } = {
     Award, Star, Crown, Swords, Target, BrainCircuit, Heart, Zap, Sparkles, Coins, ShieldCheck,
     TrendingUp, ClipboardList, BookMarked, Shield, RefreshCw, ChevronsUp, Gift, Code, FlaskConical, Milestone, BookOpen, Repeat, BookText, Timer

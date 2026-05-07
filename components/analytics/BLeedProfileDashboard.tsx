@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { FTC_SEASONS } from '../../constants';
 
 interface BLeedProfileDashboardProps {
     user: User;
@@ -32,13 +33,14 @@ interface BLeedProfileDashboardProps {
 }
 
 const realmOrder: Realm[] = [
-    Realm.Mind,
-    Realm.Body,
-    Realm.Creation,
-    Realm.Spirit,
+    Realm.Programming,
+    Realm.Engineering,
+    Realm.TechnicalWriting,
+    Realm.Networking,
+    Realm.Planning,
+    Realm.Oratory,
     Realm.Creativity,
-    Realm.Finance,
-    Realm.Social,
+    Realm.FirstCulture
 ];
 
 const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({ 
@@ -77,9 +79,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         grade: user.grade || '',
         entryDate: user.entryDate || '',
         birthDate: user.birthDate || '',
-        seasons: user.seasons?.join(', ') || '',
-        mentorSeasons: user.mentorSeasons?.join(', ') || '',
-        volunteerSeasons: user.volunteerSeasons?.join(', ') || '',
+        seasons: user.seasons || [],
+        mentorSeasons: user.mentorSeasons || [],
+        volunteerSeasons: user.volunteerSeasons || [],
         bio: user.bio || ''
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -93,9 +95,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                 grade: setupData.grade,
                 entryDate: setupData.entryDate,
                 birthDate: setupData.birthDate,
-                seasons: setupData.seasons.split(',').map(s => s.trim()).filter(s => s !== ''),
-                mentorSeasons: setupData.mentorSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
-                volunteerSeasons: setupData.volunteerSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
+                seasons: setupData.seasons,
+                mentorSeasons: setupData.mentorSeasons,
+                volunteerSeasons: setupData.volunteerSeasons,
                 bio: setupData.bio,
                 profileSetup: true
             };
@@ -487,36 +489,86 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 placeholder="Ex: 24/05/2008"
                                             />
                                         </div>
-                                    <div className="space-y-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                        <div className="space-y-2">
+                                     <div className="space-y-6 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={setupData.seasons}
-                                                onChange={(e) => setSetupData({...setupData, seasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                                                placeholder="Ex: Charged Up, Crescendo"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = setupData.seasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? setupData.seasons.filter(s => s !== season)
+                                                                    : [...setupData.seasons, season];
+                                                                setSetupData({...setupData, seasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-primary border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
+
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-accent-tertiary uppercase tracking-widest ml-1">{t('analytics:profile.mentor_seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={setupData.mentorSeasons}
-                                                onChange={(e) => setSetupData({...setupData, mentorSeasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-tertiary/50 outline-none transition-all"
-                                                placeholder="Ex: PowerPlay, Centerstage"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = setupData.mentorSeasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? setupData.mentorSeasons.filter(s => s !== season)
+                                                                    : [...setupData.mentorSeasons, season];
+                                                                setSetupData({...setupData, mentorSeasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-tertiary border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
+
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-accent-red uppercase tracking-widest ml-1">{t('analytics:profile.volunteer_seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={setupData.volunteerSeasons}
-                                                onChange={(e) => setSetupData({...setupData, volunteerSeasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-red/50 outline-none transition-all"
-                                                placeholder="Ex: Rapid React"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = setupData.volunteerSeasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? setupData.volunteerSeasons.filter(s => s !== season)
+                                                                    : [...setupData.volunteerSeasons, season];
+                                                                setSetupData({...setupData, volunteerSeasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-red border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                     </div>

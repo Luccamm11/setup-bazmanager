@@ -896,7 +896,7 @@ const App: React.FC = () => {
             rank: newRank,
             xp_total: newXpTotal,
             xpToNextLevel: xpForNext,
-            stats: { ...prevUser.stats, [realm]: prevUser.stats[realm] + 1 },
+            stats: { ...prevUser.stats, [realm]: (prevUser.stats[realm] || 0) + 1 },
             wallet: { ...prevUser.wallet, credits: prevUser.wallet.credits + finalCredits },
         };
 

@@ -19,11 +19,11 @@ const realmOrder: Realm[] = [
 
 const realmColors: { [key in Realm]: string } = {
     [Realm.Programming]: "#58A6FF",
-    [Realm.Engineering]: "#F85149",
+    [Realm.Engineering]: "#FF7B72",
     [Realm.TechnicalWriting]: "#8B949E",
     [Realm.Networking]: "#3FB950",
     [Realm.Planning]: "#E3B341",
-    [Realm.Oratory]: "#F85149",
+    [Realm.Oratory]: "#F06292",
     [Realm.Creativity]: "#BC8CFF",
     [Realm.FirstCulture]: "#38D39F"
 };

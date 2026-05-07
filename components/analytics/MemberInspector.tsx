@@ -3,6 +3,7 @@ import { Search, Info, Loader2, ChevronRight, User, Plus, History, GraduationCap
 import { motion, AnimatePresence } from 'framer-motion';
 import BLeedProfileDashboard from './BLeedProfileDashboard';
 import { useTranslation } from 'react-i18next';
+import { FTC_SEASONS } from '../../constants';
 
 interface MemberInspectorProps {
     currentUser: string;
@@ -71,9 +72,9 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
         reasonForLeaving: '',
         birthDate: '',
         entryDate: '',
-        seasons: '',
-        mentorSeasons: '',
-        volunteerSeasons: '',
+        seasons: [] as string[],
+        mentorSeasons: [] as string[],
+        volunteerSeasons: [] as string[],
         bio: ''
     });
 
@@ -86,9 +87,19 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                     username: currentUser, 
                     member: {
                         ...newLegacy,
-                        seasons: newLegacy.seasons.split(',').map(s => s.trim()).filter(s => s !== ''),
-                        mentorSeasons: newLegacy.mentorSeasons.split(',').map(s => s.trim()).filter(s => s !== ''),
-                        volunteerSeasons: newLegacy.volunteerSeasons.split(',').map(s => s.trim()).filter(s => s !== '')
+                        seasons: newLegacy.seasons,
+                        mentorSeasons: newLegacy.mentorSeasons,
+                        volunteerSeasons: newLegacy.volunteerSeasons,
+                        stats: {
+                            Programming: 0,
+                            Engineering: 0,
+                            TechnicalWriting: 0,
+                            Networking: 0,
+                            Planning: 0,
+                            Oratory: 0,
+                            Creativity: 0,
+                            FirstCulture: 0,
+                        }
                     } 
                 })
             });
@@ -308,36 +319,86 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                                                 placeholder="DD/MM/AAAA"
                                             />
                                         </div>
-                                    <div className="space-y-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                        <div className="space-y-2">
+                                     <div className="space-y-6 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={newLegacy.seasons}
-                                                onChange={(e) => setNewLegacy({...newLegacy, seasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-secondary/50 outline-none transition-all"
-                                                placeholder="Ex: Charged Up, Crescendo"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = newLegacy.seasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? newLegacy.seasons.filter(s => s !== season)
+                                                                    : [...newLegacy.seasons, season];
+                                                                setNewLegacy({...newLegacy, seasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-primary border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
+
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-accent-tertiary uppercase tracking-widest ml-1">{t('analytics:profile.mentor_seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={newLegacy.mentorSeasons}
-                                                onChange={(e) => setNewLegacy({...newLegacy, mentorSeasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-tertiary/50 outline-none transition-all"
-                                                placeholder="Ex: PowerPlay, Centerstage"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = newLegacy.mentorSeasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? newLegacy.mentorSeasons.filter(s => s !== season)
+                                                                    : [...newLegacy.mentorSeasons, season];
+                                                                setNewLegacy({...newLegacy, mentorSeasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-tertiary border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
+
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black text-accent-red uppercase tracking-widest ml-1">{t('analytics:profile.volunteer_seasons')}</label>
-                                            <input 
-                                                type="text" 
-                                                value={newLegacy.volunteerSeasons}
-                                                onChange={(e) => setNewLegacy({...newLegacy, volunteerSeasons: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-red/50 outline-none transition-all"
-                                                placeholder="Ex: Rapid React"
-                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                                {FTC_SEASONS.map(season => {
+                                                    const isSelected = newLegacy.volunteerSeasons.includes(season);
+                                                    return (
+                                                        <button
+                                                            key={season}
+                                                            onClick={() => {
+                                                                const newSeasons = isSelected 
+                                                                    ? newLegacy.volunteerSeasons.filter(s => s !== season)
+                                                                    : [...newLegacy.volunteerSeasons, season];
+                                                                setNewLegacy({...newLegacy, volunteerSeasons: newSeasons});
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-accent-red border-transparent text-white shadow-lg' 
+                                                                    : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {season.split(' - ')[1]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                     </div>
