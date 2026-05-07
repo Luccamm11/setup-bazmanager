@@ -1,5 +1,10 @@
-import { ALL_USERNAMES as TEAM_MEMBERS } from '../data/members';
 import React, { useState, useEffect } from 'react';
+
+export const TEAM_MEMBERS = [
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
+  'Jonas', 'Ramon'
+];
 import { KanbanTask, KanbanStatus, TeamMission, UserRole } from '../types';
 import { Plus, GripVertical, Users, Shield, Target } from 'lucide-react';
 
