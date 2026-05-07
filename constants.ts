@@ -191,80 +191,80 @@ export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [];
 export const STORE_ITEMS: StoreItem[] = [
     {
         id: '3d_priority',
-        name: "Prioridade na Impressora 3D",
-        description: "Vá para o topo da fila de impressão 3D para o seu projeto pessoal ou peça de teste.",
+        name: "3D Printer Priority",
+        description: "Jump to the top of the 3D printing queue for your personal project or test part.",
         cost: 300,
         category: 'Reward',
         effect: { type: 'REAL_WORLD_REWARD' }
     },
     {
         id: 'programming_surge',
-        name: "Foco em Programação",
-        description: "Ganha 2x XP em todas as missões de 'Programming' por 24h.",
+        name: "Programming Focus",
+        description: "Earn 2x XP on all 'Programming' quests for 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Programming] }
     },
     {
         id: 'engineering_surge',
-        name: "Foco em Engenharia",
-        description: "Ganha 2x XP em todas as missões de 'Engineering' por 24h.",
+        name: "Engineering Focus",
+        description: "Earn 2x XP on all 'Engineering' quests for 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Engineering] }
     },
     {
         id: 'writing_catalyst',
-        name: "Catalisador de Escrita",
-        description: "Ganha 2x XP em missões de 'Technical Writing' por 24h.",
+        name: "Writing Catalyst",
+        description: "Earn 2x XP on 'Technical Writing' quests for 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.TechnicalWriting] }
     },
     {
         id: 'networking_surge',
-        name: "Surto de Networking",
-        description: "Ganha 2x XP em missões de 'Networking' por 24h.",
+        name: "Networking Surge",
+        description: "Earn 2x XP on 'Networking' quests for 24h.",
         cost: 250,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Networking] }
     },
     {
         id: 'inspire_core_surge',
-        name: "Pack Inspire Award",
-        description: "Um pacote que dobra o XP de Engenharia, Programação e Escrita Técnica por 24h.",
+        name: "Inspire Award Pack",
+        description: "A bundle that doubles Engineering, Programming, and Technical Writing XP for 24h.",
         cost: 650,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [Realm.Engineering, Realm.Programming, Realm.TechnicalWriting] }
     },
     {
         id: 'omni_boost',
-        name: "Grind de Temporada",
-        description: "Dobra o ganho de XP de TODAS as missões (todos os Realms) por 24 horas. Para sprints finais.",
+        name: "Season Grind",
+        description: "Doubles XP gain from ALL quests (all Realms) for 24 hours. For final sprints.",
         cost: 800,
         category: 'Buff',
         effect: { type: 'XP_BOOST', value: 2, duration: 24, realms: [] }
     },
     {
         id: 'streak_shield',
-        name: "Escudo Anti-Falta",
-        description: "Protege sua Streak (dias consecutivos) caso você não consiga treinar/completar missão naquele dia.",
+        name: "Streak Shield",
+        description: "Protects your streak if you can't train/complete a quest that day.",
         cost: 500,
         category: 'Utility',
         effect: { type: 'STREAK_SAVER' }
     },
     {
         id: 'quest_reroll',
-        name: "Re-roll de Missões",
-        description: "Receba novas missões diárias instantaneamente (bom quando as missões atuais estão bloqueadas).",
+        name: "Quest Re-roll",
+        description: "Receive new daily quests instantly.",
         cost: 150,
         category: 'Utility',
         effect: { type: 'QUEST_REROLL' }
     },
     {
         id: 'instant_streak',
-        name: "Sequência Instantânea",
-        description: "Sua sequência diária pula para 3 dias, ativando bônus imediatamente.",
+        name: "Instant Streak",
+        description: "Your daily streak jumps to 3 days, activating bonuses immediately.",
         cost: 400,
         category: 'Utility',
         effect: { type: 'INSTANT_STREAK' } 

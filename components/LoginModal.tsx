@@ -12,16 +12,6 @@ interface LoginModalProps {
 
 const VALID_USERS = ALL_MEMBERS.map(m => m.username);
 
-// Award focus labels for display
-const AWARD_LABELS: Record<string, string> = {
-  Sustentabilidade: '🌱 Sustentabilidade',
-  PensamentoCriativo: '💡 Pensamento Criativo',
-  Conexao: '🤝 Conexão',
-  Alcance: '📢 Alcance',
-  Controle: '🤖 Controle',
-  Inovacao: '🚀 Inovação',
-  Design: '🔧 Design Industrial',
-};
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {
   const { t } = useTranslation('common');
@@ -129,7 +119,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 <optgroup label="Membros">
                   {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
                     <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
-                      {m.displayName} — {m.awardFocus ? AWARD_LABELS[m.awardFocus] || m.awardFocus : ''}
+                      {m.displayName} — {m.awardFocus ? t(`common:awards.${m.awardFocus}`) : ''}
                     </option>
                   ))}
                 </optgroup>
@@ -151,7 +141,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
               >
                 <Award className="w-3.5 h-3.5 text-yellow-500/70" />
                 <span className="text-[11px] font-bold text-yellow-500/80">
-                  {AWARD_LABELS[selectedMember.awardFocus]}
+                  {t(`common:awards.${selectedMember.awardFocus}`)}
                 </span>
               </motion.div>
             )}
@@ -230,7 +220,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                                 ? 'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/15 hover:border-orange-500/40'
                                 : 'border-white/10 bg-white/5 hover:bg-yellow-500/10 hover:border-yellow-500/30'
                         }`}
-                        title={member.awardFocus ? AWARD_LABELS[member.awardFocus] : 'Técnico'}
+                        title={member.awardFocus ? t(`common:awards.${member.awardFocus}`) : 'Técnico'}
                     >
                         {isTech && <Shield className="w-3 h-3 text-orange-400 mr-1.5 shrink-0" />}
                         <span className={`shrink-0 text-xs font-black ${isTech ? 'text-orange-400' : 'text-yellow-500/80'}`}>{member.displayName[0]}</span>

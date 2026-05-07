@@ -1,7 +1,7 @@
+import { ALL_USERNAMES as TEAM_MEMBERS } from '../data/members';
 import React, { useState, useEffect } from 'react';
 import { KanbanTask, KanbanStatus, TeamMission, UserRole } from '../types';
 import { Plus, GripVertical, Users, Shield, Target } from 'lucide-react';
-import { ALL_MEMBERS } from './tech/AttendanceDashboard'; // Re-use member list or define locally
 
 interface KanbanBoardProps {
   currentUser: string;
@@ -14,12 +14,6 @@ const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
   { id: 'todo', label: 'A Fazer', color: 'border-blue-500/50 bg-blue-500/10' },
   { id: 'in_progress', label: 'Em Andamento', color: 'border-yellow-500/50 bg-yellow-500/10' },
   { id: 'done', label: 'Concluído', color: 'border-green-500/50 bg-green-500/10' },
-];
-
-export const TEAM_MEMBERS = [
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
-  'Jonas', 'Ramon'
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missions, onCompleteMission }) => {

@@ -1,13 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { TECHNICIAN_USERNAMES, ALL_USERNAMES as ALL_VALID_USERNAMES } from '../data/members';
 
 // Centralized member data — single source of truth
-const TECHNICIAN_USERNAMES = ['Jonas', 'Ramon'];
-const ALL_VALID_USERNAMES = [
-  'Jonas', 'Ramon',
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo',
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
-];
-
 // Award focus per member (for API response enrichment)
 const AWARD_FOCUS: Record<string, string | null> = {
   'Jonas': null,

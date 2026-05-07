@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Skill, Realm } from '../types';
 import { SKILL_REALMS } from '../constants';
@@ -13,6 +14,7 @@ interface AddEditSkillModalProps {
 }
 
 const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, onSave, skillToEdit, apiKey }) => {
+  const { t } = useTranslation(['common']);
   const [name, setName] = useState(skillToEdit?.name || '');
   const [realm, setRealm] = useState<Realm>(skillToEdit?.realm || SKILL_REALMS[0]);
 
@@ -75,7 +77,7 @@ const AddEditSkillModal: React.FC<AddEditSkillModalProps> = ({ isOpen, onClose, 
                 onChange={e => setRealm(e.target.value as Realm)} 
                 className="mt-1 block w-full bg-background border border-border-color rounded-md py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary sm:text-sm"
             >
-              {SKILL_REALMS.map(r => <option key={r} value={r}>{r}</option>)}
+              {SKILL_REALMS.map(r => <option key={r} value={r}>{t(`common:realm.${r}`)}</option>)}
             </select>
           </div>
           

@@ -32,13 +32,14 @@ interface BLeedProfileDashboardProps {
 }
 
 const realmOrder: Realm[] = [
-    Realm.Mind,
-    Realm.Body,
-    Realm.Creation,
-    Realm.Spirit,
+    Realm.Programming,
+    Realm.Engineering,
+    Realm.TechnicalWriting,
+    Realm.Networking,
+    Realm.Planning,
+    Realm.Oratory,
     Realm.Creativity,
-    Realm.Finance,
-    Realm.Social,
+    Realm.FirstCulture,
     Realm.Meta
 ];
 
@@ -285,16 +286,16 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             <div className="relative z-10 space-y-6">
                                 <div>
                                     <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2 ${user.type === 'mentor' ? 'text-accent-tertiary' : 'text-accent-red'}`}>
-                                        <Info size={14} /> {user.type === 'mentor' ? 'Contribuição do Mentor' : 'Histórico na Equipe'}
+                                        <Info size={14} /> {user.type === 'mentor' ? t('analytics:profile.contribution_mentor') : t('analytics:profile.team_history')}
                                     </p>
                                     <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-tight">
-                                        {user.howHelps || user.howHeHelped || 'Informação não fornecida.'}
+                                        {user.howHelps || user.howHeHelped || t('analytics:profile.info_not_provided')}
                                     </h3>
                                 </div>
                                 
                                 {user.type === 'former' && user.reasonForLeaving && (
                                     <div className="pt-6 border-t border-white/10">
-                                        <p className="text-[10px] font-black text-accent-red uppercase tracking-[0.3em] mb-2">Motivo da Saída</p>
+                                        <p className="text-[10px] font-black text-accent-red uppercase tracking-[0.3em] mb-2">{t('analytics:profile.leaving_reason')}</p>
                                         <p className="text-text-secondary text-sm font-medium leading-relaxed">
                                             {user.reasonForLeaving}
                                         </p>

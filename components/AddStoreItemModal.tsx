@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Wand2, Loader2 } from 'lucide-react';
 import { StoreItem, User, Realm } from '../types';
 import { SKILL_REALMS } from '../constants';
@@ -14,6 +15,7 @@ interface AddStoreItemModalProps {
 }
 
 const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit, user, apiKey }) => {
+  const { t } = useTranslation(['common']);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState(100);
@@ -186,7 +188,7 @@ const AddStoreItemModal: React.FC<AddStoreItemModalProps> = ({ isOpen, onClose, 
                         <div className="flex flex-wrap gap-2">
                             {SKILL_REALMS.map(r => (
                                 <button key={r} type="button" onClick={() => handleRealmToggle(r)} className={`px-3 py-1 text-sm rounded-full border-2 ${effectRealms.includes(r) ? 'bg-accent-tertiary border-accent-primary text-white' : 'bg-background border-border-color text-text-secondary hover:border-text-secondary'}`}>
-                                    {r}
+                                    {t(`common:realm.${r}`)}
                                 </button>
                             ))}
                         </div>

@@ -1,17 +1,18 @@
 import React from 'react';
-import { BrainCircuit, Heart, Zap, Sparkles } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Code, FlaskConical, BookText, TrendingUp, ClipboardList, Crown, Milestone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Realm, Skill } from '../../types';
 
 const realmConfig = {
-  [Realm.Mind]: { icon: <BrainCircuit size={18} />, color: "bg-accent-primary" },
-  [Realm.Body]: { icon: <Heart size={18} />, color: "bg-accent-red" },
-  [Realm.Creation]: { icon: <Zap size={18} />, color: "bg-accent-secondary" },
-  [Realm.Spirit]: { icon: <Sparkles size={18} />, color: "bg-accent-tertiary" },
-  [Realm.Creativity]: { icon: <Sparkles size={18} />, color: "bg-accent-primary" },
-  [Realm.Finance]: { icon: <Sparkles size={18} />, color: "bg-accent-green" },
-  [Realm.Social]: { icon: <Sparkles size={18} />, color: "bg-accent-primary" },
-  [Realm.Meta]: { icon: <Sparkles size={18} />, color: "bg-text-secondary" },
+  [Realm.Programming]: { icon: <Code size={18} />, color: "bg-accent-primary" },
+  [Realm.Engineering]: { icon: <FlaskConical size={18} />, color: "bg-accent-red" },
+  [Realm.TechnicalWriting]: { icon: <BookText size={18} />, color: "bg-accent-secondary" },
+  [Realm.Networking]: { icon: <TrendingUp size={18} />, color: "bg-accent-tertiary" },
+  [Realm.Planning]: { icon: <ClipboardList size={18} />, color: "bg-accent-primary" },
+  [Realm.Oratory]: { icon: <Zap size={18} />, color: "bg-accent-secondary" },
+  [Realm.Creativity]: { icon: <Sparkles size={18} />, color: "bg-accent-tertiary" },
+  [Realm.FirstCulture]: { icon: <Crown size={18} />, color: "bg-accent-primary" },
+  [Realm.Meta]: { icon: <Milestone size={18} />, color: "bg-text-secondary" },
 };
 
 interface TopSkillsListProps {

@@ -2,6 +2,7 @@ import React from 'react';
 import { TeamMission, Realm } from '../types';
 import { motion } from 'framer-motion';
 import { CheckCircle, Clock, Zap, Coins, Users, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMissionsProps {
   missions: TeamMission[];
@@ -36,6 +37,7 @@ const REALM_BG_COLORS: { [key in Realm]?: string } = {
 };
 
 const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCompleteMission, onRefresh, isLoading }) => {
+  const { t } = useTranslation(['analytics', 'common']);
   const now = new Date();
 
   const myMissions = missions.filter(m =>
@@ -50,11 +52,15 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
 
   const getTimeRemaining = (deadline: string) => {
     const diff = new Date(deadline).getTime() - now.getTime();
-    if (diff <= 0) return 'Expirada';
-    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (diff <= 0) return t('analytics:missions.expired_status');
+    const hoursTotal = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
-    return `${hours}h ${mins}m`;
+    if (hoursTotal > 24) {
+      const days = Math.floor(hoursTotal / 24);
+      const hours = hoursTotal % 24;
+      return `${t('analytics:missions.time_left.days', { count: days })} ${t('analytics:missions.time_left.hours', { count: hours })}`;
+    }
+    return `${t('analytics:missions.time_left.hours', { count: hoursTotal })} ${t('analytics:missions.time_left.minutes', { count: mins })}`;
   };
 
   return (
@@ -62,15 +68,15 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Missões da Equipe</h2>
-          <p className="text-sm text-text-secondary mt-1">Missões atribuídas pelos técnicos</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">{t('analytics:missions.title')}</h2>
+          <p className="text-sm text-text-secondary mt-1">{t('analytics:missions.subtitle')}</p>
         </div>
         <button
           onClick={onRefresh}
           disabled={isLoading}
           className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-text-secondary hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
         >
-          {isLoading ? 'Carregando...' : 'Atualizar'}
+          {isLoading ? t('analytics:missions.loading') : t('analytics:missions.refresh')}
         </button>
       </div>
 
@@ -78,7 +84,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
       {activeMissions.length > 0 ? (
         <div className="space-y-3">
           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">
-            Ativas ({activeMissions.length})
+            {t('analytics:missions.active')} ({activeMissions.length})
           </h3>
           {activeMissions.map((mission, idx) => (
             <motion.div
@@ -99,7 +105,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                   <div className="flex flex-wrap items-center gap-1.5 mt-3">
                     {mission.realmRewards.map(rr => (
                       <span key={rr.realm} className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${REALM_BG_COLORS[rr.realm] || 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
-                        {rr.realm} +{rr.xp} XP
+                        {t(`common:realm.${rr.realm}`)} +{rr.xp} XP
                       </span>
                     ))}
                     {mission.credit_reward > 0 && (
@@ -115,10 +121,10 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                       <Clock className="w-3 h-3" /> {getTimeRemaining(mission.deadline)}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> {totalXp(mission)} XP total
+                      <Zap className="w-3 h-3" /> {t('analytics:missions.total_xp', { count: totalXp(mission) })}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" /> Por {mission.createdBy}
+                      <Users className="w-3 h-3" /> {t('analytics:missions.created_by', { name: mission.createdBy })}
                     </span>
                   </div>
                 </div>
@@ -128,7 +134,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                   onClick={() => onCompleteMission(mission.id)}
                   className="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-lg hover:shadow-green-500/20 transition-all hover:scale-105 active:scale-95"
                 >
-                  Completar
+                  {t('analytics:missions.complete_button')}
                 </button>
               </div>
             </motion.div>
@@ -139,8 +145,8 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-zinc-600" />
           </div>
-          <p className="text-text-secondary text-sm font-medium">Nenhuma missão ativa no momento</p>
-          <p className="text-zinc-600 text-xs mt-1">Os técnicos ainda não atribuíram missões</p>
+          <p className="text-text-secondary text-sm font-medium">{t('analytics:missions.no_missions')}</p>
+          <p className="text-zinc-600 text-xs mt-1">{t('analytics:missions.no_missions_hint')}</p>
         </div>
       )}
 
@@ -148,7 +154,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
       {completedMissions.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">
-            Completadas ({completedMissions.length})
+            {t('analytics:missions.completed')} ({completedMissions.length})
           </h3>
           {completedMissions.map(mission => (
             <div key={mission.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 opacity-60">
@@ -158,7 +164,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
                   <h4 className="text-white/70 font-bold text-sm truncate">{mission.title}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     {mission.realmRewards.map(rr => (
-                      <span key={rr.realm} className="text-[10px] text-zinc-500 font-bold">{rr.realm} +{rr.xp}</span>
+                      <span key={rr.realm} className="text-[10px] text-zinc-500 font-bold">{t(`common:realm.${rr.realm}`)} +{rr.xp}</span>
                     ))}
                   </div>
                 </div>
@@ -172,7 +178,7 @@ const TeamMissions: React.FC<TeamMissionsProps> = ({ missions, currentUser, onCo
       {expiredMissions.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">
-            Expiradas ({expiredMissions.length})
+            {t('analytics:missions.expired_label')} ({expiredMissions.length})
           </h3>
           {expiredMissions.map(mission => (
             <div key={mission.id} className="bg-red-500/5 border border-red-500/10 rounded-2xl p-4 opacity-50">

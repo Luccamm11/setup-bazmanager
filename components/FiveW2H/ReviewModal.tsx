@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Coins, Zap, Trash2, Plus } from 'lucide-react';
 import type { FiveW2HPlan, RealmXpReward } from '../../types';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const ReviewModal: React.FC<Props> = ({ plan, isOpen, onClose, onSubmit }) => {
+  const { t } = useTranslation(['common']);
   const [rewards, setRewards] = useState<RealmXpReward[]>(
     plan.realmRewards.length > 0 ? plan.realmRewards : [{ realm: Realm.Planning, xp: 50 }]
   );
@@ -99,7 +101,7 @@ const ReviewModal: React.FC<Props> = ({ plan, isOpen, onClose, onSubmit }) => {
                       className="flex-1 bg-black/30 border border-white/10 rounded-lg py-2 px-3 text-white text-xs focus:outline-none focus:border-accent-primary appearance-none"
                     >
                       {SKILL_REALMS.map(r => (
-                        <option key={r} value={r}>{REALM_LABELS[r]}</option>
+                        <option key={r} value={r}>{t(`common:realm.${r}`)}</option>
                       ))}
                     </select>
 

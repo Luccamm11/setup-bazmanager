@@ -74,11 +74,49 @@
     "entryDate": "Membro desde",
     "not_informed": "Não informado",
     "seasons": "Temporadas",
+    "seasons_placeholder": "Ex: 2022, 2023",
     "no_seasons": "Nenhuma temporada registrada",
     "award_focus_default": "Multitarefa",
     "award_focus_description": "Especialista dedicado a impulsionar a estratégia de {{focus}} da Bazinga! 73.",
     "bleed_attributes": "Atributos B-LEED",
-    "competence_level": "Nível de Competência"
+    "competence_level": "Nível de Competência",
+    "contribution_mentor": "Contribuição do Mentor",
+    "team_history": "Histórico na Equipe",
+    "info_not_provided": "Informação não fornecida.",
+    "leaving_reason": "Motivo da Saída",
+    "add_legacy_title": "Adicionar Legado",
+    "add_legacy_subtitle": "Cadastre mentores ou membros históricos da equipe.",
+    "legacy_type": "Tipo",
+    "mentor": "Mentor",
+    "former_member": "Membro Anterior",
+    "how_helps": "Como ajuda a equipe?",
+    "how_helps_placeholder": "Responsabilidades, mentorias, etc...",
+    "how_helped": "Como ajudava a equipe?",
+    "how_helped_placeholder": "Papel que exercia na época...",
+    "leaving_reason_label": "Por que saiu?",
+    "leaving_reason_placeholder": "Motivo da saída...",
+    "bio_placeholder": "Informações adicionais...",
+    "register_legacy": "Cadastrar no Sistema"
+  },
+  "missions": {
+    "title": "Missões da Equipe",
+    "subtitle": "Missões atribuídas pelos técnicos",
+    "refresh": "Atualizar",
+    "loading": "Carregando...",
+    "active": "Ativas",
+    "completed": "Completadas",
+    "expired_label": "Expiradas",
+    "expired_status": "Expirada",
+    "no_missions": "Nenhuma missão ativa no momento",
+    "no_missions_hint": "Os técnicos ainda não atribuíram missões",
+    "complete_button": "Completar",
+    "created_by": "Por {{name}}",
+    "total_xp": "{{count}} XP total",
+    "time_left": {
+      "days": "{{count}}d",
+      "hours": "{{count}}h",
+      "minutes": "{{count}}m"
+    }
   },
   "dashboard_tab": {
     "title": "Dashboard",
@@ -88,6 +126,82 @@
       "personal": "Meu Progresso",
       "team": "Visão da Equipe",
       "member_lookup": "Inspecionar Membro"
+    }
+  },
+  "attendance": {
+    "title": "Controle de Presença",
+    "subtitle": "Gerencie o histórico de presença e atividades externas dos membros.",
+    "daily_view": "Presença do Dia",
+    "calendar_view": "Ver Calendário",
+    "save_list": "Salvar Lista",
+    "date_label": "Data do Registro:",
+    "month_label": "Mês Base:",
+    "member_header": "Membro",
+    "present_header": "Presenças",
+    "absent_header": "Faltas",
+    "status_header": "Definir Status",
+    "status": {
+      "present": "Presença",
+      "absent": "Falta",
+      "medical": "Atestado",
+      "medical_full": "Atestado Médico",
+      "itinerary": "Itinerário",
+      "vacation": "Férias",
+      "no_record": "Sem registro",
+      "weekend": "Final de Semana"
+    }
+  },
+  "finance": {
+    "title": "Financeiro da Equipe",
+    "subtitle": "Gerencie os gastos, ganhos e investimentos",
+    "loading": "Carregando financeiro...",
+    "new_record": "Novo Registro",
+    "edit_record": "Editar Registro",
+    "delete_confirm": "Tem certeza que deseja excluir este registro?",
+    "balance": "Saldo Atual",
+    "income": "Total Ganhos",
+    "expense": "Total Gastos",
+    "investments": "Lucro Investimentos",
+    "table": {
+      "date": "Data",
+      "description": "Descrição",
+      "category": "Categoria",
+      "type": "Tipo",
+      "amount": "Valor",
+      "return": "Retorno",
+      "profit": "Lucro/Prej",
+      "actions": "Ações",
+      "no_records": "Nenhum registro encontrado.",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "types": {
+      "income": "Ganho",
+      "expense": "Gasto",
+      "investment": "Investimento",
+      "investment_short": "Inv"
+    },
+    "status": {
+      "open": "Aberto",
+      "closed": "Fechado",
+      "in_progress": "Em andamento",
+      "completed": "Concluído"
+    },
+    "form": {
+      "type": "Tipo",
+      "date": "Data",
+      "description": "Descrição",
+      "description_placeholder": "Ex: Compra de Filamento PETG",
+      "category": "Categoria",
+      "category_placeholder": "Ex: Materiais",
+      "value": "Valor (Custo/Ganho)",
+      "investment_details": "Detalhes do Investimento",
+      "investment_status": "Status",
+      "investment_return": "Retorno Obtido",
+      "investment_return_placeholder": "Opcional",
+      "investment_hint": "O retorno obtido é o valor total que voltou para a equipe com este investimento.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
     }
   }
 }
