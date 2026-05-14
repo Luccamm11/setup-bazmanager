@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const ALL_MEMBERS = [
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
-];
+import { MEMBER_USERNAMES } from '../../data/members';
+const ALL_MEMBERS = MEMBER_USERNAMES;
 import { Calendar, CheckSquare, XSquare, BriefcaseMedical, Clock, Plane, Loader2, Save, ListTodo } from 'lucide-react';
 
 type AttendanceStatus = 'Atestado Medico' | 'Itinerario' | 'Falta' | 'Presenca' | 'Ferias';

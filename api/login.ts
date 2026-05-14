@@ -6,6 +6,7 @@ const ALL_VALID_USERNAMES = [
   'Jonas', 'Ramon',
   'Lucca', 'Clarice', 'Ana Clara', 'Bernardo',
   'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
+  'Gabriela Chaves', 'Sara Galdino',
 ];
 
 // Award focus per member (for API response enrichment)
@@ -22,6 +23,8 @@ const AWARD_FOCUS: Record<string, string | null> = {
   'Yan': 'Inovacao',
   'Guilherme': 'Design',
   'Enzo Resende': 'Design',
+  'Gabriela Chaves': 'Alcance',
+  'Sara Galdino': 'Conexao',
 };
 
 export default function handler(req: VercelRequest, res: VercelResponse) {

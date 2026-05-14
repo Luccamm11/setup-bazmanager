@@ -86,6 +86,22 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
     });
     const [isSaving, setIsSaving] = useState(false);
 
+    // Sync setupData when opening the modal for editing
+    React.useEffect(() => {
+        if (isSetupOpen) {
+            setSetupData({
+                fullName: user.fullName || '',
+                grade: user.grade || '',
+                entryDate: user.entryDate || '',
+                birthDate: user.birthDate || '',
+                seasons: user.seasons || [],
+                mentorSeasons: user.mentorSeasons || [],
+                volunteerSeasons: user.volunteerSeasons || [],
+                bio: user.bio || ''
+            });
+        }
+    }, [isSetupOpen, user]);
+
     const handleSaveSetup = async () => {
         setIsSaving(true);
         try {
@@ -172,6 +188,21 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     </button>
                                 ))}
                             </div>
+                            
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <button 
+                                    onClick={() => {
+                                        setShowSettings(false);
+                                        setIsSetupOpen(true);
+                                    }}
+                                    className="flex items-center gap-3 w-full p-3 bg-accent-primary/10 hover:bg-accent-primary/20 border border-accent-primary/20 rounded-2xl text-accent-primary transition-all group"
+                                >
+                                    <Edit2 size={16} className="group-hover:rotate-12 transition-transform" />
+                                    <span className="text-xs font-black uppercase tracking-wider">
+                                        {t('analytics:profile.edit_dossier', 'Editar Dossiê')}
+                                    </span>
+                                </button>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -199,8 +230,15 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                             
                             {visibility.fullName && (
                                 <>
-                                    <h2 className="text-2xl font-black text-text-primary tracking-tight">
+                                    <h2 className="text-2xl font-black text-text-primary tracking-tight flex items-center justify-center gap-2">
                                         {user.fullName || user.name}
+                                        <button 
+                                            onClick={() => setIsSetupOpen(true)}
+                                            className="p-1.5 hover:bg-white/5 rounded-lg text-text-muted hover:text-accent-primary transition-all opacity-0 group-hover:opacity-100"
+                                            title={t('analytics:profile.edit_dossier', 'Editar Dossiê')}
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
                                     </h2>
                                     <p className={`font-black uppercase tracking-widest text-[10px] mt-1 ${user.type === 'mentor' ? 'text-accent-tertiary' : user.type === 'former' ? 'text-accent-red' : 'text-accent-primary'}`}>
                                         {user.rank} {user.type === 'active' && `• LVL ${user.level_overall || 0}`}
