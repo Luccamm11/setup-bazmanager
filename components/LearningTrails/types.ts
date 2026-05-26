@@ -1,4 +1,3 @@
-export type TrailCategory = 'Programming' | 'Engineering' | 'CAD' | 'Management' | 'Marketing';
 export type PillarType = 'Mentoria Estratégica' | 'Desenvolvimento Autônomo' | 'Aprendizagem Coletiva';
 export type ProgressStatus = 'pending' | 'in_progress' | 'review' | 'completed';
 
@@ -8,17 +7,17 @@ export interface Competency {
   description: string;
   pillar: PillarType;
   evaluationMethod: string;
-  xpReward: number; // Suggested XP for completing this competency
+  xpReward: number; 
 }
 
 export interface TrailStage {
   id: string;
-  level: string; // e.g. "Iniciante", "Intermediário", "Avançado"
+  level: string; 
   competencies: Competency[];
 }
 
 export interface LearningTrail {
-  id: TrailCategory;
+  id: string;
   title: string;
   description: string;
   stages: TrailStage[];
@@ -32,9 +31,15 @@ export interface MemberCompetencyProgress {
 
 export interface MemberTrailData {
   username: string;
-  trailId: TrailCategory;
+  trailId: string;
   activeStageId: string;
   progress: Record<string, MemberCompetencyProgress>; // Map of competencyId -> Progress
   assignedBy?: string;
   assignedAt: string;
+  isArchived?: boolean; // For when the trail is deleted but we want to keep the record
+}
+
+export interface LearningTrailsData {
+  definitions: LearningTrail[];
+  progress: MemberTrailData[];
 }

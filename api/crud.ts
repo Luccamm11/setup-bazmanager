@@ -5,6 +5,7 @@ const KEYS = {
   attendance: 'levelup_attendance_records',
   finance: 'levelup_finance_records',
   kanban: 'levelup_kanban_tasks',
+  learning_trails: 'levelup_learning_trails_data',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
