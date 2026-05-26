@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ALL_MEMBERS } from '../constants';
 export const TEAM_MEMBERS = ALL_MEMBERS;
 import { KanbanTask, KanbanStatus, TeamMission, UserRole } from '../types';
-import { Plus, GripVertical, Users, Shield, Target } from 'lucide-react';
+import { Plus, GripVertical, Users, Shield, Target, X, Clock, AlignLeft } from 'lucide-react';
 
 interface KanbanBoardProps {
   currentUser: string;
@@ -29,6 +29,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
   const [newTaskMissionId, setNewTaskMissionId] = useState<string>('');
 
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [viewingTask, setViewingTask] = useState<KanbanTask | null>(null);
 
   useEffect(() => {
     // If user is member, lock to themselves
@@ -185,9 +186,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
     setDraggedTaskId(null);
   };
 
-  const handleDeleteTask = (id: string) => {
+  const handleDeleteTask = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
       saveTasks(tasks.filter(t => t.id !== id));
+      if (viewingTask?.id === id) setViewingTask(null);
     }
   };
 
@@ -263,13 +266,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
                   <div
                     key={task.id}
                     draggable
+                    onClick={() => setViewingTask(task)}
                     onDragStart={(e) => handleDragStart(e, task.id)}
                     className="bg-surface/80 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-white/20 transition-all shadow-sm group"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-bold text-white text-sm break-words flex-1 pr-2">{task.title}</h4>
                       <button 
-                        onClick={() => handleDeleteTask(task.id)}
+                        onClick={(e) => handleDeleteTask(e, task.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:bg-red-400/10 rounded transition-all shrink-0"
                       >
                         X
@@ -374,6 +378,83 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setViewingTask(null)}>
+          <div className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setViewingTask(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <div className="mb-6 pr-8">
+              <h3 className="text-xl font-bold text-white break-words">{viewingTask.title}</h3>
+              <div className="flex items-center gap-2 mt-3">
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border ${
+                  viewingTask.status === 'done' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
+                  viewingTask.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
+                  'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                }`}>
+                  {KANBAN_COLUMNS.find(c => c.id === viewingTask.status)?.label}
+                </span>
+                {viewingTask.missionId && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent-primary bg-accent-primary/10 px-2 py-1 rounded-lg border border-accent-primary/20 flex items-center gap-1">
+                    <Shield size={12} /> Missão da Equipe
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center gap-2 text-text-secondary font-bold text-xs uppercase tracking-wider mb-2">
+                  <AlignLeft size={16} /> Descrição
+                </div>
+                <div className="bg-black/20 rounded-xl p-4 text-white text-sm whitespace-pre-wrap border border-white/5">
+                  {viewingTask.description || <span className="text-white/30 italic">Nenhuma descrição fornecida.</span>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary mb-1">Responsável</p>
+                  <div className="flex items-center gap-2">
+                    <Users size={14} className="text-accent-primary" />
+                    <span className="text-white text-sm font-medium">{viewingTask.assignee}</span>
+                  </div>
+                </div>
+                <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary mb-1">Criado Por</p>
+                  <div className="flex items-center gap-2">
+                    <Users size={14} className="text-text-muted" />
+                    <span className="text-white text-sm font-medium">{viewingTask.createdBy}</span>
+                  </div>
+                </div>
+                <div className="bg-black/20 rounded-xl p-3 border border-white/5 col-span-2">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary mb-1">Data de Criação</p>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-text-muted" />
+                    <span className="text-white text-sm font-medium">
+                      {new Date(viewingTask.createdAt).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6 pt-4 border-t border-white/10">
+              <button
+                onClick={(e) => handleDeleteTask(e, viewingTask.id)}
+                className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 font-bold rounded-xl transition-colors text-sm"
+              >
+                Excluir Tarefa
+              </button>
+            </div>
           </div>
         </div>
       )}
