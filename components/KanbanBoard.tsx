@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ALL_MEMBERS } from '../constants';
 export const TEAM_MEMBERS = ALL_MEMBERS;
 import { KanbanTask, KanbanStatus, TeamMission, UserRole } from '../types';
-import { Plus, GripVertical, Users, Shield, Target, X, Clock, AlignLeft } from 'lucide-react';
+import { Plus, GripVertical, Users, Shield, Target, X, Clock, AlignLeft, Edit2 } from 'lucide-react';
 
 interface KanbanBoardProps {
   currentUser: string;
@@ -30,6 +30,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
 
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [viewingTask, setViewingTask] = useState<KanbanTask | null>(null);
+  const [isEditingTask, setIsEditingTask] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
 
   useEffect(() => {
     // If user is member, lock to themselves
@@ -266,7 +269,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
                   <div
                     key={task.id}
                     draggable
-                    onClick={() => setViewingTask(task)}
+                    onClick={() => {
+                      setViewingTask(task);
+                      setIsEditingTask(false);
+                    }}
                     onDragStart={(e) => handleDragStart(e, task.id)}
                     className="bg-surface/80 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-white/20 transition-all shadow-sm group"
                   >
@@ -392,32 +398,61 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
               <X size={20} />
             </button>
             
-            <div className="mb-6 pr-8">
-              <h3 className="text-xl font-bold text-white break-words">{viewingTask.title}</h3>
-              <div className="flex items-center gap-2 mt-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border ${
-                  viewingTask.status === 'done' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
-                  viewingTask.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
-                  'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                }`}>
-                  {KANBAN_COLUMNS.find(c => c.id === viewingTask.status)?.label}
-                </span>
-                {viewingTask.missionId && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent-primary bg-accent-primary/10 px-2 py-1 rounded-lg border border-accent-primary/20 flex items-center gap-1">
-                    <Shield size={12} /> Missão da Equipe
+            {isEditingTask ? (
+              <div className="mb-6 pr-8">
+                <input 
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  className="text-xl font-bold text-white bg-black/40 border border-white/20 rounded-lg px-3 py-2 w-full mb-3 focus:outline-none focus:border-accent-primary"
+                  placeholder="Título da tarefa..."
+                />
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border ${
+                    viewingTask.status === 'done' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
+                    viewingTask.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
+                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  }`}>
+                    {KANBAN_COLUMNS.find(c => c.id === viewingTask.status)?.label}
                   </span>
-                )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-6 pr-8">
+                <h3 className="text-xl font-bold text-white break-words">{viewingTask.title}</h3>
+                <div className="flex items-center gap-2 mt-3">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border ${
+                    viewingTask.status === 'done' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
+                    viewingTask.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
+                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  }`}>
+                    {KANBAN_COLUMNS.find(c => c.id === viewingTask.status)?.label}
+                  </span>
+                  {viewingTask.missionId && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-accent-primary bg-accent-primary/10 px-2 py-1 rounded-lg border border-accent-primary/20 flex items-center gap-1">
+                      <Shield size={12} /> Missão da Equipe
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 text-text-secondary font-bold text-xs uppercase tracking-wider mb-2">
                   <AlignLeft size={16} /> Descrição
                 </div>
-                <div className="bg-black/20 rounded-xl p-4 text-white text-sm whitespace-pre-wrap border border-white/5">
-                  {viewingTask.description || <span className="text-white/30 italic">Nenhuma descrição fornecida.</span>}
-                </div>
+                {isEditingTask ? (
+                  <textarea 
+                    value={editDesc}
+                    onChange={e => setEditDesc(e.target.value)}
+                    className="bg-black/40 rounded-xl p-4 text-white text-sm w-full min-h-[120px] border border-white/20 focus:outline-none focus:border-accent-primary custom-scrollbar resize-none"
+                    placeholder="Adicione uma descrição mais detalhada..."
+                  />
+                ) : (
+                  <div className="bg-black/20 rounded-xl p-4 text-white text-sm whitespace-pre-wrap border border-white/5 max-h-[250px] overflow-y-auto custom-scrollbar">
+                    {viewingTask.description || <span className="text-white/30 italic">Nenhuma descrição fornecida.</span>}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -447,13 +482,50 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missio
               </div>
             </div>
 
-            <div className="flex justify-end mt-6 pt-4 border-t border-white/10">
-              <button
-                onClick={(e) => handleDeleteTask(e, viewingTask.id)}
-                className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 font-bold rounded-xl transition-colors text-sm"
-              >
-                Excluir Tarefa
-              </button>
+            <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-white/10">
+              {isEditingTask ? (
+                <>
+                  <button
+                    onClick={() => setIsEditingTask(false)}
+                    className="px-4 py-2 bg-white/5 text-white hover:bg-white/10 rounded-xl transition-colors text-sm font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!editTitle.trim()) return;
+                      const updatedTasks = tasks.map(t => 
+                        t.id === viewingTask.id ? { ...t, title: editTitle, description: editDesc } : t
+                      );
+                      saveTasks(updatedTasks);
+                      setViewingTask({ ...viewingTask, title: editTitle, description: editDesc });
+                      setIsEditingTask(false);
+                    }}
+                    className="px-4 py-2 bg-accent-primary text-white hover:bg-accent-secondary rounded-xl transition-colors text-sm font-bold shadow-glow-primary"
+                  >
+                    Salvar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditTitle(viewingTask.title);
+                      setEditDesc(viewingTask.description || '');
+                      setIsEditingTask(true);
+                    }}
+                    className="px-4 py-2 bg-white/5 text-white hover:bg-white/10 rounded-xl transition-colors text-sm font-bold flex items-center gap-2"
+                  >
+                    <Edit2 size={14} /> Editar
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteTask(e, viewingTask.id)}
+                    className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 font-bold rounded-xl transition-colors text-sm"
+                  >
+                    Excluir
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
