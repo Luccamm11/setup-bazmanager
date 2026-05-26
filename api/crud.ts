@@ -25,8 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
-      const { records, tasks } = req.body;
-      const data = type === 'kanban' ? tasks : records;
+      const { records, tasks, learning_trails } = req.body;
+      let data: any;
+      if (type === 'kanban') {
+        data = tasks;
+      } else if (type === 'learning_trails') {
+        data = learning_trails;
+      } else {
+        data = records;
+      }
 
       if (!data) {
         return res.status(400).json({ success: false, error: 'No data provided' });

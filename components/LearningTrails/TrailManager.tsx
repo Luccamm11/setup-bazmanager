@@ -276,11 +276,12 @@ export const TrailManager: React.FC<TrailManagerProps> = ({ definitions, onSave,
                                     <select 
                                       value={comp.pillar}
                                       onChange={e => handleUpdateCompetency(stage.id, comp.id, { pillar: e.target.value as PillarType })}
-                                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-primary"
+                                      className="w-full border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-primary"
+                                      style={{ backgroundColor: '#18181b', color: '#ffffff' }}
                                     >
-                                      <option value="Desenvolvimento Autônomo">Desenvolvimento Autônomo</option>
-                                      <option value="Mentoria Estratégica">Mentoria Estratégica</option>
-                                      <option value="Aprendizagem Coletiva">Aprendizagem Coletiva</option>
+                                      <option value="Desenvolvimento Autônomo" style={{ backgroundColor: '#18181b', color: '#ffffff' }}>Desenvolvimento Autônomo</option>
+                                      <option value="Mentoria Estratégica" style={{ backgroundColor: '#18181b', color: '#ffffff' }}>Mentoria Estratégica</option>
+                                      <option value="Aprendizagem Coletiva" style={{ backgroundColor: '#18181b', color: '#ffffff' }}>Aprendizagem Coletiva</option>
                                     </select>
                                   </div>
                                   <div>
