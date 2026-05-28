@@ -181,6 +181,28 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
     }
   };
 
+  // Helper to parse and render text with clickable links
+  const renderMessageContent = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, idx) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={idx}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent-primary hover:underline font-bold transition-all duration-300 drop-shadow-[0_0_8px_rgba(59,130,246,0.2)] break-all hover:text-white"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   // Filter members list based on search and selected tab
   const filteredMembers = ALL_MEMBERS.filter(m => {
     if (m.username === currentUser) return false;
@@ -485,7 +507,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                               : 'bg-white/[0.02] border-white/5 text-text-primary rounded-2xl rounded-tl-none'
                           }`}
                         >
-                          <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                          <p className="whitespace-pre-wrap break-words leading-relaxed">{renderMessageContent(msg.text)}</p>
                           
                           {/* Bubble timestamp */}
                           <div className="text-[8px] text-text-muted mt-1.5 text-right font-black tracking-wider uppercase">
