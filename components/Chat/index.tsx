@@ -9,12 +9,22 @@ interface TeamChatProps {
 
 export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   const [messages, setMessages] = useState<TeamChatMessage[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'group' | 'dm'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'group' | 'dm'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string>('team');
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  // Unread messages state, stored in LocalStorage by currentUser
+  const [lastRead, setLastRead] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(`bazmanager_chat_last_read_${currentUser}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -59,6 +69,40 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, selectedConversationId]);
+
+  // Mark active conversation as read
+  const markAsRead = (convId: string, timestamp?: string) => {
+    const time = timestamp || new Date().toISOString();
+    setLastRead(prev => {
+      const updated = { ...prev, [convId]: time };
+      localStorage.setItem(`bazmanager_chat_last_read_${currentUser}`, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Check unread count for a conversation
+  const getUnreadCount = (convId: string) => {
+    const lastReadTime = lastRead[convId];
+    // Filter messages in this conversation, NOT sent by the current user
+    const incomingMessages = messages.filter(m => m.conversationId === convId && m.sender !== currentUser);
+    if (!lastReadTime) return incomingMessages.length; // If never read, all incoming messages are unread
+    
+    return incomingMessages.filter(m => new Date(m.timestamp) > new Date(lastReadTime)).length;
+  };
+
+  // Watch for messages and selection changes to automatically clear unread messages
+  useEffect(() => {
+    if (selectedConversationId && messages.length > 0) {
+      const lastMsg = [...messages]
+        .reverse()
+        .find(m => m.conversationId === selectedConversationId);
+      if (lastMsg) {
+        markAsRead(selectedConversationId, lastMsg.timestamp);
+      } else {
+        markAsRead(selectedConversationId);
+      }
+    }
   }, [messages, selectedConversationId]);
 
   // Send message
@@ -137,23 +181,27 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
     }
   };
 
-  // Filter members list based on search
+  // Filter members list based on search and selected tab
   const filteredMembers = ALL_MEMBERS.filter(m => {
     if (m.username === currentUser) return false;
+    
+    // Text search filter
     const searchMatch = m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
-    
     if (!searchMatch) return false;
+
+    // Tab filter
     if (activeTab === 'all') return true;
     if (activeTab === 'group') return false; // Group is separate
     if (activeTab === 'dm') return true;
+    
+    if (activeTab === 'unread') {
+      const convId = getDmConversationId(currentUser, m.username);
+      return getUnreadCount(convId) > 0;
+    }
+    
     return true;
   });
-
-  // Calculate unread counts or count total messages in conversations
-  const getConversationMessageCount = (convId: string) => {
-    return messages.filter(m => m.conversationId === convId).length;
-  };
 
   // Selected conversation detail header details
   const isGroupChat = selectedConversationId === 'team';
@@ -182,18 +230,26 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
           </div>
           
           {/* Quick Filters */}
-          <div className="flex bg-white/[0.02] p-1 rounded-lg border border-white/5">
+          <div className="flex bg-white/[0.02] p-1 rounded-lg border border-white/5 gap-0.5">
             <button
               onClick={() => setActiveTab('all')}
-              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+              className={`flex-1 py-1.5 text-[9px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
                 activeTab === 'all' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
               }`}
             >
               Tudo
             </button>
             <button
+              onClick={() => setActiveTab('unread')}
+              className={`flex-1 py-1.5 text-[9px] uppercase tracking-wider font-black rounded-md transition-all duration-300 flex items-center justify-center gap-1 ${
+                activeTab === 'unread' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
+              }`}
+            >
+              Não Lidas
+            </button>
+            <button
               onClick={() => setActiveTab('group')}
-              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+              className={`flex-1 py-1.5 text-[9px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
                 activeTab === 'group' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
               }`}
             >
@@ -201,7 +257,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
             </button>
             <button
               onClick={() => setActiveTab('dm')}
-              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+              className={`flex-1 py-1.5 text-[9px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
                 activeTab === 'dm' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
               }`}
             >
@@ -214,7 +270,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
         <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
           
           {/* # Geral (Group) Channel */}
-          {activeTab !== 'dm' && (
+          {(activeTab !== 'dm' && (activeTab !== 'unread' || getUnreadCount('team') > 0)) && (
             <button
               onClick={() => setSelectedConversationId('team')}
               className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
@@ -239,9 +295,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                 </div>
               </div>
               
-              {getConversationMessageCount('team') > 0 && (
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black">
-                  {getConversationMessageCount('team')}
+              {getUnreadCount('team') > 0 && (
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.3)]">
+                  {getUnreadCount('team')}
                 </span>
               )}
             </button>
@@ -250,15 +306,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
           {/* DM Separator */}
           {activeTab !== 'group' && (
             <>
-              <div className="px-3 pt-4 pb-2 text-[9px] uppercase tracking-widest font-black text-text-muted flex items-center gap-2">
-                <span>Mensagens Diretas</span>
-                <div className="h-[1px] bg-white/5 flex-1"></div>
-              </div>
+              {filteredMembers.length > 0 && (
+                <div className="px-3 pt-4 pb-2 text-[9px] uppercase tracking-widest font-black text-text-muted flex items-center gap-2">
+                  <span>Mensagens Diretas</span>
+                  <div className="h-[1px] bg-white/5 flex-1"></div>
+                </div>
+              )}
 
               {filteredMembers.map(member => {
                 const convId = getDmConversationId(currentUser, member.username);
                 const isSelected = selectedConversationId === convId;
-                const messageCount = getConversationMessageCount(convId);
+                const unreadCount = getUnreadCount(convId);
                 const isTechnician = member.role === 'technician';
 
                 // Initial initials
@@ -308,15 +366,22 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                       </div>
                     </div>
 
-                    {messageCount > 0 && (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black shrink-0">
-                        {messageCount}
+                    {unreadCount > 0 && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black shrink-0 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.3)]">
+                        {unreadCount}
                       </span>
                     )}
                   </button>
                 );
               })}
             </>
+          )}
+
+          {activeTab === 'unread' && filteredMembers.length === 0 && getUnreadCount('team') === 0 && (
+            <div className="p-8 text-center text-text-muted text-xs space-y-2">
+              <p className="font-bold">Nenhuma mensagem não lida!</p>
+              <p className="text-[10px] opacity-60">Excelente trabalho mantendo suas comunicações atualizadas.</p>
+            </div>
           )}
 
         </div>
