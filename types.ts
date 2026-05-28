@@ -244,6 +244,15 @@ export interface ChatMessage {
     timestamp: string;
 }
 
+export interface TeamChatMessage {
+    id: string;
+    sender: string;
+    text: string;
+    timestamp: string;
+    conversationId: string;
+}
+
+
 export interface WeeklyProgress {
     day: string;
     xp: number;

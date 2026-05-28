@@ -6,6 +6,7 @@ const KEYS = {
   finance: 'levelup_finance_records',
   kanban: 'levelup_kanban_tasks',
   learning_trails: 'levelup_learning_trails_data',
+  chat: 'levelup_chat_data',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -20,17 +21,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
       const rawData = await redis.get(REDIS_KEY);
-      const data = rawData ? JSON.parse(rawData) : (type === 'kanban' ? [] : {});
+      const data = rawData ? JSON.parse(rawData) : (type === 'kanban' || type === 'chat' ? [] : {});
       return res.status(200).json({ success: true, [type]: data });
     }
 
     if (req.method === 'POST') {
-      const { records, tasks, learning_trails } = req.body;
+      const { records, tasks, learning_trails, chat } = req.body;
       let data: any;
       if (type === 'kanban') {
         data = tasks;
       } else if (type === 'learning_trails') {
         data = learning_trails;
+      } else if (type === 'chat') {
+        data = chat;
       } else {
         data = records;
       }
@@ -39,8 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ success: false, error: 'No data provided' });
       }
 
-      if (type === 'kanban' && !Array.isArray(data)) {
-        return res.status(400).json({ success: false, error: 'Invalid tasks format' });
+      if ((type === 'kanban' || type === 'chat') && !Array.isArray(data)) {
+        return res.status(400).json({ success: false, error: `Invalid ${type} format` });
       }
 
       await redis.set(REDIS_KEY, JSON.stringify(data));

@@ -1,0 +1,473 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles } from 'lucide-react';
+import { ALL_MEMBERS, getMemberByUsername } from '../../data/members';
+import { TeamChatMessage } from '../../types';
+
+interface TeamChatProps {
+  currentUser: string;
+}
+
+export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
+  const [messages, setMessages] = useState<TeamChatMessage[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'group' | 'dm'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedConversationId, setSelectedConversationId] = useState<string>('team');
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper to format conversation ID for a DM (alphabetical sorting to match both directions)
+  const getDmConversationId = (userA: string, userB: string) => {
+    const sorted = [userA, userB].sort();
+    return `dm_${sorted[0]}_${sorted[1]}`;
+  };
+
+  // Fetch messages from Redis
+  const fetchMessages = async (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const res = await fetch('/api/crud?type=chat');
+      const data = await res.json();
+      if (data.success && data.chat) {
+        setMessages(data.chat);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar mensagens do chat:', err);
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  };
+
+  // Poll for messages every 6 seconds
+  useEffect(() => {
+    fetchMessages(true);
+
+    pollingRef.current = setInterval(() => {
+      fetchMessages(false);
+    }, 6000);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, selectedConversationId]);
+
+  // Send message
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim() || isSending) return;
+
+    setIsSending(true);
+    const newMessage: TeamChatMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      sender: currentUser,
+      text: inputText.trim(),
+      timestamp: new Date().toISOString(),
+      conversationId: selectedConversationId,
+    };
+
+    const updatedMessages = [...messages, newMessage];
+
+    try {
+      // Optmistically update UI
+      setMessages(updatedMessages);
+      setInputText('');
+
+      // Send to server
+      const res = await fetch('/api/crud?type=chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat: updatedMessages }),
+      });
+      
+      if (!res.ok) {
+        throw new Error('Falha ao enviar mensagem');
+      }
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+      // Revert optimism if error
+      fetchMessages(false);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Get recipient profile for a DM conversation
+  const getDmRecipient = (convId: string) => {
+    if (!convId.startsWith('dm_')) return null;
+    const parts = convId.replace('dm_', '').split('_');
+    const recipientUsername = parts.find(u => u !== currentUser);
+    return recipientUsername ? getMemberByUsername(recipientUsername) : null;
+  };
+
+  // Format date/time
+  const formatTime = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const formatDateLabel = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      const today = new Date();
+      if (date.toDateString() === today.toDateString()) {
+        return 'Hoje';
+      }
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      if (date.toDateString() === yesterday.toDateString()) {
+        return 'Ontem';
+      }
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    } catch (e) {
+      return '';
+    }
+  };
+
+  // Filter members list based on search
+  const filteredMembers = ALL_MEMBERS.filter(m => {
+    if (m.username === currentUser) return false;
+    const searchMatch = m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (!searchMatch) return false;
+    if (activeTab === 'all') return true;
+    if (activeTab === 'group') return false; // Group is separate
+    if (activeTab === 'dm') return true;
+    return true;
+  });
+
+  // Calculate unread counts or count total messages in conversations
+  const getConversationMessageCount = (convId: string) => {
+    return messages.filter(m => m.conversationId === convId).length;
+  };
+
+  // Selected conversation detail header details
+  const isGroupChat = selectedConversationId === 'team';
+  const recipient = isGroupChat ? null : getDmRecipient(selectedConversationId);
+
+  // Active messages thread filter
+  const activeMessages = messages.filter(m => m.conversationId === selectedConversationId);
+
+  return (
+    <div className="flex h-[calc(100vh-12rem)] w-full rounded-2xl border border-white/5 bg-primary/20 backdrop-blur-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.4)]">
+      
+      {/* 1. Left Contact Panel */}
+      <div className="w-80 border-r border-white/5 flex flex-col bg-primary/45 shrink-0 hidden sm:flex">
+        
+        {/* Search & Tabs */}
+        <div className="p-4 space-y-3 border-b border-white/5">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-muted" />
+            <input
+              type="text"
+              placeholder="Buscar contatos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-white/[0.03] border border-white/5 text-white placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all duration-300"
+            />
+          </div>
+          
+          {/* Quick Filters */}
+          <div className="flex bg-white/[0.02] p-1 rounded-lg border border-white/5">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+                activeTab === 'all' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
+              }`}
+            >
+              Tudo
+            </button>
+            <button
+              onClick={() => setActiveTab('group')}
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+                activeTab === 'group' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
+              }`}
+            >
+              Grupo
+            </button>
+            <button
+              onClick={() => setActiveTab('dm')}
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider font-black rounded-md transition-all duration-300 ${
+                activeTab === 'dm' ? 'bg-accent-primary/25 text-white shadow-glow-primary border border-accent-primary/30' : 'text-text-muted hover:text-white'
+              }`}
+            >
+              DMs
+            </button>
+          </div>
+        </div>
+
+        {/* Contacts & Channels List */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+          
+          {/* # Geral (Group) Channel */}
+          {activeTab !== 'dm' && (
+            <button
+              onClick={() => setSelectedConversationId('team')}
+              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
+                selectedConversationId === 'team'
+                  ? 'bg-white/[0.04] border-accent-primary/30 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                  : 'bg-transparent border-transparent text-text-secondary hover:bg-white/[0.01] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-500 ${
+                  selectedConversationId === 'team'
+                    ? 'bg-gradient-to-br from-accent-primary/20 to-accent-tertiary/20 border-accent-primary/30 shadow-glow-primary'
+                    : 'bg-white/[0.02] border-white/5'
+                }`}>
+                  <Hash className={`w-5 h-5 ${selectedConversationId === 'team' ? 'text-accent-primary' : 'text-text-muted group-hover:text-white'}`} />
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-text-primary"># Geral (Equipe Toda)</div>
+                  <div className="text-[10px] text-text-muted uppercase tracking-wider font-black flex items-center gap-1">
+                    <Users className="w-3 h-3" /> canal de equipe
+                  </div>
+                </div>
+              </div>
+              
+              {getConversationMessageCount('team') > 0 && (
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black">
+                  {getConversationMessageCount('team')}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* DM Separator */}
+          {activeTab !== 'group' && (
+            <>
+              <div className="px-3 pt-4 pb-2 text-[9px] uppercase tracking-widest font-black text-text-muted flex items-center gap-2">
+                <span>Mensagens Diretas</span>
+                <div className="h-[1px] bg-white/5 flex-1"></div>
+              </div>
+
+              {filteredMembers.map(member => {
+                const convId = getDmConversationId(currentUser, member.username);
+                const isSelected = selectedConversationId === convId;
+                const messageCount = getConversationMessageCount(convId);
+                const isTechnician = member.role === 'technician';
+
+                // Initial initials
+                const initials = member.displayName.substring(0, 2).toUpperCase();
+
+                return (
+                  <button
+                    key={member.username}
+                    onClick={() => setSelectedConversationId(convId)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
+                      isSelected
+                        ? 'bg-white/[0.04] border-accent-primary/30 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                        : 'bg-transparent border-transparent text-text-secondary hover:bg-white/[0.01] hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="relative shrink-0">
+                        {/* Avatar representation with sharp geometric styling */}
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border transition-all duration-500 ${
+                          isSelected
+                            ? 'bg-gradient-to-br from-accent-primary/20 to-accent-tertiary/20 border-accent-primary/30 text-white shadow-glow-primary'
+                            : 'bg-white/[0.02] border-white/5 text-text-secondary group-hover:text-white group-hover:border-white/10'
+                        }`}>
+                          {initials}
+                        </div>
+                        {/* Custom visual indicator of presence (Green-cyan pulse) */}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#09090b] shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm text-text-primary truncate flex items-center gap-1.5">
+                          {member.displayName}
+                          {isTechnician && (
+                            <span className="text-[8px] px-1.5 py-0.25 rounded-md bg-orange-500/10 text-orange-400 border border-orange-500/20 font-black uppercase">Téc</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-text-muted truncate flex items-center gap-1">
+                          {member.awardFocus ? (
+                            <>
+                              <Award className="w-3 h-3 text-accent-primary" /> {member.awardFocus}
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="w-3 h-3 text-orange-400" /> Mentor
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {messageCount > 0 && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black shrink-0">
+                        {messageCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </>
+          )}
+
+        </div>
+      </div>
+
+      {/* 2. Main Chat Thread Panel */}
+      <div className="flex-1 flex flex-col bg-transparent">
+        
+        {/* Header bar */}
+        <div className="h-16 border-b border-white/5 px-6 flex items-center justify-between bg-primary/20">
+          <div className="flex items-center space-x-3 min-w-0">
+            {isGroupChat ? (
+              <>
+                <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-accent-primary" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-white tracking-wide"># GERAL (EQUIPE TODA)</h3>
+                  <p className="text-[10px] text-text-muted">Espaço compartilhado para avisos e coordenação do time</p>
+                </div>
+              </>
+            ) : recipient ? (
+              <>
+                <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center font-black text-sm text-accent-primary">
+                  {recipient.displayName.substring(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-black text-sm text-white tracking-wide uppercase truncate">{recipient.fullName || recipient.displayName}</h3>
+                  <p className="text-[10px] text-text-muted truncate flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-accent-primary" />
+                    Foco: <span className="text-text-primary">{recipient.awardFocus || 'Mentoria Geral'}</span>
+                    {recipient.coreMission && (
+                      <span className="hidden md:inline text-text-muted"> — "{recipient.coreMission}"</span>
+                    )}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-text-muted">Selecione uma conversa</p>
+            )}
+          </div>
+        </div>
+
+        {/* Message Thread Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-black/10">
+          {isLoading ? (
+            <div className="h-full w-full flex flex-col items-center justify-center space-y-2">
+              <div className="w-8 h-8 rounded-lg border-2 border-accent-primary border-t-transparent animate-spin"></div>
+              <p className="text-xs text-text-muted">Sincronizando comunicações...</p>
+            </div>
+          ) : activeMessages.length === 0 ? (
+            <div className="h-full w-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+              <MessageSquare className="w-12 h-12 text-text-muted opacity-20" />
+              <div>
+                <p className="font-black text-sm text-text-secondary uppercase tracking-wider">Inicie a transmissão</p>
+                <p className="text-xs text-text-muted max-w-xs mt-1">Este canal está limpo e seguro para comunicações internas da equipe.</p>
+              </div>
+            </div>
+          ) : (
+            activeMessages.map((msg, index) => {
+              const isOwnMessage = msg.sender === currentUser;
+              const senderObj = getMemberByUsername(msg.sender);
+              const showSenderName = !isOwnMessage && (index === 0 || activeMessages[index - 1].sender !== msg.sender);
+              
+              // Date separator helper
+              const showDateSeparator = index === 0 || 
+                formatDateLabel(activeMessages[index - 1].timestamp) !== formatDateLabel(msg.timestamp);
+
+              return (
+                <div key={msg.id} className="space-y-1">
+                  
+                  {/* Date Separator */}
+                  {showDateSeparator && (
+                    <div className="flex items-center justify-center my-4">
+                      <div className="h-[1px] bg-white/5 flex-grow max-w-[100px]"></div>
+                      <span className="text-[9px] uppercase tracking-widest font-black text-text-muted px-4">
+                        {formatDateLabel(msg.timestamp)}
+                      </span>
+                      <div className="h-[1px] bg-white/5 flex-grow max-w-[100px]"></div>
+                    </div>
+                  )}
+
+                  <div className={`flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex items-end space-x-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
+                      
+                      {/* Message Bubble Column */}
+                      <div className="space-y-0.5">
+                        
+                        {/* Sender Display Name */}
+                        {showSenderName && (
+                          <div className="text-[10px] font-bold text-accent-primary pl-2 uppercase tracking-wide">
+                            {senderObj?.displayName || msg.sender}
+                          </div>
+                        )}
+
+                        {/* Geometric Chat Bubble with Asymmetry (Sharp edges on entry side) */}
+                        <div
+                          className={`px-4 py-2.5 border transition-all duration-300 text-sm shadow-md ${
+                            isOwnMessage
+                              ? 'bg-accent-primary/10 border-accent-primary/30 text-white rounded-2xl rounded-tr-none shadow-[0_0_16px_rgba(59,130,246,0.05)]'
+                              : 'bg-white/[0.02] border-white/5 text-text-primary rounded-2xl rounded-tl-none'
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                          
+                          {/* Bubble timestamp */}
+                          <div className="text-[8px] text-text-muted mt-1.5 text-right font-black tracking-wider uppercase">
+                            {formatTime(msg.timestamp)}
+                          </div>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Message Input Box */}
+        <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-primary/20 flex gap-3">
+          <input
+            type="text"
+            placeholder={isGroupChat ? "Enviar mensagem no canal geral..." : "Enviar mensagem direta..."}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            disabled={isSending}
+            className="flex-1 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all duration-300"
+          />
+          
+          <button
+            type="submit"
+            disabled={!inputText.trim() || isSending}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shrink-0 ${
+              inputText.trim() && !isSending
+                ? 'bg-gradient-to-br from-accent-primary to-accent-tertiary border-accent-primary/30 text-white shadow-glow-primary hover:scale-[1.03] active:scale-[0.98]'
+                : 'bg-white/[0.02] border-white/5 text-text-muted cursor-not-allowed'
+            }`}
+          >
+            {isSending ? (
+              <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
+        </form>
+
+      </div>
+    </div>
+  );
+};
