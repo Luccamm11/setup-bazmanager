@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles } from 'lucide-react';
+import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles, ChevronLeft } from 'lucide-react';
 import { ALL_MEMBERS, getMemberByUsername } from '../../data/members';
 import { TeamChatMessage } from '../../types';
 
@@ -15,6 +15,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  
+  // Mobile responsive view toggle: 'contacts' list or active 'chat' thread
+  const [mobileView, setMobileView] = useState<'contacts' | 'chat'>('contacts');
 
   // Unread messages state, stored in LocalStorage by currentUser
   const [lastRead, setLastRead] = useState<Record<string, string>>(() => {
@@ -69,7 +72,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedConversationId]);
+  }, [messages, selectedConversationId, mobileView]);
 
   // Mark active conversation as read
   const markAsRead = (convId: string, timestamp?: string) => {
@@ -84,9 +87,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   // Check unread count for a conversation
   const getUnreadCount = (convId: string) => {
     const lastReadTime = lastRead[convId];
-    // Filter messages in this conversation, NOT sent by the current user
     const incomingMessages = messages.filter(m => m.conversationId === convId && m.sender !== currentUser);
-    if (!lastReadTime) return incomingMessages.length; // If never read, all incoming messages are unread
+    if (!lastReadTime) return incomingMessages.length; 
     
     return incomingMessages.filter(m => new Date(m.timestamp) > new Date(lastReadTime)).length;
   };
@@ -122,11 +124,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
     const updatedMessages = [...messages, newMessage];
 
     try {
-      // Optmistically update UI
       setMessages(updatedMessages);
       setInputText('');
 
-      // Send to server
       const res = await fetch('/api/crud?type=chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -138,7 +138,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
       }
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);
-      // Revert optimism if error
       fetchMessages(false);
     } finally {
       setIsSending(false);
@@ -207,14 +206,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   const filteredMembers = ALL_MEMBERS.filter(m => {
     if (m.username === currentUser) return false;
     
-    // Text search filter
     const searchMatch = m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
     if (!searchMatch) return false;
 
-    // Tab filter
     if (activeTab === 'all') return true;
-    if (activeTab === 'group') return false; // Group is separate
+    if (activeTab === 'group') return false; 
     if (activeTab === 'dm') return true;
     
     if (activeTab === 'unread') {
@@ -225,18 +222,25 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
     return true;
   });
 
-  // Selected conversation detail header details
   const isGroupChat = selectedConversationId === 'team';
   const recipient = isGroupChat ? null : getDmRecipient(selectedConversationId);
-
-  // Active messages thread filter
   const activeMessages = messages.filter(m => m.conversationId === selectedConversationId);
 
+  // Helper to switch conversations and toggle mobile view
+  const handleSelectConversation = (convId: string) => {
+    setSelectedConversationId(convId);
+    setMobileView('chat');
+  };
+
   return (
-    <div className="flex h-[calc(100vh-12rem)] w-full rounded-2xl border border-white/5 bg-primary/20 backdrop-blur-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.4)]">
+    <div className="flex h-[calc(100vh-14rem)] sm:h-[calc(100vh-12rem)] min-h-[480px] w-full rounded-2xl border border-white/5 bg-primary/20 backdrop-blur-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.4)]">
       
       {/* 1. Left Contact Panel */}
-      <div className="w-80 border-r border-white/5 flex flex-col bg-primary/45 shrink-0 hidden sm:flex">
+      <div 
+        className={`${
+          mobileView === 'contacts' ? 'flex w-full' : 'hidden'
+        } sm:flex sm:w-80 border-r border-white/5 flex-col bg-primary/45 shrink-0`}
+      >
         
         {/* Search & Tabs */}
         <div className="p-4 space-y-3 border-b border-white/5">
@@ -294,7 +298,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
           {/* # Geral (Group) Channel */}
           {(activeTab !== 'dm' && (activeTab !== 'unread' || getUnreadCount('team') > 0)) && (
             <button
-              onClick={() => setSelectedConversationId('team')}
+              onClick={() => handleSelectConversation('team')}
               className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
                 selectedConversationId === 'team'
                   ? 'bg-white/[0.04] border-accent-primary/30 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
@@ -341,13 +345,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                 const unreadCount = getUnreadCount(convId);
                 const isTechnician = member.role === 'technician';
 
-                // Initial initials
                 const initials = member.displayName.substring(0, 2).toUpperCase();
 
                 return (
                   <button
                     key={member.username}
-                    onClick={() => setSelectedConversationId(convId)}
+                    onClick={() => handleSelectConversation(convId)}
                     className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
                       isSelected
                         ? 'bg-white/[0.04] border-accent-primary/30 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
@@ -356,7 +359,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                   >
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className="relative shrink-0">
-                        {/* Avatar representation with sharp geometric styling */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border transition-all duration-500 ${
                           isSelected
                             ? 'bg-gradient-to-br from-accent-primary/20 to-accent-tertiary/20 border-accent-primary/30 text-white shadow-glow-primary'
@@ -364,7 +366,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                         }`}>
                           {initials}
                         </div>
-                        {/* Custom visual indicator of presence (Green-cyan pulse) */}
                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#09090b] shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
                       </div>
                       <div className="min-w-0">
@@ -410,34 +411,45 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
       </div>
 
       {/* 2. Main Chat Thread Panel */}
-      <div className="flex-1 flex flex-col bg-transparent">
+      <div 
+        className={`${
+          mobileView === 'chat' ? 'flex flex-1' : 'hidden'
+        } sm:flex flex-col bg-transparent`}
+      >
         
         {/* Header bar */}
-        <div className="h-16 border-b border-white/5 px-6 flex items-center justify-between bg-primary/20">
-          <div className="flex items-center space-x-3 min-w-0">
+        <div className="h-16 border-b border-white/5 px-4 sm:px-6 flex items-center bg-primary/20 select-none">
+          
+          {/* Back button on mobile view */}
+          <button
+            onClick={() => setMobileView('contacts')}
+            className="sm:hidden mr-3 p-2 rounded-xl border border-white/5 bg-white/[0.02] text-text-secondary hover:text-white flex items-center justify-center active:scale-95 transition-all duration-300"
+            title="Voltar para contatos"
+          >
+            <ChevronLeft className="w-5 h-5 text-accent-primary" />
+          </button>
+
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
             {isGroupChat ? (
               <>
-                <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center shrink-0">
                   <Hash className="w-5 h-5 text-accent-primary" />
                 </div>
-                <div>
-                  <h3 className="font-black text-sm text-white tracking-wide"># GERAL (EQUIPE TODA)</h3>
-                  <p className="text-[10px] text-text-muted">Espaço compartilhado para avisos e coordenação do time</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-black text-sm text-white tracking-wide truncate"># GERAL (EQUIPE TODA)</h3>
+                  <p className="text-[10px] text-text-muted truncate">Avisos e coordenação do time</p>
                 </div>
               </>
             ) : recipient ? (
               <>
-                <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center font-black text-sm text-accent-primary">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center font-black text-sm text-accent-primary shrink-0">
                   {recipient.displayName.substring(0, 2).toUpperCase()}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-black text-sm text-white tracking-wide uppercase truncate">{recipient.fullName || recipient.displayName}</h3>
                   <p className="text-[10px] text-text-muted truncate flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-accent-primary" />
-                    Foco: <span className="text-text-primary">{recipient.awardFocus || 'Mentoria Geral'}</span>
-                    {recipient.coreMission && (
-                      <span className="hidden md:inline text-text-muted"> — "{recipient.coreMission}"</span>
-                    )}
+                    Foco: <span className="text-text-primary truncate max-w-[100px] sm:max-w-none">{recipient.awardFocus || 'Mentoria Geral'}</span>
                   </p>
                 </div>
               </>
@@ -448,7 +460,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
         </div>
 
         {/* Message Thread Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-black/10">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar bg-black/10">
           {isLoading ? (
             <div className="h-full w-full flex flex-col items-center justify-center space-y-2">
               <div className="w-8 h-8 rounded-lg border-2 border-accent-primary border-t-transparent animate-spin"></div>
@@ -459,7 +471,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
               <MessageSquare className="w-12 h-12 text-text-muted opacity-20" />
               <div>
                 <p className="font-black text-sm text-text-secondary uppercase tracking-wider">Inicie a transmissão</p>
-                <p className="text-xs text-text-muted max-w-xs mt-1">Este canal está limpo e seguro para comunicações internas da equipe.</p>
+                <p className="text-xs text-text-muted max-w-xs mt-1">Este canal está seguro para comunicações internas.</p>
               </div>
             </div>
           ) : (
@@ -468,40 +480,35 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
               const senderObj = getMemberByUsername(msg.sender);
               const showSenderName = !isOwnMessage && (index === 0 || activeMessages[index - 1].sender !== msg.sender);
               
-              // Date separator helper
               const showDateSeparator = index === 0 || 
                 formatDateLabel(activeMessages[index - 1].timestamp) !== formatDateLabel(msg.timestamp);
 
               return (
                 <div key={msg.id} className="space-y-1">
                   
-                  {/* Date Separator */}
                   {showDateSeparator && (
                     <div className="flex items-center justify-center my-4">
-                      <div className="h-[1px] bg-white/5 flex-grow max-w-[100px]"></div>
-                      <span className="text-[9px] uppercase tracking-widest font-black text-text-muted px-4">
+                      <div className="h-[1px] bg-white/5 flex-grow max-w-[60px] sm:max-w-[100px]"></div>
+                      <span className="text-[9px] uppercase tracking-widest font-black text-text-muted px-3 sm:px-4">
                         {formatDateLabel(msg.timestamp)}
                       </span>
-                      <div className="h-[1px] bg-white/5 flex-grow max-w-[100px]"></div>
+                      <div className="h-[1px] bg-white/5 flex-grow max-w-[60px] sm:max-w-[100px]"></div>
                     </div>
                   )}
 
                   <div className={`flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex items-end space-x-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
+                    <div className={`flex items-end space-x-2 max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
                       
-                      {/* Message Bubble Column */}
-                      <div className="space-y-0.5">
+                      <div className="space-y-0.5 max-w-full">
                         
-                        {/* Sender Display Name */}
                         {showSenderName && (
                           <div className="text-[10px] font-bold text-accent-primary pl-2 uppercase tracking-wide">
                             {senderObj?.displayName || msg.sender}
                           </div>
                         )}
 
-                        {/* Geometric Chat Bubble with Asymmetry (Sharp edges on entry side) */}
                         <div
-                          className={`px-4 py-2.5 border transition-all duration-300 text-sm shadow-md ${
+                          className={`px-3 sm:px-4 py-2 border transition-all duration-300 text-sm shadow-md ${
                             isOwnMessage
                               ? 'bg-accent-primary/10 border-accent-primary/30 text-white rounded-2xl rounded-tr-none shadow-[0_0_16px_rgba(59,130,246,0.05)]'
                               : 'bg-white/[0.02] border-white/5 text-text-primary rounded-2xl rounded-tl-none'
@@ -509,7 +516,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                         >
                           <p className="whitespace-pre-wrap break-words leading-relaxed">{renderMessageContent(msg.text)}</p>
                           
-                          {/* Bubble timestamp */}
                           <div className="text-[8px] text-text-muted mt-1.5 text-right font-black tracking-wider uppercase">
                             {formatTime(msg.timestamp)}
                           </div>
@@ -527,29 +533,29 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
         </div>
 
         {/* Message Input Box */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-primary/20 flex gap-3">
+        <form onSubmit={handleSendMessage} className="p-3 sm:p-4 border-t border-white/5 bg-primary/20 flex gap-2 sm:gap-3">
           <input
             type="text"
-            placeholder={isGroupChat ? "Enviar mensagem no canal geral..." : "Enviar mensagem direta..."}
+            placeholder={isGroupChat ? "Mensagem geral..." : "Mensagem privada..."}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             disabled={isSending}
-            className="flex-1 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all duration-300"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs sm:text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all duration-300"
           />
           
           <button
             type="submit"
             disabled={!inputText.trim() || isSending}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shrink-0 ${
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border transition-all duration-500 shrink-0 ${
               inputText.trim() && !isSending
                 ? 'bg-gradient-to-br from-accent-primary to-accent-tertiary border-accent-primary/30 text-white shadow-glow-primary hover:scale-[1.03] active:scale-[0.98]'
                 : 'bg-white/[0.02] border-white/5 text-text-muted cursor-not-allowed'
             }`}
           >
             {isSending ? (
-              <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
             ) : (
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
           </button>
         </form>
