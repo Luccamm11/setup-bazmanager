@@ -32,6 +32,7 @@ interface SkillTreeProps {
   onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
   onAdjustRealmLevel?: (realm: string, level: number) => void;
   onUnlockInitialLevels?: () => void;
+  isInitialSetupMode?: boolean;
 }
 
 const realmConfig = {
@@ -213,7 +214,8 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
     onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
     currentUserRole, currentUser, selectedMemberUsername, onMemberChange,
-    onConfirmInitialLevels, onAdjustInitialSkillLevel, onAdjustRealmLevel, onUnlockInitialLevels
+    onConfirmInitialLevels, onAdjustInitialSkillLevel, onAdjustRealmLevel, onUnlockInitialLevels,
+    isInitialSetupMode
   } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -266,7 +268,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const isTechnicianViewingMember = currentUserRole === 'technician' && selectedMemberUsername !== undefined && selectedMemberUsername !== currentUser;
 
   // True when the technician can actively set initial levels (unlocked state)
-  const isInitialEditActive = isTechnicianViewingMember && !user.initialLevelsSet;
+  const isInitialEditActive = isInitialSetupMode && isTechnicianViewingMember && !user.initialLevelsSet;
 
   // Show the realm panel whenever technician is viewing a member AND levels are unlocked AND there are skills
   const showRealmPanel = isInitialEditActive && !!onAdjustRealmLevel && Object.keys(skillsByRealm).length > 0;
@@ -344,7 +346,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
       )}
 
       {/* 4. Success State: Levels Locked — show prominent unlock button */}
-      {currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
+      {isInitialSetupMode && currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
         <div className="max-w-md mx-auto mb-6 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-center shadow-glass flex flex-col items-center gap-3">
           <p className="text-sm text-emerald-400 font-black flex items-center gap-2">
             🔒 Níveis iniciais de <span className="text-white">{user.name}</span> definidos e bloqueados.
