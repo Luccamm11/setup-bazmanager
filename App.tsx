@@ -242,6 +242,136 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(null);
 
+  // --- Technician View & Initial Levels States ---
+  const [selectedMember, setSelectedMember] = useState<string>('Lucca');
+  const [selectedMemberData, setSelectedMemberData] = useState<any | null>(null);
+
+  const fetchSelectedMemberData = useCallback(async (username: string) => {
+    try {
+      const res = await fetch(`/api/persistence?username=${username}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        const migrated = migrateLoadedState(data.data);
+        if (!migrated.user.name || migrated.user.name === "Awakened") {
+          migrated.user.name = username;
+        }
+        setSelectedMemberData(migrated);
+      } else {
+        const member = getMemberByUsername(username);
+        if (member) {
+          const initial = getInitialUserData(member);
+          setSelectedMemberData(initial);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch selected member data:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userRole === 'technician' && view === 'skill_tree' && selectedMember) {
+      fetchSelectedMemberData(selectedMember);
+    }
+  }, [view, selectedMember, userRole, fetchSelectedMemberData]);
+
+  const handleAdjustInitialSkillLevel = (skillId: string, delta: number) => {
+    if (!selectedMemberData) return;
+    setSelectedMemberData((prev: any) => {
+      if (!prev) return prev;
+      const updatedUser = { ...prev.user };
+      const updatedSkillTree = { ...updatedUser.skill_tree };
+      const skill = updatedSkillTree[skillId];
+      if (!skill) return prev;
+
+      const newLevel = Math.max(1, Math.min(10, skill.level + delta));
+      updatedSkillTree[skillId] = {
+        ...skill,
+        level: newLevel,
+        xp: 0,
+        xpToNextLevel: getXpThresholdForSkillLevel(newLevel, skill.xpScale),
+      };
+
+      updatedUser.skill_tree = updatedSkillTree;
+      return { ...prev, user: updatedUser };
+    });
+  };
+
+  const handleConfirmInitialLevels = async () => {
+    if (!selectedMemberData || !selectedMember) return;
+    setSyncStatus('syncing');
+
+    const updatedUser = { ...selectedMemberData.user };
+    updatedUser.initialLevelsSet = true;
+
+    const totalSkillLevels = Object.values(updatedUser.skill_tree).reduce((sum: number, s: any) => sum + s.level, 0);
+    const baseLevel = Math.max(1, Math.floor(totalSkillLevels / 4));
+    updatedUser.level_overall = baseLevel;
+    updatedUser.xp_total = 0;
+    updatedUser.xpToNextLevel = getXpThresholdForLevel(baseLevel);
+    updatedUser.rank = getRankForLevel(baseLevel);
+
+    const updatedState = { ...selectedMemberData, user: updatedUser };
+
+    try {
+      const res = await fetch('/api/persistence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: selectedMember, data: updatedState }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedMemberData(updatedState);
+        setSyncStatus('synced');
+        setSystemMessages(prev => [
+          { 
+            id: `initial-levels-confirmed-${Date.now()}`, 
+            text: `Níveis iniciais de ${selectedMember} definidos com sucesso! Nível Geral: ${baseLevel}.`, 
+            timestamp: 'Just now', 
+            type: 'reward' 
+          }, 
+          ...prev
+        ]);
+        setTimeout(() => setSyncStatus('idle'), 1500);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error("Failed to save initial levels:", err);
+      setSyncStatus('error');
+    }
+  };
+
+  // Autosave selected member data for technicians
+  useEffect(() => {
+    if (userRole !== 'technician' || !selectedMember || !selectedMemberData) return;
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = window.setTimeout(() => {
+        setSyncStatus('syncing');
+        fetch('/api/persistence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: selectedMember, data: selectedMemberData })
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) {
+                  setSyncStatus('synced');
+                  setTimeout(() => setSyncStatus('idle'), 1500);
+              } else {
+                  throw new Error(data.error);
+              }
+          })
+          .catch(err => {
+              console.error("Could not save member state to Vercel KV", err);
+              setSyncStatus('error');
+          });
+    }, 2000);
+
+    return () => {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [selectedMemberData, selectedMember, userRole]);
+
   useEffect(() => {
     if (user.name === "Awakened") {
       setIsNameEntryModalOpen(true);
@@ -1959,7 +2089,93 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     switch(view) {
       case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
-      case 'skill_tree': return <SkillTree user={user} onUpdateTopicDifficulty={handleUpdateTopicDifficulty} onAddSkill={() => setIsSkillModalOpen(true)} onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} onDeleteSkill={handleDeleteSkill} onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} onDeleteTopic={handleDeleteTopic} onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} onUpdateSkillPriority={handleUpdateSkillPriority} onToggleSkillActive={handleToggleSkillActive} onGenerateRecommendations={handleGenerateRecommendations} />;
+      case 'skill_tree': {
+        const isEditingMember = userRole === 'technician' && selectedMemberData;
+        const targetUser = isEditingMember ? selectedMemberData.user : user;
+        const setTargetUser = isEditingMember
+          ? (updater: any) => setSelectedMemberData((prev: any) => ({ ...prev, user: typeof updater === 'function' ? updater(prev.user) : updater }))
+          : setUser;
+
+        const handleUpdateTopicDifficultyWrapped = (topicId: string, newDifficulty: TopicDifficulty) => {
+          const topic = targetUser.knowledgeBase[topicId];
+          if (!topic || topic.difficulty === newDifficulty) return;
+          const oldDifficulty = topic.difficulty;
+          const oldTopicXp = TOPIC_XP_MAP[oldDifficulty] || 0;
+          const newTopicXp = TOPIC_XP_MAP[newDifficulty] || 0;
+          const xpDifference = newTopicXp - oldTopicXp;
+          setTargetUser((prevUser: User) => {
+            const newKnowledgeBase = { ...prevUser.knowledgeBase };
+            if (newKnowledgeBase[topicId]) {
+              newKnowledgeBase[topicId].difficulty = newDifficulty;
+            }
+            const skillId = topic.skillId;
+            const skill = prevUser.skill_tree[skillId];
+            let newSkillTree = { ...prevUser.skill_tree };
+            if (skill) {
+              const oldSkillXp = skill.xp;
+              const newSkillXp = Math.max(0, oldSkillXp + xpDifference);
+              let calcLevel = 1;
+              let calcXpForNext = getXpThresholdForSkillLevel(1, skill.xpScale);
+              let remainingXp = newSkillXp;
+              while (remainingXp >= calcXpForNext) {
+                remainingXp -= calcXpForNext;
+                calcLevel++;
+                calcXpForNext = getXpThresholdForSkillLevel(calcLevel, skill.xpScale);
+              }
+              newSkillTree[skillId] = {
+                ...skill,
+                level: calcLevel,
+                xp: Math.floor(remainingXp),
+                xpToNextLevel: calcXpForNext,
+              };
+            }
+            return { ...prevUser, skill_tree: newSkillTree, knowledgeBase: newKnowledgeBase };
+          });
+        };
+
+        const handleUpdateSkillPriorityWrapped = (skillId: string, priority: number) => {
+          setTargetUser((prevUser: User) => {
+            const newSkillTree = { ...prevUser.skill_tree };
+            if (newSkillTree[skillId]) {
+              newSkillTree[skillId].priority = priority;
+            }
+            return { ...prevUser, skill_tree: newSkillTree };
+          });
+        };
+
+        const handleToggleSkillActiveWrapped = (skillId: string) => {
+          setTargetUser((prevUser: User) => {
+            const newSkillTree = { ...prevUser.skill_tree };
+            if (newSkillTree[skillId]) {
+              newSkillTree[skillId].isActive = !newSkillTree[skillId].isActive;
+            }
+            return { ...prevUser, skill_tree: newSkillTree };
+          });
+        };
+
+        return (
+          <SkillTree 
+            user={targetUser} 
+            onUpdateTopicDifficulty={handleUpdateTopicDifficultyWrapped} 
+            onAddSkill={() => setIsSkillModalOpen(true)} 
+            onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} 
+            onDeleteSkill={handleDeleteSkill} 
+            onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} 
+            onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} 
+            onDeleteTopic={handleDeleteTopic} 
+            onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} 
+            onUpdateSkillPriority={handleUpdateSkillPriorityWrapped} 
+            onToggleSkillActive={handleToggleSkillActiveWrapped} 
+            onGenerateRecommendations={handleGenerateRecommendations}
+            currentUserRole={userRole}
+            currentUser={currentUser || ''}
+            selectedMemberUsername={selectedMember}
+            onMemberChange={setSelectedMember}
+            onConfirmInitialLevels={handleConfirmInitialLevels}
+            onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
+          />
+        );
+      }
       case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} completedMajorGoals={user.completedMajorGoals || []} onJournalSubmit={handleJournalSubmit} />;
       case 'inventory': return <RoboticsInventory />;
       case 'store': return <Store items={storeItems} onBuyItem={handleBuyItem} userCredits={user.wallet.credits} onAddItem={() => setIsStoreItemModalOpen(true)} onEditItem={(item) => { setEditingStoreItem(item); setIsStoreItemModalOpen(true); }} onDeleteItem={handleDeleteStoreItem} />;

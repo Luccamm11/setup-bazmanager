@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guia do BazManager — Bazinga! 73</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #09090b;
+      --surface:    #111113;
+      --border:     rgba(255,255,255,0.07);
+      --yellow:     #eab308;
+      --yellow-dim: rgba(234,179,8,0.15);
+      --blue:       #3b82f6;
+      --blue-dim:   rgba(59,130,246,0.15);
+      --green:      #22c55e;
+      --green-dim:  rgba(34,197,94,0.15);
+      --orange:     #f97316;
+      --orange-dim: rgba(249,115,22,0.15);
+      --cyan:       #06b6d4;
+      --cyan-dim:   rgba(6,182,212,0.15);
+      --red:        #ef4444;
+      --red-dim:    rgba(239,68,68,0.15);
+      --text:       #f4f4f5;
+      --muted:      #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ─── SLIDE CONTAINER ─── */
+    #slider {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    .slide {
+      min-width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      padding: 52px 64px 40px;
+    }
+
+    /* ─── NOISE TEXTURE ─── */
+    .slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide > * { position: relative; z-index: 1; }
+
+    /* ─── BLOBS ─── */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── NAV BAR ─── */
+    #nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(17,17,19,0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 10px 20px;
+      z-index: 9999;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    .nav-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .nav-dot.active { background: var(--yellow); transform: scale(1.4); }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+
+    .slide-counter {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+
+    /* ─── PROGRESS BAR ─── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--yellow), var(--orange));
+      transition: width 0.5s ease;
+      z-index: 9998;
+    }
+
+    /* ─── SLIDE HEADER ─── */
+    .slide-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 12px;
+      width: fit-content;
+    }
+    .slide-label .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+
+    .slide-title {
+      font-size: clamp(28px, 4vw, 52px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .slide-sub {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 36px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* ─── CARDS ─── */
+    .cards {
+      display: grid;
+      gap: 16px;
+    }
+    .cards-2 { grid-template-columns: 1fr 1fr; }
+    .cards-3 { grid-template-columns: repeat(3, 1fr); }
+    .cards-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.12); }
+
+    .card-icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ─── ACCENT BORDERS ─── */
+    .accent-yellow { border-top: 2px solid var(--yellow); }
+    .accent-blue   { border-top: 2px solid var(--blue); }
+    .accent-green  { border-top: 2px solid var(--green); }
+    .accent-orange { border-top: 2px solid var(--orange); }
+    .accent-cyan   { border-top: 2px solid var(--cyan); }
+    .accent-red    { border-top: 2px solid var(--red); }
+
+    /* ─── BADGE ─── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+    .badge-yellow { background: var(--yellow-dim); color: var(--yellow); border-color: rgba(234,179,8,0.25); }
+    .badge-blue   { background: var(--blue-dim);   color: var(--blue);   border-color: rgba(59,130,246,0.25); }
+    .badge-green  { background: var(--green-dim);  color: var(--green);  border-color: rgba(34,197,94,0.25); }
+    .badge-orange { background: var(--orange-dim); color: var(--orange); border-color: rgba(249,115,22,0.25); }
+    .badge-cyan   { background: var(--cyan-dim);   color: var(--cyan);   border-color: rgba(6,182,212,0.25); }
+    .badge-red    { background: var(--red-dim);    color: var(--red);    border-color: rgba(239,68,68,0.25); }
+
+    /* ─── STEPS ─── */
+    .steps { display: flex; flex-direction: column; gap: 14px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .step-num {
+      min-width: 32px; height: 32px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .step-body { padding-top: 6px; }
+    .step-label { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+    .step-desc  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+    /* ─── MOCK UI ─── */
+    .mock {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .mock-bar {
+      background: rgba(0,0,0,0.4);
+      height: 36px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mock-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ─── HERO SLIDE ─── */
+    .hero-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(234,179,8,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-logo {
+      font-size: clamp(60px, 10vw, 120px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #eab308, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 12px;
+      margin-bottom: 40px;
+    }
+
+    /* ─── LIST ─── */
+    .feat-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feat-list li {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .feat-list li .ico {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .feat-list li span { color: var(--text); }
+
+    /* ─── INFO BOX ─── */
+    .info-box {
+      background: rgba(234,179,8,0.05);
+      border: 1px solid rgba(234,179,8,0.15);
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 13px;
+      color: rgba(234,179,8,0.85);
+      line-height: 1.6;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .info-box.blue {
+      background: rgba(59,130,246,0.05);
+      border-color: rgba(59,130,246,0.15);
+      color: rgba(147,197,253,0.85);
+    }
+    .info-box.green {
+      background: rgba(34,197,94,0.05);
+      border-color: rgba(34,197,94,0.15);
+      color: rgba(134,239,172,0.85);
+    }
+    .info-box.orange {
+      background: rgba(249,115,22,0.05);
+      border-color: rgba(249,115,22,0.15);
+      color: rgba(253,186,116,0.85);
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ─── KANBAN MOCK ─── */
+    .kanban-col {
+      flex: 1;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .kanban-col-header {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .kanban-task {
+      margin: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+    }
+    .kanban-task-title { font-weight: 700; margin-bottom: 4px; }
+    .kanban-task-meta { font-size: 10px; color: var(--muted); }
+
+    /* ─── FINANCE MOCK ─── */
+    .finance-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 90px 70px 80px;
+      gap: 12px;
+      padding: 10px 16px;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      align-items: center;
+    }
+
+    /* ─── PRINT QUEUE MOCK ─── */
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 12px;
+    }
+    .queue-pos {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: var(--yellow-dim);
+      color: var(--yellow);
+      font-weight: 900;
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ─── SKILL TREE MOCK ─── */
+    .skill-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .skill-fill { height: 100%; border-radius: 3px; }
+
+    /* keyboard hints */
+    #keyhint {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      gap: 8px;
+      z-index: 9999;
+    }
+    .key {
+      background: rgba(17,17,19,0.9);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .slide { padding: 36px 28px 40px; }
+      .cards-3 { grid-template-columns: 1fr 1fr; }
+      .cards-4 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .slide { padding: 28px 18px 40px; }
+      .cards-2, .cards-3, .cards-4 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div id="keyhint">
+  <span class="key">←</span>
+  <span class="key">→</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+  SLIDES
+══════════════════════════════════════════════════════════════ -->
+<div id="slider">
+
+  <!-- ── SLIDE 0 · CAPA ── -->
+  <div class="slide" style="justify-content:center;align-items:center;text-align:center;">
+    <div class="hero-glow"></div>
+    <div class="blob" style="width:500px;height:500px;background:rgba(234,179,8,0.06);top:-100px;left:-200px;"></div>
+    <div class="blob" style="width:400px;height:400px;background:rgba(249,115,22,0.05);bottom:-80px;right:-100px;"></div>
+
+    <div class="slide-label" style="margin:0 auto 24px;">
+      <span class="dot" style="background:var(--yellow);"></span>
+      Guia Oficial do Sistema
+    </div>
+
+    <div class="hero-logo">BazManager</div>
+    <div class="hero-sub">Bazinga! 73 — FTC Team · Metodologia B-LEED</div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:48px;">
+      <span class="badge badge-yellow">🏆 Gamificação</span>
+      <span class="badge badge-blue">🤖 IA Integrada</span>
+      <span class="badge badge-green">📈 Gestão Completa</span>
+      <span class="badge badge-orange">🔥 Tempo Real</span>
+    </div>
+
+    <ul class="feat-list" style="text-align:left;max-width:420px;">
+      <li><div class="ico" style="background:var(--yellow-dim);">🔐</div><span>Login seguro por membro da equipe</span></li>
+      <li><div class="ico" style="background:var(--blue-dim);">🌳</div><span>Árvore de Habilidades e Trilhas de Aprendizagem</span></li>
+      <li><div class="ico" style="background:var(--green-dim);">📋</div><span>Kanban, Missões, Finanças e Impressão 3D</span></li>
+      <li><div class="ico" style="background:var(--orange-dim);">✨</div><span>Dashboard completo de performance</span></li>
+    </ul>
+
+    <div style="margin-top:36px;font-size:13px;color:var(--muted);">Use as setas <strong style="color:var(--text);">← →</strong> ou os botões abaixo para navegar</div>
+  </div>
+
+  <!-- ── SLIDE 1 · LOGIN ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(234,179,8,0.06);top:-80px;right:-80px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--yellow);"></span>
+      Tela Inicial
+    </div>
+    <h1 class="slide-title">Acesso ao Sistema</h1>
+    <p class="slide-sub">O BazManager é um sistema fechado. Apenas membros autorizados da equipe Bazinga! 73 podem entrar.</p>
+
+    <div class="cards cards-2" style="flex:1;align-items:start;">
+      <!-- MOCK LOGIN -->
+      <div class="mock">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57;"></div>
+          <div class="mock-dot" style="background:#ffbd2e;"></div>
+          <div class="mock-dot" style="background:#28ca41;"></div>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto;font-family:'JetBrains Mono',monospace;">bazmanager.vercel.app</span>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:14px;align-items:center;">
+          <div style="width:52px;height:52px;background:var(--yellow-dim);border:1px solid rgba(234,179,8,0.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;">🔐</div>
+          <div style="font-size:18px;font-weight:900;">BazManager</div>
+          <div style="font-size:10px;color:var(--yellow);font-weight:700;letter-spacing:0.2em;">BAZINGA! 73 — FTC TEAM</div>
+
+          <div style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;">
+            👤 <span>Selecione seu nome...</span>
+          </div>
+          <div style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;letter-spacing:0.3em;">
+            🔒 ••••••
+          </div>
+          <div style="width:100%;background:var(--yellow);border-radius:12px;padding:11px;text-align:center;font-size:12px;font-weight:900;color:#000;">
+            AUTENTICAR →
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px;">
+            <span style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);color:rgba(249,115,22,0.8);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;">🛡️ J</span>
+            <span style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);color:rgba(249,115,22,0.8);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;">🛡️ R</span>
+            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;color:var(--muted);">M1</span>
+            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;color:var(--muted);">M2</span>
+            <span style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;color:var(--muted);">M3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTRUCTIONS -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">01</div>
+            <div class="step-body">
+              <div class="step-label">Selecione seu nome</div>
+              <div class="step-desc">No campo "Usuário", escolha seu nome na lista suspensa. Técnicos aparecem com 🛡️, membros com sua área de foco.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">02</div>
+            <div class="step-body">
+              <div class="step-label">Digite a senha da equipe</div>
+              <div class="step-desc">A senha é <strong style="font-family:'JetBrains Mono',monospace;color:var(--yellow);">021083</strong> — única para todos os membros. Nunca compartilhe fora da equipe.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">03</div>
+            <div class="step-body">
+              <div class="step-label">Clique em Autenticar</div>
+              <div class="step-desc">O sistema carrega seus dados pessoais de XP, habilidades e progresso salvo na nuvem automaticamente.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-box">
+          ⚠️
+          <div><strong>Importante:</strong> Sempre faça login com <em>seu próprio nome</em>. O progresso de XP, missões e habilidades é individual — logar como outro membro mistura dados.</div>
+        </div>
+
+        <div class="info-box blue">
+          🛡️
+          <div><strong>Técnicos (Jonas / Ramon)</strong> têm acesso a funcionalidades extras: criar missões, gerenciar financeiro, ver o quadro completo da equipe e exportar a Jornada da equipe.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2 · HOME ── -->
+  <div class="slide">
+    <div class="blob" style="width:350px;height:350px;background:rgba(59,130,246,0.06);top:-60px;right:0;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--blue);"></span>
+      Aba Principal
+    </div>
+    <h1 class="slide-title">Home — Seu Painel de Controle</h1>
+    <p class="slide-sub">A primeira tela após o login. Concentra suas missões ativas, objetivos maiores e recompensas diárias.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Arc display -->
+        <div class="card" style="padding:18px;background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.15);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:18px;">🎯</span>
+            <div>
+              <div style="font-size:9px;color:var(--muted);font-weight:800;letter-spacing:0.2em;text-transform:uppercase;">Arco Ativo</div>
+              <div style="font-size:15px;font-weight:900;">Bazinga Championship</div>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;">Narrativa da temporada atual. Define os bônus de XP e o contexto das suas missões.</p>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+            <span class="badge badge-blue">⚡ +15% XP Robótica</span>
+            <span class="badge badge-yellow">🔥 Streak Ativo</span>
+          </div>
+        </div>
+
+        <!-- Daily loot -->
+        <div class="card" style="padding:18px;background:rgba(34,197,94,0.05);border-color:rgba(34,197,94,0.15);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">🎁</span>
+              <div>
+                <div style="font-size:14px;font-weight:800;color:var(--green);">Daily Payload</div>
+                <div style="font-size:11px;color:var(--muted);">Recompensa diária disponível!</div>
+              </div>
+            </div>
+            <div style="background:var(--green-dim);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:6px 14px;border-radius:8px;font-size:11px;font-weight:800;">ABRIR</div>
+          </div>
+        </div>
+
+        <!-- Objectives mock -->
+        <div class="card" style="padding:18px;flex:1;">
+          <div style="font-size:12px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:6px;">⚡ Objetivos Ativos</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;">
+              <div style="font-weight:700;margin-bottom:3px;">Estudar cinemática do braço robótico</div>
+              <div style="display:flex;gap:6px;">
+                <span class="badge badge-blue">Programação</span>
+                <span style="font-size:10px;color:var(--muted);padding-top:2px;">⏱ 2h restantes</span>
+              </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;">
+              <div style="font-weight:700;margin-bottom:3px;">Montar apresentação do regionals</div>
+              <div style="display:flex;gap:6px;">
+                <span class="badge badge-orange">Comunicação</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: explanation -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card accent-blue">
+          <span class="card-icon">🎯</span>
+          <div class="card-title">Arco da Temporada</div>
+          <p class="card-desc">Mostra a narrativa e os bônus da temporada atual. Define o contexto de todas as missões e multiplica XP em áreas prioritárias.</p>
+        </div>
+        <div class="card accent-green">
+          <span class="card-icon">🎁</span>
+          <div class="card-title">Daily Payload (Lootbox Diária)</div>
+          <p class="card-desc">Abra uma vez por dia para ganhar XP, créditos ou itens de buff. Aparece toda vez que você acessa o sistema em um novo dia.</p>
+        </div>
+        <div class="card accent-yellow">
+          <span class="card-icon">⚡</span>
+          <div class="card-title">Missões Ativas (Quests)</div>
+          <p class="card-desc">Lista todas as suas missões pendentes com prazo, dificuldade e recompensas. Conclua-as para ganhar XP e subir de nível.</p>
+        </div>
+        <div class="card accent-orange">
+          <span class="card-icon">🏆</span>
+          <div class="card-title">Objetivos Maiores (Major Goals)</div>
+          <p class="card-desc">Metas grandes com prazo longo, como "Dominar Python" ou "Montar robô completo". São as balizas estratégicas do seu desenvolvimento.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3 · ÁRVORE DE HABILIDADES ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(6,182,212,0.05);bottom:-80px;right:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--cyan);"></span>
+      Árvore de Habilidades
+    </div>
+    <h1 class="slide-title">Skill Tree — Mapeie seu Crescimento</h1>
+    <p class="slide-sub">Visualize e organize todo o seu conhecimento técnico em áreas de competência com nível e XP acumulado.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- MOCK skill tree -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;">Suas Habilidades</div>
+        <!-- Skills -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">💻</span>
+                <span style="font-weight:800;font-size:13px;">Programação</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);font-weight:700;">Nv.7</span>
+            </div>
+            <div class="skill-bar"><div class="skill-fill" style="width:68%;background:linear-gradient(90deg,var(--cyan),#3b82f6);"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px;">1.240 / 1.800 XP</div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">⚙️</span>
+                <span style="font-weight:800;font-size:13px;">Engenharia</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--orange);font-weight:700;">Nv.5</span>
+            </div>
+            <div class="skill-bar"><div class="skill-fill" style="width:45%;background:linear-gradient(90deg,var(--orange),#f59e0b);"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px;">560 / 1.200 XP</div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🗣️</span>
+                <span style="font-weight:800;font-size:13px;">Comunicação</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);font-weight:700;">Nv.3</span>
+            </div>
+            <div class="skill-bar"><div class="skill-fill" style="width:30%;background:linear-gradient(90deg,var(--green),#06b6d4);"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px;">280 / 920 XP</div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🎨</span>
+                <span style="font-weight:800;font-size:13px;">Criatividade</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);font-weight:700;">Nv.4</span>
+            </div>
+            <div class="skill-bar"><div class="skill-fill" style="width:55%;background:linear-gradient(90deg,var(--yellow),var(--orange));"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px;">400 / 720 XP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="info-box blue">
+          🌳
+          <div>A Árvore de Habilidades é o <strong>coração do B-LEED</strong>. Cada tópico de conhecimento que você registra (ex: "Aprendi loops em Python") vira XP numa habilidade específica.</div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">01</div>
+            <div class="step-body">
+              <div class="step-label">Adicionar Tópico de Conhecimento</div>
+              <div class="step-desc">Clique no + de uma habilidade → descreva o que aprendeu → escolha dificuldade (Fácil/Médio/Difícil/Chefe) → salve. O XP é calculado automaticamente.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">02</div>
+            <div class="step-body">
+              <div class="step-label">Acompanhe o Nível de cada Área</div>
+              <div class="step-desc">O nível reflete sua profundidade real. Quanto mais tópicos com alta dificuldade, mais rápido você avança. Mire em atingir o nível máximo nas áreas do seu foco de prêmio.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">03</div>
+            <div class="step-body">
+              <div class="step-label">Use a IA para Gerar Tópicos</div>
+              <div class="step-desc">Informe o conteúdo de uma aula ou disciplina e a IA gera automaticamente uma lista de tópicos para você importar de uma vez.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          ⭐
+          <div><strong>Por que é importante?</strong> A Árvore alimenta o Dashboard de desempenho, a Jornada B-LEED exportável e garante que os técnicos saibam exatamente onde cada membro precisa de apoio.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4 · JORNADA B-LEED ── -->
+  <div class="slide">
+    <div class="blob" style="width:450px;height:450px;background:rgba(249,115,22,0.05);top:-100px;left:-100px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--orange);"></span>
+      Jornada B-LEED
+    </div>
+    <h1 class="slide-title">Jornada de Desenvolvimento</h1>
+    <p class="slide-sub">Exporte seu histórico de crescimento em Markdown — um relatório factual gerado por IA com seus dados reais do sistema.</p>
+
+    <div class="cards cards-2" style="flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- B-LEED explanation -->
+        <div class="card" style="background:rgba(249,115,22,0.04);border-color:rgba(249,115,22,0.12);">
+          <div style="font-size:15px;font-weight:900;margin-bottom:10px;">O que é o B-LEED?</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7;">
+            <strong style="color:var(--text);">B</strong>azinga — <strong style="color:var(--text);">L</strong>iderança, <strong style="color:var(--text);">E</strong>ducação, <strong style="color:var(--text);">E</strong>volução e <strong style="color:var(--text);">D</strong>esenvolvimento.<br><br>
+            Metodologia oficial da equipe que estrutura como aprendemos, praticamos e compartilhamos conhecimento em 3 pilares:
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;">
+              <span style="font-size:16px;">🌱</span><div><strong>Desenvolvimento Autônomo</strong> — aprender por conta própria no seu ritmo</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;">
+              <span style="font-size:16px;">🤝</span><div><strong>Mentorias Estratégicas</strong> — validar com especialistas e mentores</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;">
+              <span style="font-size:16px;">🔥</span><div><strong>Evolução Coletiva</strong> — transformar conhecimento individual em aprendizado compartilhado</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Journey phases -->
+        <div class="card" style="padding:18px;">
+          <div style="font-size:12px;font-weight:800;margin-bottom:12px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;">Fases da Jornada</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;padding:8px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border);">
+              <span class="badge badge-green" style="font-size:9px;">INICIANTE</span>
+              <span style="color:var(--muted);">Foco total em <strong style="color:var(--text);">Desenvolvimento Autônomo</strong></span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;padding:8px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border);">
+              <span class="badge badge-yellow" style="font-size:9px;">INTERMEDIÁRIO</span>
+              <span style="color:var(--muted);">Foco em <strong style="color:var(--text);">Mentorias Estratégicas</strong></span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;padding:8px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border);">
+              <span class="badge badge-orange" style="font-size:9px;">AVANÇADO</span>
+              <span style="color:var(--muted);">Foco em <strong style="color:var(--text);">Evolução Coletiva</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export panel -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card accent-orange">
+          <span class="card-icon">📄</span>
+          <div class="card-title">Exportar Minha Jornada</div>
+          <p class="card-desc">Gera um arquivo <code style="background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;font-size:11px;">.md</code> com todo seu histórico: XP ganho, habilidades desenvolvidas e missões concluídas. Serve como portfólio pessoal técnico.</p>
+          <div style="margin-top:14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;display:flex;align-items:center;gap:8px;">
+            ⬇️ <span style="color:var(--muted);">Disponível para <strong style="color:var(--text);">todos os membros</strong></span>
+          </div>
+        </div>
+
+        <div class="card" style="background:rgba(249,115,22,0.04);border-color:rgba(249,115,22,0.12);">
+          <span class="card-icon">📊</span>
+          <div class="card-title">Exportar Jornada da Equipe <span class="badge badge-orange" style="font-size:9px;vertical-align:middle;">TÉCNICO</span></div>
+          <p class="card-desc">Agrega o desenvolvimento de todos os 12 membros. Gera uma visão geral do crescimento técnico coletivo para portfólios externos e relatórios da temporada FTC.</p>
+        </div>
+
+        <div class="info-box orange">
+          🤖
+          <div><strong>IA com Temperature 0:</strong> A IA responsável pela geração é proibida de inventar dados. Ela formata 100% dos dados reais do banco — sem deduções ou eventos fictícios.</div>
+        </div>
+
+        <div class="info-box green">
+          📌
+          <div><strong>Quando usar?</strong> Exporte mensalmente para acompanhar evolução, ou antes de competições para apresentar ao time de juízes o portfólio técnico da equipe.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5 · CHAT ── -->
+  <div class="slide">
+    <div class="blob" style="width:350px;height:350px;background:rgba(34,197,94,0.05);bottom:-60px;right:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--green);"></span>
+      Chat
+    </div>
+    <h1 class="slide-title">Chat da Equipe</h1>
+    <p class="slide-sub">Comunicação interna em tempo real entre todos os membros, direto no BazManager — sem precisar sair do sistema.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Chat mock -->
+      <div class="mock" style="display:flex;flex-direction:column;height:100%;">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57;"></div>
+          <div class="mock-dot" style="background:#ffbd2e;"></div>
+          <div class="mock-dot" style="background:#28ca41;"></div>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto;"># geral</span>
+        </div>
+        <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+          <!-- Messages -->
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="width:28px;height:28px;background:rgba(234,179,8,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--yellow);flex-shrink:0;">J</div>
+            <div>
+              <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:3px;">Jonas <span style="color:var(--muted);font-weight:400;">12:30</span></div>
+              <div style="font-size:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-width:220px;">Pessoal, reunião hoje às 18h na oficina! 🤖</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="width:28px;height:28px;background:rgba(59,130,246,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--blue);flex-shrink:0;">L</div>
+            <div>
+              <div style="font-size:11px;font-weight:800;color:var(--blue);margin-bottom:3px;">Lucas <span style="color:var(--muted);font-weight:400;">12:32</span></div>
+              <div style="font-size:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-width:220px;">Confirmado! Vou levar os esquemas do braço.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;flex-direction:row-reverse;">
+            <div style="width:28px;height:28px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--green);flex-shrink:0;">V</div>
+            <div style="align-items:flex-end;display:flex;flex-direction:column;">
+              <div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:3px;"><span style="color:var(--muted);font-weight:400;">12:35</span> Você</div>
+              <div style="font-size:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);border-radius:10px;padding:8px 12px;max-width:220px;">👍 Estarei lá! Terminei a missão de hoje.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="width:28px;height:28px;background:rgba(249,115,22,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--orange);flex-shrink:0;">R</div>
+            <div>
+              <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:3px;">Ramon <span style="color:var(--muted);font-weight:400;">12:40</span></div>
+              <div style="font-size:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-width:220px;">Ótimo! Vou criar uma missão nova no sistema agora 🎯</div>
+            </div>
+          </div>
+        </div>
+        <!-- Input -->
+        <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;">
+          <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:12px;color:var(--muted);">Mensagem para #geral...</div>
+          <div style="background:var(--green);border-radius:9px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">➤</div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="cards cards-2" style="gap:12px;">
+          <div class="card accent-green" style="padding:18px;">
+            <span class="card-icon" style="font-size:22px;">💬</span>
+            <div class="card-title">Mensagens em Tempo Real</div>
+            <p class="card-desc">Converse com toda a equipe sem sair do BazManager. Mensagens sincronizadas para todos os membros logados.</p>
+          </div>
+          <div class="card accent-blue" style="padding:18px;">
+            <span class="card-icon" style="font-size:22px;">🔔</span>
+            <div class="card-title">Notificações</div>
+            <p class="card-desc">O sino no header avisa sobre novas mensagens, missões atribuídas e planos 5W2H para revisar.</p>
+          </div>
+        </div>
+
+        <div class="info-box green">
+          💡
+          <div><strong>Boas práticas:</strong> Use o chat para combinar horários de oficina, tirar dúvidas rápidas e avisar quando concluiu uma missão. Mantenha o tom colaborativo!</div>
+        </div>
+
+        <div class="card" style="padding:20px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:12px;">📋 O que comunicar pelo chat?</div>
+          <ul class="feat-list">
+            <li><div class="ico" style="background:var(--green-dim);">✅</div><span>Conclusão de missões e tarefas</span></li>
+            <li><div class="ico" style="background:var(--blue-dim);">📅</div><span>Avisos de reuniões e encontros na oficina</span></li>
+            <li><div class="ico" style="background:var(--yellow-dim);">❓</div><span>Dúvidas técnicas rápidas para a equipe</span></li>
+            <li><div class="ico" style="background:var(--orange-dim);">🖨️</div><span>Arquivos para fila de impressão 3D</span></li>
+            <li><div class="ico" style="background:var(--cyan-dim);">🤝</div><span>Pedidos de mentoria ou ajuda de membros avançados</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6 · INVENTÁRIO ── -->
+  <div class="slide">
+    <div class="blob" style="width:380px;height:380px;background:rgba(234,179,8,0.05);top:-60px;right:-40px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--yellow);"></span>
+      Inventário
+    </div>
+    <h1 class="slide-title">Inventário da Robótica</h1>
+    <p class="slide-sub">Controle completo de todos os equipamentos, ferramentas, insumos e EPIs da sala — com rastreamento de uso em tempo real.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Inventory mock table -->
+      <div class="mock" style="overflow:hidden;">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57;"></div>
+          <div class="mock-dot" style="background:#ffbd2e;"></div>
+          <div class="mock-dot" style="background:#28ca41;"></div>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px;">Inventário da Robótica</span>
+          <span style="margin-left:auto;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);color:rgba(251,191,36,0.8);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:800;">3 em uso</span>
+        </div>
+        <!-- Search bar -->
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
+          <div style="flex:1;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:11px;color:var(--muted);">🔍 Pesquisar por nome ou código...</div>
+          <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:11px;color:var(--muted);">▼ Categoria</div>
+        </div>
+        <!-- Table header -->
+        <div style="display:grid;grid-template-columns:1fr 90px 50px 60px;padding:8px 14px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;background:rgba(0,0,0,0.2);border-bottom:1px solid var(--border);">
+          <span>Item</span><span>Categoria</span><span style="text-align:center;">Qtd</span><span style="text-align:center;">Em Uso</span>
+        </div>
+        <!-- Rows -->
+        <div style="display:grid;grid-template-columns:1fr 90px 50px 60px;padding:10px 14px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:rgba(251,191,36,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">🔧</div>Chave de Fenda Philips</div>
+          <span style="font-size:10px;background:rgba(251,191,36,0.08);color:rgba(251,191,36,0.8);border:1px solid rgba(251,191,36,0.15);padding:2px 7px;border-radius:5px;font-weight:700;">Ferramentas</span>
+          <span style="text-align:center;font-weight:900;">4</span>
+          <div style="display:flex;justify-content:center;"><span style="color:rgba(251,191,36,0.8);font-size:16px;">✅</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 90px 50px 60px;padding:10px 14px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:rgba(59,130,246,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">⚙️</div>Impressora 3D Bambu X1C</div>
+          <span style="font-size:10px;background:rgba(59,130,246,0.08);color:rgba(59,130,246,0.8);border:1px solid rgba(59,130,246,0.15);padding:2px 7px;border-radius:5px;font-weight:700;">Máquinas</span>
+          <span style="text-align:center;font-weight:900;">1</span>
+          <div style="display:flex;justify-content:center;"><span style="color:rgba(251,191,36,0.8);font-size:16px;">✅</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 90px 50px 60px;padding:10px 14px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:rgba(135,206,250,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">🪖</div>Óculos de Proteção</div>
+          <span style="font-size:10px;background:rgba(135,206,250,0.08);color:rgba(135,206,250,0.8);border:1px solid rgba(135,206,250,0.15);padding:2px 7px;border-radius:5px;font-weight:700;">EPIs</span>
+          <span style="text-align:center;font-weight:900;">6</span>
+          <div style="display:flex;justify-content:center;"><span style="color:rgba(255,255,255,0.15);font-size:16px;">○</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 90px 50px 60px;padding:10px 14px;font-size:11.5px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:rgba(167,139,250,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">🧪</div>Filamento PLA 1kg</div>
+          <span style="font-size:10px;background:rgba(167,139,250,0.08);color:rgba(167,139,250,0.8);border:1px solid rgba(167,139,250,0.15);padding:2px 7px;border-radius:5px;font-weight:700;">Insumos</span>
+          <span style="text-align:center;font-weight:900;">3</span>
+          <div style="display:flex;justify-content:center;"><span style="color:rgba(255,255,255,0.15);font-size:16px;">○</span></div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="cards cards-2" style="gap:12px;">
+          <div class="card accent-yellow" style="padding:18px;">
+            <span class="card-icon" style="font-size:22px;">🔧</span>
+            <div class="card-title">4 Categorias</div>
+            <p class="card-desc">Ferramentas, Máquinas, EPIs e Insumos. Filtre por categoria para encontrar o que precisa rapidamente.</p>
+          </div>
+          <div class="card accent-orange" style="padding:18px;">
+            <span class="card-icon" style="font-size:22px;">📍</span>
+            <div class="card-title">Rastreio de Uso</div>
+            <p class="card-desc">Marque o item como "Em Uso" e informe onde está sendo utilizado (ex: "Robô principal"). Visível para toda a equipe.</p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">01</div>
+            <div class="step-body">
+              <div class="step-label">Ao pegar um item</div>
+              <div class="step-desc">Encontre o item na lista → clique no círculo "Em Uso" → informe onde está sendo usado. Isso avisa toda a equipe.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">02</div>
+            <div class="step-body">
+              <div class="step-label">Ao devolver o item</div>
+              <div class="step-desc">Clique no ✅ novamente para desmarcar "Em Uso". O item volta a aparecer como disponível para a equipe.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">03</div>
+            <div class="step-body">
+              <div class="step-label">Adicionar item novo</div>
+              <div class="step-desc">Clique em "+ Adicionar Item" → preencha nome, categoria, quantidade e preço. Fica registrado no sistema para todos.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          ⚠️
+          <div><strong>Por que é essencial usar?</strong> Sem o inventário atualizado, a equipe perde tempo procurando materiais. O rastreio evita conflitos e garante que todos saibam onde estão os recursos da sala.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7 · MISSÕES DA EQUIPE ── -->
+  <div class="slide">
+    <div class="blob" style="width:380px;height:380px;background:rgba(59,130,246,0.05);bottom:-80px;left:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--blue);"></span>
+      Missões da Equipe
+    </div>
+    <h1 class="slide-title">Team Missions</h1>
+    <p class="slide-sub">Tarefas atribuídas pelos técnicos (Jonas/Ramon) ou criadas pelos próprios membros. Alinhadas às necessidades da temporada FTC.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Mission cards -->
+        <div class="card" style="padding:18px;background:rgba(59,130,246,0.04);border-color:rgba(59,130,246,0.12);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:900;margin-bottom:4px;">⚙️ Montar subsistema do outtake</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="badge badge-blue">Engenharia</span>
+                <span class="badge badge-orange">Alta Prioridade</span>
+              </div>
+            </div>
+            <span style="font-size:10px;color:var(--muted);white-space:nowrap;margin-left:8px;">2 dias</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;">Montar e testar o subsistema de outtake conforme o CAD aprovado na última reunião.</p>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:11px;color:var(--muted);">👥 Lucas, Mateus, Ana</div>
+            <div style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,0.2);padding:4px 10px;border-radius:8px;font-size:10px;font-weight:800;">PENDENTE</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:18px;background:rgba(34,197,94,0.04);border-color:rgba(34,197,94,0.12);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:900;margin-bottom:4px;">💻 Implementar auto-alinhamento</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="badge badge-cyan">Programação</span>
+              </div>
+            </div>
+            <span style="font-size:10px;color:var(--muted);white-space:nowrap;margin-left:8px;">5 dias</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;">Codificar rotina de auto-alinhamento com encoder e PID.</p>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:11px;color:var(--muted);">👤 Pedro</div>
+            <div style="background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.2);padding:4px 10px;border-radius:8px;font-size:10px;font-weight:800;">✓ CONCLUÍDA</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:900;color:var(--blue);">12</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;">Ativas</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:900;color:var(--green);">47</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;">Concluídas</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:900;color:var(--yellow);">+250</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;">XP p/ missão</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--blue-dim);color:var(--blue);">01</div>
+            <div class="step-body">
+              <div class="step-label">Ver suas missões atribuídas</div>
+              <div class="step-desc">A aba exibe todas as missões atribuídas a você. Veja prazo, descrição, recompensas de XP e quem mais está envolvido.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--blue-dim);color:var(--blue);">02</div>
+            <div class="step-body">
+              <div class="step-label">Concluir uma missão</div>
+              <div class="step-desc">Ao terminar, clique em "Concluir Missão". O XP é creditado automaticamente e o técnico é notificado.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--blue-dim);color:var(--blue);">03</div>
+            <div class="step-body">
+              <div class="step-label">Criar missão (técnicos)</div>
+              <div class="step-desc">Jonas e Ramon criam missões novas pelo botão "+ Nova Missão", atribuindo a membros específicos ou a toda a equipe.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box blue">
+          🎯
+          <div><strong>Diferença de Quests:</strong> Missões da Equipe são colaborativas e definidas pelos técnicos. As Quests (Home) são individuais e geradas pela IA para desenvolvimento autônomo.</div>
+        </div>
+
+        <div class="info-box green">
+          📣
+          <div><strong>Notificações automáticas:</strong> Quando uma nova missão é criada para você, o sino no topo do sistema acende e você recebe um alerta em tempo real.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8 · 5W2H ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(6,182,212,0.05);top:-100px;right:-80px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--cyan);"></span>
+      Planejamento
+    </div>
+    <h1 class="slide-title">Planejamento 5W2H</h1>
+    <p class="slide-sub">Ferramenta de planejamento estruturado para qualquer projeto ou missão. Garante clareza, alinhamento e responsabilidade.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- 5W2H mock form -->
+      <div class="card" style="padding:20px;overflow:auto;">
+        <div style="font-size:13px;font-weight:900;margin-bottom:14px;color:var(--cyan);">📋 Novo Plano</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--cyan);">WHAT?</span>
+            <span style="font-size:11px;color:var(--muted);">O que será feito? (ex: Montar braço do robô)</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--blue);">WHY?</span>
+            <span style="font-size:11px;color:var(--muted);">Por que isso é necessário?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--green);">WHO?</span>
+            <span style="font-size:11px;color:var(--muted);">Quem será o responsável?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--yellow);">WHEN?</span>
+            <span style="font-size:11px;color:var(--muted);">Quando começa / termina?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--orange);">WHERE?</span>
+            <span style="font-size:11px;color:var(--muted);">Onde será executado?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--red);">HOW?</span>
+            <span style="font-size:11px;color:var(--muted);">Como será realizado?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:center;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+            <span style="font-size:11px;font-weight:900;color:var(--muted);">HOW $?</span>
+            <span style="font-size:11px;color:var(--muted);">Qual o custo estimado?</span>
+          </div>
+          <div style="margin-top:6px;background:var(--cyan);border-radius:10px;padding:10px;text-align:center;font-size:12px;font-weight:900;color:#000;">
+            Enviar Plano para Revisão →
+          </div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="info-box blue">
+          📐
+          <div><strong>O que é o 5W2H?</strong> Metodologia de planejamento com 7 perguntas fundamentais que garantem que um plano esteja completo antes de ser executado. Evita improvisação e retrabalho.</div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">01</div>
+            <div class="step-body">
+              <div class="step-label">Criar um Plano</div>
+              <div class="step-desc">Clique em "+ Novo Plano" → preencha as 7 perguntas → envie para revisão dos técnicos.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">02</div>
+            <div class="step-body">
+              <div class="step-label">Revisão pelos Técnicos</div>
+              <div class="step-desc">Jonas ou Ramon revisam o plano e aprovam ou pedem ajustes. Você é notificado sobre a decisão.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">03</div>
+            <div class="step-body">
+              <div class="step-label">Executar com clareza</div>
+              <div class="step-desc">Com o plano aprovado, toda a equipe sabe exatamente o que, quem, quando, onde, por que, como e quanto custa.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          ⭐
+          <div><strong>Quando usar o 5W2H?</strong> Antes de qualquer projeto maior: subsistema novo do robô, evento de outreach, viagem para competição, compra de equipamento. <em>Planejar é mais rápido que improvisar.</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9 · TRILHAS ── -->
+  <div class="slide">
+    <div class="blob" style="width:380px;height:380px;background:rgba(34,197,94,0.05);bottom:-60px;right:-40px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--green);"></span>
+      Trilhas de Aprendizagem
+    </div>
+    <h1 class="slide-title">Learning Trails</h1>
+    <p class="slide-sub">Mapas de estudo estruturados por área. Do iniciante ao avançado, cada trilha guia seu desenvolvimento técnico com conteúdo progressivo.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Trails mock -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card" style="padding:18px;background:rgba(59,130,246,0.04);border-color:rgba(59,130,246,0.12);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">💻</span>
+              <div>
+                <div style="font-weight:900;font-size:14px;">Programação</div>
+                <div style="font-size:10px;color:var(--muted);">Java · Python · FTC SDK</div>
+              </div>
+            </div>
+            <span class="badge badge-blue">12 módulos</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" style="width:45%;background:linear-gradient(90deg,var(--blue),var(--cyan));"></div></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;">5 de 12 módulos concluídos</div>
+        </div>
+
+        <div class="card" style="padding:18px;background:rgba(249,115,22,0.04);border-color:rgba(249,115,22,0.12);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">⚙️</span>
+              <div>
+                <div style="font-weight:900;font-size:14px;">Mecânica</div>
+                <div style="font-size:10px;color:var(--muted);">CAD · Impressão 3D · Estruturas</div>
+              </div>
+            </div>
+            <span class="badge badge-orange">9 módulos</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" style="width:22%;background:linear-gradient(90deg,var(--orange),#f59e0b);"></div></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;">2 de 9 módulos concluídos</div>
+        </div>
+
+        <div class="card" style="padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">🗣️</span>
+              <div>
+                <div style="font-weight:900;font-size:14px;">Comunicação</div>
+                <div style="font-size:10px;color:var(--muted);">Apresentação · Portfolio · Outreach</div>
+              </div>
+            </div>
+            <span class="badge badge-green">8 módulos</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" style="width:62%;background:linear-gradient(90deg,var(--green),var(--cyan));"></div></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;">5 de 8 módulos concluídos</div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="cards cards-2" style="gap:12px;">
+          <div class="card accent-green" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">🗺️</span>
+            <div class="card-title">Caminho Claro</div>
+            <p class="card-desc">Cada trilha é sequenciada do básico ao avançado. Você sempre sabe o próximo passo.</p>
+          </div>
+          <div class="card accent-blue" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">📚</span>
+            <div class="card-title">Conteúdo por Área</div>
+            <p class="card-desc">Programação, Mecânica, Engenharia, Comunicação, Estratégia. Cada área do FTC coberta.</p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--green-dim);color:var(--green);">01</div>
+            <div class="step-body">
+              <div class="step-label">Escolha sua Trilha Principal</div>
+              <div class="step-desc">Foque na trilha alinhada ao seu papel na equipe e ao seu foco de prêmio. Ex: Se é do software, foque em Programação.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green-dim);color:var(--green);">02</div>
+            <div class="step-body">
+              <div class="step-label">Complete Módulos em Sequência</div>
+              <div class="step-desc">Estude o conteúdo do módulo → pratique → registre o tópico na Árvore de Habilidades para ganhar XP.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green-dim);color:var(--green);">03</div>
+            <div class="step-body">
+              <div class="step-label">Expanda para Outras Trilhas</div>
+              <div class="step-desc">O B-LEED valoriza membros multidisciplinares. Após dominar sua área, explore módulos de outras trilhas.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box green">
+          🌱
+          <div><strong>Pilar B-LEED:</strong> As Trilhas são a expressão do pilar de <em>Desenvolvimento Autônomo</em>. Você aprende no seu ritmo, mas com um mapa claro definido pela equipe.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 10 · KANBAN ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(249,115,22,0.05);top:-80px;right:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--orange);"></span>
+      Quadro Kanban
+    </div>
+    <h1 class="slide-title">Kanban Board</h1>
+    <p class="slide-sub">Gerencie tarefas pessoais e missões da equipe com drag-and-drop visual. Três colunas: A Fazer → Em Andamento → Concluído.</p>
+
+    <div style="display:flex;gap:16px;flex:1;overflow:hidden;">
+      <!-- Kanban mock -->
+      <div style="flex:1;display:flex;gap:10px;overflow:hidden;">
+        <div class="kanban-col">
+          <div class="kanban-col-header" style="color:var(--blue);">🔵 A Fazer <span style="float:right;background:rgba(59,130,246,0.1);padding:1px 7px;border-radius:5px;">3</span></div>
+          <div class="kanban-task">
+            <div class="kanban-task-title">Estudar cinemática inversa</div>
+            <div class="kanban-task-meta">👤 Pedro · Programação</div>
+          </div>
+          <div class="kanban-task" style="background:rgba(59,130,246,0.04);border-color:rgba(59,130,246,0.1);">
+            <div class="kanban-task-title" style="font-size:10.5px;">[Missão] Montar outtake</div>
+            <div class="kanban-task-meta">🛡️ Missão da Equipe</div>
+          </div>
+          <div class="kanban-task">
+            <div class="kanban-task-title">Criar slide para competição</div>
+            <div class="kanban-task-meta">👤 Ana · Comunicação</div>
+          </div>
+        </div>
+
+        <div class="kanban-col" style="border-color:rgba(234,179,8,0.3);background:rgba(234,179,8,0.03);">
+          <div class="kanban-col-header" style="color:var(--yellow);">🟡 Em Andamento <span style="float:right;background:rgba(234,179,8,0.1);padding:1px 7px;border-radius:5px;">2</span></div>
+          <div class="kanban-task" style="background:rgba(234,179,8,0.03);border-color:rgba(234,179,8,0.12);">
+            <div class="kanban-task-title">Implementar PID Controller</div>
+            <div class="kanban-task-meta" style="color:var(--yellow);">⏳ Em progresso</div>
+          </div>
+          <div class="kanban-task">
+            <div class="kanban-task-title">Design da garra no Onshape</div>
+            <div class="kanban-task-meta">👤 Lucas · CAD</div>
+          </div>
+        </div>
+
+        <div class="kanban-col" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.03);">
+          <div class="kanban-col-header" style="color:var(--green);">🟢 Concluído <span style="float:right;background:rgba(34,197,94,0.1);padding:1px 7px;border-radius:5px;">4</span></div>
+          <div class="kanban-task" style="opacity:0.7;">
+            <div class="kanban-task-title">Configurar webcam de visão</div>
+            <div class="kanban-task-meta" style="color:var(--green);">✅ Concluído hoje</div>
+          </div>
+          <div class="kanban-task" style="opacity:0.7;">
+            <div class="kanban-task-title">Soldar conectores da bateria</div>
+            <div class="kanban-task-meta" style="color:var(--green);">✅ 28/05</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: explanation -->
+      <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
+        <div class="info-box orange">
+          🎯
+          <div>O Kanban é <strong>sincronizado com as Missões da Equipe</strong>. Ao receber uma missão, ela aparece automaticamente em "A Fazer".</div>
+        </div>
+
+        <div class="steps" style="gap:10px;">
+          <div class="step">
+            <div class="step-num" style="background:var(--orange-dim);color:var(--orange);">01</div>
+            <div class="step-body">
+              <div class="step-label" style="font-size:12px;">Arrastar e Soltar</div>
+              <div class="step-desc" style="font-size:11px;">Mova tarefas entre colunas com drag-and-drop. Ao mover uma missão para "Concluído", o XP é creditado automaticamente.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--orange-dim);color:var(--orange);">02</div>
+            <div class="step-body">
+              <div class="step-label" style="font-size:12px;">Criar Tarefas Próprias</div>
+              <div class="step-desc" style="font-size:11px;">Além das missões, crie tarefas pessoais para organizar seu dia. Opcionalmente vincule a uma missão existente.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--orange-dim);color:var(--orange);">03</div>
+            <div class="step-body">
+              <div class="step-label" style="font-size:12px;">Visão Geral (Técnicos)</div>
+              <div class="step-desc" style="font-size:11px;">Jonas e Ramon podem ver o quadro completo de toda a equipe, filtrando por membro.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:14px;">
+          <div style="font-size:11px;font-weight:800;margin-bottom:8px;">💡 Dica de uso diário</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;">Abra o Kanban ao iniciar o dia, mova suas tarefas conforme progride e feche o dia com tudo atualizado. É sua agenda visual de produtividade.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 11 · FINANCEIRO ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(34,197,94,0.05);bottom:-80px;left:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--green);"></span>
+      Financeiro
+    </div>
+    <h1 class="slide-title">Financeiro da Equipe</h1>
+    <p class="slide-sub">Controle total de gastos, ganhos e investimentos da equipe Bazinga! 73. Transparência financeira para todos os membros.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Finance mock -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Summary cards -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.12);border-radius:14px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div style="width:28px;height:28px;background:rgba(34,197,94,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">📈</div>
+              <div style="font-size:11px;color:var(--muted);">Total Ganhos</div>
+            </div>
+            <div style="font-size:20px;font-weight:900;color:var(--text);">R$ 12.450</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.12);border-radius:14px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div style="width:28px;height:28px;background:rgba(239,68,68,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">📉</div>
+              <div style="font-size:11px;color:var(--muted);">Total Gastos</div>
+            </div>
+            <div style="font-size:20px;font-weight:900;color:var(--text);">R$ 8.730</div>
+          </div>
+          <div style="background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);border-radius:14px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div style="width:28px;height:28px;background:rgba(59,130,246,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">💰</div>
+              <div style="font-size:11px;color:var(--muted);">Saldo Atual</div>
+            </div>
+            <div style="font-size:20px;font-weight:900;color:var(--green);">R$ 3.720</div>
+          </div>
+          <div style="background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.12);border-radius:14px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div style="width:28px;height:28px;background:rgba(167,139,250,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">📊</div>
+              <div style="font-size:11px;color:var(--muted);">Inv. Lucro</div>
+            </div>
+            <div style="font-size:20px;font-weight:900;color:var(--green);">+ R$ 500</div>
+          </div>
+        </div>
+
+        <!-- Table mock -->
+        <div class="mock" style="overflow:hidden;">
+          <div class="finance-row" style="background:rgba(0,0,0,0.2);font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">
+            <span>Data</span><span>Descrição</span><span>Tipo</span><span style="text-align:right;">Valor</span><span style="text-align:right;">Resultado</span>
+          </div>
+          <div class="finance-row">
+            <span style="color:var(--muted);">15/05</span>
+            <span style="font-weight:600;">Patrocínio FIEMG</span>
+            <span style="font-size:10px;background:rgba(34,197,94,0.1);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:700;">Ganho</span>
+            <span style="text-align:right;font-weight:700;">R$ 5.000</span>
+            <span style="text-align:right;color:var(--green);font-weight:700;">+5.000</span>
+          </div>
+          <div class="finance-row">
+            <span style="color:var(--muted);">18/05</span>
+            <span style="font-weight:600;">Filamento PETG 3kg</span>
+            <span style="font-size:10px;background:rgba(239,68,68,0.1);color:var(--red);padding:2px 6px;border-radius:4px;font-weight:700;">Gasto</span>
+            <span style="text-align:right;font-weight:700;">R$ 420</span>
+            <span style="text-align:right;color:var(--red);font-weight:700;">-420</span>
+          </div>
+          <div class="finance-row">
+            <span style="color:var(--muted);">22/05</span>
+            <span style="font-weight:600;">Rifas da equipe</span>
+            <span style="font-size:10px;background:rgba(167,139,250,0.1);color:rgba(167,139,250,0.9);padding:2px 6px;border-radius:4px;font-weight:700;">Inv. Aberto</span>
+            <span style="text-align:right;font-weight:700;">R$ 200</span>
+            <span style="text-align:right;color:var(--muted);">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="info-box green">
+          💰
+          <div><strong>Transparência total:</strong> Todos os membros <em>visualizam</em> o financeiro. Apenas técnicos <em>editam</em>. Garante que a equipe saiba exatamente o estado dos recursos.</div>
+        </div>
+
+        <div class="card accent-green">
+          <span class="card-icon">📋</span>
+          <div class="card-title">3 Tipos de Registro</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+            <li style="font-size:12.5px;display:flex;gap:8px;"><span style="color:var(--green);">📈 Ganho</span> — <span style="color:var(--muted);">Patrocínios, rifa, venda</span></li>
+            <li style="font-size:12.5px;display:flex;gap:8px;"><span style="color:var(--red);">📉 Gasto</span> — <span style="color:var(--muted);">Compras de materiais e peças</span></li>
+            <li style="font-size:12.5px;display:flex;gap:8px;"><span style="color:rgba(167,139,250,0.9);">📊 Investimento</span> — <span style="color:var(--muted);">Com retorno esperado (rifas, eventos)</span></li>
+          </ul>
+        </div>
+
+        <div class="card" style="padding:20px;">
+          <div style="font-size:12px;font-weight:800;margin-bottom:10px;">📌 Por que acompanhar o financeiro?</div>
+          <ul class="feat-list">
+            <li><div class="ico" style="background:var(--green-dim);">✅</div><span>Saber exatamente o que a equipe pode gastar</span></li>
+            <li><div class="ico" style="background:var(--blue-dim);">📊</div><span>Tomar decisões de compra com dados reais</span></li>
+            <li><div class="ico" style="background:var(--yellow-dim);">🏆</div><span>Pontuar melhor nos critérios de gestão do FTC</span></li>
+            <li><div class="ico" style="background:var(--orange-dim);">🤝</div><span>Apresentar prestação de contas aos patrocinadores</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 12 · FILA 3D ── -->
+  <div class="slide">
+    <div class="blob" style="width:380px;height:380px;background:rgba(234,179,8,0.05);top:-80px;left:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--yellow);"></span>
+      Impressão 3D
+    </div>
+    <h1 class="slide-title">Fila de Impressão 3D</h1>
+    <p class="slide-sub">Sistema FIFO justo e transparente para gerenciar quem imprime quando. Integrado ao fluxo de fabricação do robô.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Queue mock -->
+      <div class="mock" style="overflow:hidden;">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57;"></div>
+          <div class="mock-dot" style="background:#ffbd2e;"></div>
+          <div class="mock-dot" style="background:#28ca41;"></div>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px;">🖨️ Fila de Impressão 3D</span>
+          <span style="margin-left:auto;" class="badge badge-yellow">4 na fila</span>
+        </div>
+
+        <!-- Current printing -->
+        <div style="padding:12px 16px;background:rgba(34,197,94,0.05);border-bottom:1px solid rgba(34,197,94,0.1);">
+          <div style="font-size:10px;color:var(--green);font-weight:800;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">🔄 Imprimindo agora</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;background:var(--green-dim);border:1px solid rgba(34,197,94,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">🖨️</div>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Suporte do Servo Motor v3</div>
+              <div style="font-size:11px;color:var(--muted);">👤 Lucas · PETG Preto · ~2h20</div>
+            </div>
+            <div style="margin-left:auto;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.2);padding:5px 10px;border-radius:8px;font-size:10px;font-weight:800;">EM PROGRESSO</div>
+          </div>
+        </div>
+
+        <!-- Queue list -->
+        <div class="queue-item">
+          <div class="queue-pos">2</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;">Bracket da Câmera v2</div>
+            <div style="font-size:10px;color:var(--muted);">👤 Ana · PLA Branco</div>
+          </div>
+          <span style="font-size:10px;color:var(--muted);">~1h</span>
+        </div>
+        <div class="queue-item">
+          <div class="queue-pos">3</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;">Peça de encaixe do outtake</div>
+            <div style="font-size:10px;color:var(--muted);">👤 Pedro · PETG Preto</div>
+          </div>
+          <span style="font-size:10px;color:var(--muted);">~3h</span>
+        </div>
+        <div class="queue-item">
+          <div class="queue-pos" style="background:rgba(234,179,8,0.3);color:var(--yellow);">⭐</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;">Garra Frontal — URGENTE</div>
+            <div style="font-size:10px;color:var(--yellow);">👤 Mateus · Prioridade 3D usada</div>
+          </div>
+          <span style="font-size:10px;color:var(--yellow);">⬆️ Prioridade</span>
+        </div>
+
+        <!-- Add button -->
+        <div style="padding:12px 16px;border-top:1px solid var(--border);">
+          <div style="background:var(--yellow);border-radius:10px;padding:9px;text-align:center;font-size:12px;font-weight:900;color:#000;">+ Entrar na Fila</div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="info-box">
+          🖨️
+          <div><strong>Sistema FIFO</strong> (First In, First Out): Quem chega primeiro, imprime primeiro. Elimina conflitos e garante que todos saibam seu lugar na fila.</div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">01</div>
+            <div class="step-body">
+              <div class="step-label">Enviar arquivo para o técnico</div>
+              <div class="step-desc">Envie o arquivo .STL ou .3MF para Jonas ou Ramon via WhatsApp com o nome da peça e material desejado.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">02</div>
+            <div class="step-body">
+              <div class="step-label">Entrar na fila no sistema</div>
+              <div class="step-desc">Clique em "+ Entrar na Fila" → informe nome da peça, material e estimativa de tempo. Você entra na fila automaticamente.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--yellow-dim);color:var(--yellow);">03</div>
+            <div class="step-body">
+              <div class="step-label">Acompanhar o progresso</div>
+              <div class="step-desc">Veja sua posição na fila e o progresso da impressão atual. Quando chegar sua vez, você é notificado.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card accent-yellow" style="padding:16px;">
+          <span style="font-size:18px;display:block;margin-bottom:8px;">⭐</span>
+          <div class="card-title">Item "Prioridade 3D"</div>
+          <p class="card-desc">Disponível na Loja do sistema. Use seus créditos ganhos completando missões para pular para o topo da fila em situações urgentes. Recurso estratégico para peças críticas do robô.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 13 · DASHBOARD ── -->
+  <div class="slide">
+    <div class="blob" style="width:400px;height:400px;background:rgba(59,130,246,0.06);bottom:-80px;right:-60px;"></div>
+
+    <div class="slide-label">
+      <span class="dot" style="background:var(--blue);"></span>
+      Dashboard
+    </div>
+    <h1 class="slide-title">Dashboard de Performance</h1>
+    <p class="slide-sub">Visão geral de toda a sua evolução: XP acumulado, atividade semanal, badges conquistados e comparativo com a equipe.</p>
+
+    <div class="cards cards-2" style="flex:1;">
+      <!-- Dashboard mock -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Stats row -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--yellow),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">24</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Nível Geral</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:var(--blue);">4.820</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">XP Total</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:var(--orange);">🔥 12</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Streak (dias)</div>
+          </div>
+        </div>
+
+        <!-- Weekly chart mock -->
+        <div class="card" style="padding:16px;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.12em;">📊 Atividade Semanal (XP)</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:60px;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:1;width:100%;background:rgba(59,130,246,0.3);border-radius:4px 4px 0 0;" title="Seg"></div>
+              <div style="font-size:9px;color:var(--muted);">Seg</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:0.6;width:100%;background:rgba(59,130,246,0.3);border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:9px;color:var(--muted);">Ter</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:0.85;width:100%;background:rgba(59,130,246,0.3);border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:9px;color:var(--muted);">Qua</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:0.4;width:100%;background:rgba(59,130,246,0.3);border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:9px;color:var(--muted);">Qui</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:1;width:100%;background:linear-gradient(var(--blue),var(--cyan));border-radius:4px 4px 0 0;box-shadow:0 0 10px rgba(59,130,246,0.4);"></div>
+              <div style="font-size:9px;color:var(--blue);">Sex</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:0.5;width:100%;background:rgba(59,130,246,0.2);border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:9px;color:var(--muted);">Sáb</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="flex:0.2;width:100%;background:rgba(59,130,246,0.1);border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:9px;color:var(--muted);">Dom</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="card" style="padding:16px;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.12em;">🏅 Badges Desbloqueados</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="width:40px;height:40px;background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">⚡</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px;">10 Quests</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:40px;height:40px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🤖</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px;">Controle</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:40px;height:40px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🏆</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px;">Nv.10</div>
+            </div>
+            <div style="text-align:center;opacity:0.3;">
+              <div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🔒</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px;">???</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right explanation -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="cards cards-2" style="gap:12px;">
+          <div class="card accent-blue" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">📊</span>
+            <div class="card-title">Atividade Semanal</div>
+            <p class="card-desc">Gráfico de XP ganho por dia. Identifique seus picos de produtividade e dias de menor engajamento.</p>
+          </div>
+          <div class="card accent-yellow" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">🔥</span>
+            <div class="card-title">Streak (Sequência)</div>
+            <p class="card-desc">Quantos dias seguidos você registrou atividade. A constância é o pilar principal do B-LEED. Não quebre a sequência!</p>
+          </div>
+          <div class="card accent-orange" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">🏅</span>
+            <div class="card-title">Badges</div>
+            <p class="card-desc">Conquistas desbloqueadas automaticamente ao atingir marcos (10 quests, nível 10, habilidade nível 5, etc.).</p>
+          </div>
+          <div class="card accent-cyan" style="padding:16px;">
+            <span class="card-icon" style="font-size:20px;">🏆</span>
+            <div class="card-title">Rank e Nível</div>
+            <p class="card-desc">Do Rank E (Aprendiz) ao Rank S. Seu nível geral reflete toda a experiência acumulada no sistema.</p>
+          </div>
+        </div>
+
+        <div class="info-box blue">
+          📈
+          <div><strong>Use o Dashboard semanalmente</strong> para checar se está mantendo constância, quais habilidades precisam de atenção e se está evoluindo em direção ao seu objetivo de prêmio FTC.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 14 · FECHAMENTO ── -->
+  <div class="slide" style="justify-content:center;align-items:center;text-align:center;">
+    <div class="hero-glow"></div>
+    <div class="blob" style="width:500px;height:500px;background:rgba(234,179,8,0.07);top:-100px;right:-100px;"></div>
+    <div class="blob" style="width:400px;height:400px;background:rgba(59,130,246,0.05);bottom:-80px;left:-80px;"></div>
+
+    <div style="font-size:64px;margin-bottom:24px;">🚀</div>
+    <h1 class="slide-title" style="max-width:700px;margin:0 auto 16px;">Você está pronto para usar o BazManager!</h1>
+    <p class="slide-sub" style="margin:0 auto 40px;font-size:16px;">
+      O sistema está aqui para transformar cada hora de trabalho em crescimento documentado. Use todas as abas — cada uma foi feita com um propósito.
+    </p>
+
+    <div class="cards cards-4" style="max-width:800px;margin:0 auto 36px;">
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">🔐</div>
+        <div style="font-size:12px;font-weight:800;margin-bottom:4px;">Login</div>
+        <div style="font-size:11px;color:var(--muted);">Senha: 021083</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">🌳</div>
+        <div style="font-size:12px;font-weight:800;margin-bottom:4px;">Habilidades</div>
+        <div style="font-size:11px;color:var(--muted);">Registre o que aprendeu</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">🎯</div>
+        <div style="font-size:12px;font-weight:800;margin-bottom:4px;">Missões</div>
+        <div style="font-size:11px;color:var(--muted);">Conclua e ganhe XP</div>
+      </div>
+      <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">📦</div>
+        <div style="font-size:12px;font-weight:800;margin-bottom:4px;">Inventário</div>
+        <div style="font-size:11px;color:var(--muted);">Marque o que usar</div>
+      </div>
+    </div>
+
+    <div class="info-box" style="max-width:600px;margin:0 auto;text-align:left;">
+      ✨
+      <div><em>"O B-LEED não define velocidade, ele define direção. O sistema está ativo. Bem-vindo à jornada, membro da Bazinga!"</em> 🚀</div>
+    </div>
+  </div>
+
+</div>
+<!-- ── END SLIDER ── -->
+
+<!-- ── NAV ── -->
+<div id="nav">
+  <button class="nav-btn" id="btn-prev">‹</button>
+  <div id="dots"></div>
+  <span class="slide-counter" id="counter">01 / 15</span>
+  <button class="nav-btn" id="btn-next">›</button>
+</div>
+
+<script>
+  const slider   = document.getElementById('slider');
+  const dotsEl   = document.getElementById('dots');
+  const counter  = document.getElementById('counter');
+  const progress = document.getElementById('progress-bar');
+  const btnPrev  = document.getElementById('btn-prev');
+  const btnNext  = document.getElementById('btn-next');
+
+  const slides   = document.querySelectorAll('.slide');
+  const total    = slides.length;
+  let current    = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'nav-dot';
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    current = Math.max(0, Math.min(total - 1, n));
+    slider.style.transform = `translateX(-${current * 100}vw)`;
+    document.querySelectorAll('.nav-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+    progress.style.width = ((current + 1) / total * 100) + '%';
+  }
+
+  btnPrev.addEventListener('click', () => goTo(current - 1));
+  btnNext.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(current - 1); }
+  });
+
+  // Touch / swipe
+  let startX = 0;
+  slider.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  slider.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) goTo(current + (dx < 0 ? 1 : -1));
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>

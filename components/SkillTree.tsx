@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Shield, Award, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getAwardProfile } from '../data/awardProfiles';
+import { ALL_MEMBERS } from '../data/members';
 import type { AwardType } from '../data/members';
 
 interface SkillTreeProps {
@@ -21,6 +22,14 @@ interface SkillTreeProps {
   onUpdateSkillPriority: (skillId: string, priority: number) => void;
   onToggleSkillActive: (skillId: string) => void;
   onGenerateRecommendations: () => void;
+  
+  // Technician role view & initial levels setting props
+  currentUserRole?: string;
+  currentUser?: string;
+  selectedMemberUsername?: string;
+  onMemberChange?: (username: string) => void;
+  onConfirmInitialLevels?: () => void;
+  onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
 }
 
 const realmConfig = {
@@ -58,11 +67,19 @@ interface SkillCardProps {
   onOpenBulkAddModal: (skill: Skill) => void;
   onUpdateSkillPriority: (skillId: string, priority: number) => void;
   onToggleSkillActive: (skillId: string) => void;
+  
+  // Initial levels configuration props
+  isInitialEditActive?: boolean;
+  onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
 }
 
 const SkillCard: React.FC<SkillCardProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
-  const { skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive } = props;
+  const { 
+    skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, 
+    onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
+    onUpdateSkillPriority, onToggleSkillActive, isInitialEditActive, onAdjustInitialSkillLevel 
+  } = props;
   const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
   const progress = (skill.xp / skill.xpToNextLevel) * 100;
 
@@ -91,7 +108,29 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
           <h3>{skill.name}</h3>
         </div>
         <div className='flex items-center space-x-2'>
-            <span className="font-black text-lg bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-white shadow-sm mr-2">{t('skill_level', { level: skill.level })}</span>
+            {isInitialEditActive && onAdjustInitialSkillLevel ? (
+              <div className="flex items-center space-x-1 mr-2 select-none">
+                <button 
+                  onClick={() => onAdjustInitialSkillLevel(skill.id, -1)} 
+                  type="button"
+                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-white/10 active:scale-90 text-text-secondary hover:text-white transition-all duration-300"
+                >
+                  -
+                </button>
+                <span className="font-black text-base bg-white/5 px-2.5 py-0.5 rounded-lg border border-white/10 text-amber-400 shadow-sm">
+                  Lvl {skill.level}
+                </span>
+                <button 
+                  onClick={() => onAdjustInitialSkillLevel(skill.id, 1)} 
+                  type="button"
+                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-white/10 active:scale-90 text-text-secondary hover:text-white transition-all duration-300"
+                >
+                  +
+                </button>
+              </div>
+            ) : (
+              <span className="font-black text-lg bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-white shadow-sm mr-2">{t('skill_level', { level: skill.level })}</span>
+            )}
             <button title={t('common:states.active')} onClick={() => onToggleSkillActive(skill.id)} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${skill.isActive ? 'bg-accent-primary' : 'bg-white/20'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${skill.isActive ? 'translate-x-4' : 'translate-x-0'}`}/>
             </button>
@@ -165,7 +204,13 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
 
 const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
-  const { user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations } = props;
+  const { 
+    user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, 
+    onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
+    onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
+    currentUserRole, currentUser, selectedMemberUsername, onMemberChange,
+    onConfirmInitialLevels, onAdjustInitialSkillLevel
+  } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
   const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
@@ -198,13 +243,12 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
 
   const awardType = user.awardFocus as AwardType;
   const awardProfile = awardType ? getAwardProfile(awardType) : null;
-  let radarData;
-
-  radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
+  
+  const radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
       const skillsInRealm = skillsByRealm[realm as Realm] || [];
       const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
       const subject = t(`common:realm.${realm}`);
-      const val = totalLevel + Math.floor(user.level_overall / 4); // Small bonus based on overall level
+      const val = totalLevel + Math.floor(user.level_overall / 4); 
       return { subject, A: val, fullMark: Math.max(30, val + 5) };
   });
 
@@ -214,10 +258,79 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
+  // Detect if technician is configuring a member's initial skill levels
+  const isInitialEditActive = currentUserRole === 'technician' && !user.initialLevelsSet && user.name !== currentUser;
+
   return (
     <motion.div className="space-y-8" variants={containerVariants} initial="hidden" animate="visible">
+      
+      {/* 1. Technician Member Selection Dropdown */}
+      {currentUserRole === 'technician' && onMemberChange && (
+        <div className="max-w-xs mx-auto mb-2 p-4 rounded-2xl border border-white/5 bg-primary/30 backdrop-blur-md flex flex-col gap-2 shadow-inner">
+          <label className="text-[10px] uppercase tracking-widest font-black text-text-muted text-center flex items-center justify-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-accent-primary" /> Visualizar Árvore do Competidor
+          </label>
+          <select
+            value={selectedMemberUsername || ''}
+            onChange={(e) => onMemberChange(e.target.value)}
+            style={{ backgroundColor: '#18181b', color: '#ffffff' }}
+            className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-primary transition-all duration-300 cursor-pointer"
+          >
+            {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
+              <option key={m.username} value={m.username} style={{ backgroundColor: '#18181b', color: '#ffffff' }}>
+                {m.displayName} ({m.awardFocus || 'Geral'})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 2. Banner: Technician setting initial levels */}
+      {isInitialEditActive && onConfirmInitialLevels && (
+        <div className="max-w-2xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 shadow-glass animate-pulse">
+          <div className="text-left">
+            <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              ⚠️ Ajuste de Níveis Iniciais
+            </h4>
+            <p className="text-xs text-text-secondary mt-1">
+              Defina o nível atual de cada habilidade de <strong>{user.name}</strong> na robótica antes dele iniciar as missões.
+            </p>
+          </div>
+          <button
+            onClick={onConfirmInitialLevels}
+            type="button"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl shadow-glow-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shrink-0"
+          >
+            Confirmar Níveis de {user.name}
+          </button>
+        </div>
+      )}
+
+      {/* 3. Info Banner: Member waiting for setup */}
+      {currentUserRole === 'member' && !user.initialLevelsSet && (
+        <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-center shadow-glass">
+          <h4 className="text-sm text-amber-400 font-black uppercase tracking-wider flex items-center justify-center gap-2">
+            ⚠️ Aguardando Definição de Níveis Iniciais
+          </h4>
+          <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
+            Seus níveis de habilidade iniciais ainda não foram configurados pelo Técnico. A progressão de XP e a conclusão de missões e tarefas serão liberadas assim que seus níveis iniciais forem travados.
+          </p>
+        </div>
+      )}
+
+      {/* 4. Success State: Levels Locked */}
+      {currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
+        <div className="max-w-xs mx-auto mb-8 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center shadow-glass">
+          <p className="text-xs text-emerald-400 font-bold">
+            ✓ Níveis iniciais definidos e bloqueados.
+          </p>
+        </div>
+      )}
+
       <div className='text-center'>
-        <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">{t('skill_tree')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">
+          {t('skill_tree')} {user.name !== currentUser ? `— ${user.name}` : ''}
+        </h2>
         <p className="text-text-secondary mb-6">{t('skill_tree_subtitle')}</p>
         
         <motion.div variants={itemVariants} className="w-full max-w-2xl mx-auto h-[350px] sm:h-[400px] bg-primary/20 backdrop-blur-xl border border-white/5 rounded-3xl p-4 shadow-glass mb-10 relative overflow-hidden group">
@@ -278,6 +391,8 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
                     onEditTopic={onEditTopic} onDeleteTopic={onDeleteTopic}
                     onOpenBulkAddModal={onOpenBulkAddModal} onUpdateSkillPriority={onUpdateSkillPriority}
                     onToggleSkillActive={onToggleSkillActive}
+                    isInitialEditActive={isInitialEditActive}
+                    onAdjustInitialSkillLevel={onAdjustInitialSkillLevel}
                 />
             ))}
           </div>

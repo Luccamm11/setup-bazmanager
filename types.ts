@@ -214,6 +214,7 @@ export interface User {
   completedMajorGoals?: MajorGoal[];
   activeTimedQuest?: ActiveTimedQuest | null;
   profileSetup?: boolean;
+  initialLevelsSet?: boolean;
 }
 
 export interface StoryLogEntry {
