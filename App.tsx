@@ -341,6 +341,30 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUnlockInitialLevels = () => {
+    if (!selectedMemberData || !selectedMember) return;
+    setSelectedMemberData((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        user: {
+          ...prev.user,
+          initialLevelsSet: false,
+        }
+      };
+    });
+    setSystemMessages(prev => [
+      {
+        id: `initial-levels-unlocked-${Date.now()}`,
+        text: `Níveis iniciais de ${selectedMember} destravados para edição.`,
+        timestamp: 'Just now',
+        type: 'info'
+      },
+      ...prev
+    ]);
+  };
+
+
   // Autosave selected member data for technicians
   useEffect(() => {
     if (userRole !== 'technician' || !selectedMember || !selectedMemberData) return;
@@ -2173,6 +2197,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             onMemberChange={setSelectedMember}
             onConfirmInitialLevels={handleConfirmInitialLevels}
             onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
+            onUnlockInitialLevels={handleUnlockInitialLevels}
           />
         );
       }

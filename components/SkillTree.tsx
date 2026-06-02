@@ -30,6 +30,7 @@ interface SkillTreeProps {
   onMemberChange?: (username: string) => void;
   onConfirmInitialLevels?: () => void;
   onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
+  onUnlockInitialLevels?: () => void;
 }
 
 const realmConfig = {
@@ -209,7 +210,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
     onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
     currentUserRole, currentUser, selectedMemberUsername, onMemberChange,
-    onConfirmInitialLevels, onAdjustInitialSkillLevel
+    onConfirmInitialLevels, onAdjustInitialSkillLevel, onUnlockInitialLevels
   } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -320,10 +321,19 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
 
       {/* 4. Success State: Levels Locked */}
       {currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
-        <div className="max-w-xs mx-auto mb-8 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center shadow-glass">
+        <div className="max-w-xs mx-auto mb-8 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center shadow-glass flex flex-col items-center gap-2">
           <p className="text-xs text-emerald-400 font-bold">
             ✓ Níveis iniciais definidos e bloqueados.
           </p>
+          {onUnlockInitialLevels && (
+            <button
+              onClick={onUnlockInitialLevels}
+              type="button"
+              className="text-[10px] text-text-muted hover:text-accent-red underline uppercase font-black tracking-wider transition-all duration-300 active:scale-95"
+            >
+              🔓 Destravar Ajuste Inicial
+            </button>
+          )}
         </div>
       )}
 
