@@ -341,22 +341,45 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUnlockInitialLevels = () => {
+  const handleUnlockInitialLevels = async () => {
     if (!selectedMemberData || !selectedMember) return;
-    setSelectedMemberData((prev: any) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        user: {
-          ...prev.user,
-          initialLevelsSet: false,
-        }
-      };
-    });
+
+    // Build the new state with initialLevelsSet = false
+    const unlockedState = {
+      ...selectedMemberData,
+      user: {
+        ...selectedMemberData.user,
+        initialLevelsSet: false,
+      },
+    };
+
+    // Update local state immediately so UI re-renders right away
+    setSelectedMemberData(unlockedState);
+
+    // Persist to server immediately (don't wait for autosave debounce)
+    try {
+      setSyncStatus('syncing');
+      const res = await fetch('/api/persistence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: selectedMember, data: unlockedState }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncStatus('synced');
+        setTimeout(() => setSyncStatus('idle'), 1500);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error('Failed to unlock initial levels on server:', err);
+      setSyncStatus('error');
+    }
+
     setSystemMessages(prev => [
       {
         id: `initial-levels-unlocked-${Date.now()}`,
-        text: `Níveis iniciais de ${selectedMember} destravados para edição.`,
+        text: `Níveis iniciais de ${selectedMember} destravados para edição. Use os botões +/- em cada habilidade para definir o nível.`,
         timestamp: 'Just now',
         type: 'info'
       },

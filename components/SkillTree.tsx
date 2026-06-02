@@ -110,21 +110,23 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
         </div>
         <div className='flex items-center space-x-2'>
             {isInitialEditActive && onAdjustInitialSkillLevel ? (
-              <div className="flex items-center space-x-1 mr-2 select-none">
+              <div className="flex items-center gap-1 mr-2 select-none p-1 bg-amber-500/10 rounded-xl border border-amber-500/30">
                 <button 
                   onClick={() => onAdjustInitialSkillLevel(skill.id, -1)} 
                   type="button"
-                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-white/10 active:scale-90 text-text-secondary hover:text-white transition-all duration-300"
+                  aria-label="Diminuir nível"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-base hover:bg-red-500/20 hover:border-red-500/40 active:scale-90 text-text-secondary hover:text-red-300 transition-all duration-200"
                 >
-                  -
+                  −
                 </button>
-                <span className="font-black text-base bg-white/5 px-2.5 py-0.5 rounded-lg border border-white/10 text-amber-400 shadow-sm">
-                  Lvl {skill.level}
+                <span className="font-black text-sm bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/40 text-amber-300 shadow-sm min-w-[52px] text-center">
+                  Nv {skill.level}
                 </span>
                 <button 
                   onClick={() => onAdjustInitialSkillLevel(skill.id, 1)} 
                   type="button"
-                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-white/10 active:scale-90 text-text-secondary hover:text-white transition-all duration-300"
+                  aria-label="Aumentar nível"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-base hover:bg-green-500/20 hover:border-green-500/40 active:scale-90 text-text-secondary hover:text-green-300 transition-all duration-200"
                 >
                   +
                 </button>
@@ -288,22 +290,28 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
 
       {/* 2. Banner: Technician setting initial levels */}
       {isInitialEditActive && onConfirmInitialLevels && (
-        <div className="max-w-2xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 shadow-glass animate-pulse">
-          <div className="text-left">
-            <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              ⚠️ Ajuste de Níveis Iniciais
-            </h4>
-            <p className="text-xs text-text-secondary mt-1">
-              Defina o nível atual de cada habilidade de <strong>{user.name}</strong> na robótica antes dele iniciar as missões.
-            </p>
+        <div className="max-w-2xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-md flex flex-col gap-4 shadow-glass">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="text-left">
+              <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                ⚠️ Modo de Ajuste de Níveis Iniciais — ATIVO
+              </h4>
+              <p className="text-xs text-text-secondary mt-1">
+                Defina o nível atual de cada habilidade de <strong className="text-white">{user.name}</strong> abaixo usando os botões <span className="inline-flex items-center gap-0.5 bg-white/10 px-1.5 py-0.5 rounded font-black text-amber-300">−</span> e <span className="inline-flex items-center gap-0.5 bg-white/10 px-1.5 py-0.5 rounded font-black text-amber-300">+</span> em cada card de habilidade.
+              </p>
+            </div>
+            <button
+              onClick={onConfirmInitialLevels}
+              type="button"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shrink-0"
+            >
+              ✓ Confirmar e Travar Níveis de {user.name}
+            </button>
           </div>
-          <button
-            onClick={onConfirmInitialLevels}
-            type="button"
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl shadow-glow-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shrink-0"
-          >
-            Confirmar Níveis de {user.name}
-          </button>
+          <div className="flex items-center gap-2 text-xs text-amber-300/70 bg-amber-500/10 rounded-xl px-4 py-2 border border-amber-500/10">
+            <span>👇</span>
+            <span>Cada card abaixo tem os botões <strong>−</strong> e <strong>+</strong> ao lado do nível para ajustar. Mínimo: 1 · Máximo: 10</span>
+          </div>
         </div>
       )}
 
@@ -319,19 +327,19 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </div>
       )}
 
-      {/* 4. Success State: Levels Locked */}
+      {/* 4. Success State: Levels Locked — show prominent unlock button */}
       {currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
-        <div className="max-w-xs mx-auto mb-8 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center shadow-glass flex flex-col items-center gap-2">
-          <p className="text-xs text-emerald-400 font-bold">
-            ✓ Níveis iniciais definidos e bloqueados.
+        <div className="max-w-md mx-auto mb-6 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-center shadow-glass flex flex-col items-center gap-3">
+          <p className="text-sm text-emerald-400 font-black flex items-center gap-2">
+            🔒 Níveis iniciais de <span className="text-white">{user.name}</span> definidos e bloqueados.
           </p>
           {onUnlockInitialLevels && (
             <button
               onClick={onUnlockInitialLevels}
               type="button"
-              className="text-[10px] text-text-muted hover:text-accent-red underline uppercase font-black tracking-wider transition-all duration-300 active:scale-95"
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/30 text-amber-400 hover:text-amber-300 font-black text-xs uppercase tracking-wider py-2 px-5 rounded-xl transition-all duration-300 active:scale-95 hover:shadow-md"
             >
-              🔓 Destravar Ajuste Inicial
+              🔓 Destravar para Reajustar Níveis
             </button>
           )}
         </div>
