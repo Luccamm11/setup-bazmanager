@@ -270,7 +270,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (userRole === 'technician' && view === 'skill_tree' && selectedMember) {
+    if (userRole === 'technician' && (view === 'skill_tree' || view === 'initial_levels') && selectedMember) {
       fetchSelectedMemberData(selectedMember);
     }
   }, [view, selectedMember, userRole, fetchSelectedMemberData]);
