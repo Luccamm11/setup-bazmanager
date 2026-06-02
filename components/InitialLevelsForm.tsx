@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Realm } from '../types';
 import { ALL_MEMBERS } from '../data/members';
 import { Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface InitialLevelsFormProps {
   user: User;
@@ -21,6 +22,7 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
   onAdjustRealmLevel,
   onUnlockInitialLevels,
 }) => {
+  const { t } = useTranslation(['common']);
   const [selectedRealm, setSelectedRealm] = useState<string>(Realm.Planning);
   const [level, setLevel] = useState<number>(5);
 
@@ -66,7 +68,7 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
         >
           {Object.values(Realm).map((realm) => (
             <option key={realm} value={realm}>
-              {realm}
+              {t(`common:realm.${realm}`)}
             </option>
           ))}
         </select>
@@ -100,7 +102,7 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
           type="button"
           className="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold py-2.5 rounded-xl transition-all uppercase text-xs"
         >
-          1. Aplicar Nível {level} ao Reino {selectedRealm}
+          1. Aplicar Nível {level} ao Reino {t(`common:realm.${selectedRealm}`)}
         </button>
 
         <div className="h-px bg-white/5 my-1"></div>

@@ -222,6 +222,7 @@ const App: React.FC = () => {
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
+  const memberSaveTimeoutRef = useRef<number | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('googleAiApiKey') || '');
   const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
@@ -452,8 +453,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (userRole !== 'technician' || !selectedMember || !selectedMemberData) return;
 
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = window.setTimeout(() => {
+    if (memberSaveTimeoutRef.current) clearTimeout(memberSaveTimeoutRef.current);
+    memberSaveTimeoutRef.current = window.setTimeout(() => {
         setSyncStatus('syncing');
         fetch('/api/persistence', {
             method: 'POST',
@@ -475,7 +476,7 @@ const App: React.FC = () => {
     }, 2000);
 
     return () => {
-        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        if (memberSaveTimeoutRef.current) clearTimeout(memberSaveTimeoutRef.current);
     };
   }, [selectedMemberData, selectedMember, userRole]);
 
