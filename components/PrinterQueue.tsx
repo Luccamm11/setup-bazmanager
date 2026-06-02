@@ -22,7 +22,9 @@ import {
     XCircle,
     TrendingUp,
     ChevronRight,
-    Search
+    Search,
+    ChevronUp,
+    ChevronDown
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -164,6 +166,76 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
     } catch (err) {
       console.error('Failed to delete item:', err);
     }
+  };
+
+  const handleReorder = async (newPendingItems: PrinterQueueItem[]) => {
+    const itemIds = newPendingItems.map(item => item.id);
+    
+    setQueue(prevQueue => {
+      const pendingItems = prevQueue.filter(item => item.status === 'pending');
+      const sortedPending = [...pendingItems].sort((a, b) => {
+        const indexA = itemIds.indexOf(a.id);
+        const indexB = itemIds.indexOf(b.id);
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+      
+      const newQueue: PrinterQueueItem[] = [];
+      let pendingIndex = 0;
+      for (const item of prevQueue) {
+        if (item.status === 'pending') {
+          if (pendingIndex < sortedPending.length) {
+            newQueue.push(sortedPending[pendingIndex++]);
+          }
+        } else {
+          newQueue.push(item);
+        }
+      }
+      return newQueue;
+    });
+
+    try {
+      const res = await fetch('/api/printer-queue', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reorder', itemIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchQueue();
+      }
+    } catch (err) {
+      console.error('Failed to reorder queue:', err);
+      fetchQueue();
+    }
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const newPending = [...pendingItems];
+    const temp = newPending[index];
+    newPending[index] = newPending[index - 1];
+    newPending[index - 1] = temp;
+    handleReorder(newPending);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === pendingItems.length - 1) return;
+    const newPending = [...pendingItems];
+    const temp = newPending[index];
+    newPending[index] = newPending[index + 1];
+    newPending[index + 1] = temp;
+    handleReorder(newPending);
+  };
+
+  const handlePrioritize = (index: number) => {
+    if (index === 0) return;
+    const newPending = [...pendingItems];
+    const [itemToPrioritize] = newPending.splice(index, 1);
+    newPending.unshift(itemToPrioritize);
+    handleReorder(newPending);
   };
 
   // Mapped Data
@@ -440,11 +512,44 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-[8px] font-black text-accent-primary uppercase tracking-widest bg-accent-primary/10 px-2 py-0.5 rounded-full">#{idx + 1} na fila</span>
-                                            {item.userName === currentUser && (
-                                                <button onClick={() => handleDelete(item.id)} className="p-1 text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                {idx > 0 && (
+                                                    <button 
+                                                        onClick={() => handlePrioritize(idx)}
+                                                        title="Priorizar (Mover para o topo)"
+                                                        className="p-1 text-text-muted hover:text-accent-secondary transition-colors"
+                                                    >
+                                                        <Star size={13} className="fill-current text-accent-secondary/20 hover:text-accent-secondary hover:fill-accent-secondary" />
+                                                    </button>
+                                                )}
+                                                {idx > 0 && (
+                                                    <button 
+                                                        onClick={() => handleMoveUp(idx)}
+                                                        title="Subir"
+                                                        className="p-1 text-text-muted hover:text-white transition-colors"
+                                                    >
+                                                        <ChevronUp size={14} />
+                                                    </button>
+                                                )}
+                                                {idx < pendingItems.length - 1 && (
+                                                    <button 
+                                                        onClick={() => handleMoveDown(idx)}
+                                                        title="Descer"
+                                                        className="p-1 text-text-muted hover:text-white transition-colors"
+                                                    >
+                                                        <ChevronDown size={14} />
+                                                    </button>
+                                                )}
+                                                {item.userName === currentUser && (
+                                                    <button 
+                                                        onClick={() => handleDelete(item.id)}
+                                                        title="Remover"
+                                                        className="p-1 text-text-muted hover:text-red-400 transition-colors ml-1"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <h5 className="text-white font-black text-sm mb-1 truncate">{item.filename}</h5>
                                         <div className="flex items-center justify-between mt-2">
@@ -497,7 +602,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         <div className="p-4 bg-accent-primary/10 rounded-2xl text-accent-primary"><Layers size={24} /></div>
                         <div>
                             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Gasto (Membro)</p>
-                            <h4 className="text-2xl font-black text-white">{Object.values(stats.materialUsage).reduce((a, b) => a + b, 0)}g</h4>
+                            <h4 className="text-2xl font-black text-white">{Object.values(stats.materialUsage).reduce((a: number, b: number) => a + b, 0)}g</h4>
                         </div>
                     </div>
                     <div className="bg-primary/40 p-6 rounded-3xl border border-white/10 shadow-glass flex items-center gap-5">

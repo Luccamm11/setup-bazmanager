@@ -101,6 +101,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   queue[nextPendingIndex].status = 'printing';
               }
           }
+      } else if (action === 'reorder') {
+          const { itemIds } = req.body;
+          if (Array.isArray(itemIds)) {
+              const pendingItems = queue.filter((item: any) => item.status === 'pending');
+              const sortedPending = [...pendingItems].sort((a: any, b: any) => {
+                  const indexA = itemIds.indexOf(a.id);
+                  const indexB = itemIds.indexOf(b.id);
+                  if (indexA === -1 && indexB === -1) return 0;
+                  if (indexA === -1) return 1;
+                  if (indexB === -1) return -1;
+                  return indexA - indexB;
+              });
+              
+              const newQueue: any[] = [];
+              let pendingIndex = 0;
+              for (const item of queue) {
+                  if (item.status === 'pending') {
+                      if (pendingIndex < sortedPending.length) {
+                          newQueue.push(sortedPending[pendingIndex++]);
+                      }
+                  } else {
+                      newQueue.push(item);
+                  }
+              }
+              queue = newQueue;
+          }
       }
 
       await redis.set(REDIS_KEY, JSON.stringify(queue));
