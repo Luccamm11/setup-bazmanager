@@ -9,6 +9,7 @@ import Header from './components/Header';
 import Home from './components/Home';
 import Dashboard from './components/DashboardTab';
 import SkillTree from './components/SkillTree';
+import InitialLevelsForm from './components/InitialLevelsForm';
 import StoryLog from './components/StoryLog';
 import Analytics from './components/Analytics';
 import Store from './components/Store';
@@ -2166,12 +2167,32 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     switch(view) {
       case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
-      case 'initial_levels':
-      case 'skill_tree': {
-        const isSetupTab = view === 'initial_levels';
-        if (isSetupTab && userRole !== 'technician') {
+      case 'initial_levels': {
+        if (userRole !== 'technician') {
           return <Menu onNavigate={setView} userRole={userRole} />;
         }
+        if (!selectedMemberData) {
+          return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+              <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-glow-primary"></div>
+              <p className="text-text-secondary text-sm font-medium animate-pulse">Carregando formulário...</p>
+            </div>
+          );
+        }
+        return (
+          <InitialLevelsForm 
+            user={selectedMemberData.user}
+            selectedMemberUsername={selectedMember}
+            onMemberChange={handleMemberChange}
+            onConfirmInitialLevels={handleConfirmInitialLevels}
+            onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
+            onAdjustRealmLevel={handleAdjustRealmLevel}
+            onUnlockInitialLevels={handleUnlockInitialLevels}
+            currentUser={currentUser || ''}
+          />
+        );
+      }
+      case 'skill_tree': {
         if (userRole === 'technician' && !selectedMemberData) {
           return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -2261,11 +2282,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             currentUser={currentUser || ''}
             selectedMemberUsername={selectedMember}
             onMemberChange={handleMemberChange}
-            onConfirmInitialLevels={handleConfirmInitialLevels}
-            onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
-            onAdjustRealmLevel={handleAdjustRealmLevel}
-            onUnlockInitialLevels={handleUnlockInitialLevels}
-            isInitialSetupMode={isSetupTab}
           />
         );
       }

@@ -23,16 +23,11 @@ interface SkillTreeProps {
   onToggleSkillActive: (skillId: string) => void;
   onGenerateRecommendations: () => void;
   
-  // Technician role view & initial levels setting props
+  // Technician role view props
   currentUserRole?: string;
   currentUser?: string;
   selectedMemberUsername?: string;
   onMemberChange?: (username: string) => void;
-  onConfirmInitialLevels?: () => void;
-  onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
-  onAdjustRealmLevel?: (realm: string, level: number) => void;
-  onUnlockInitialLevels?: () => void;
-  isInitialSetupMode?: boolean;
 }
 
 const realmConfig = {
@@ -70,10 +65,6 @@ interface SkillCardProps {
   onOpenBulkAddModal: (skill: Skill) => void;
   onUpdateSkillPriority: (skillId: string, priority: number) => void;
   onToggleSkillActive: (skillId: string) => void;
-  
-  // Initial levels configuration props
-  isInitialEditActive?: boolean;
-  onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
 }
 
 const SkillCard: React.FC<SkillCardProps> = (props) => {
@@ -81,7 +72,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
   const { 
     skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, 
     onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
-    onUpdateSkillPriority, onToggleSkillActive, isInitialEditActive, onAdjustInitialSkillLevel 
+    onUpdateSkillPriority, onToggleSkillActive 
   } = props;
   const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
   const progress = (skill.xp / skill.xpToNextLevel) * 100;
@@ -111,31 +102,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
           <h3>{skill.name}</h3>
         </div>
         <div className='flex items-center space-x-2'>
-            {isInitialEditActive && onAdjustInitialSkillLevel ? (
-              <div className="flex items-center gap-1 mr-2 select-none p-1 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                <button 
-                  onClick={() => onAdjustInitialSkillLevel(skill.id, -1)} 
-                  type="button"
-                  aria-label="Diminuir nível"
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-base hover:bg-red-500/20 hover:border-red-500/40 active:scale-90 text-text-secondary hover:text-red-300 transition-all duration-200"
-                >
-                  −
-                </button>
-                <span className="font-black text-sm bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/40 text-amber-300 shadow-sm min-w-[52px] text-center">
-                  Nv {skill.level}
-                </span>
-                <button 
-                  onClick={() => onAdjustInitialSkillLevel(skill.id, 1)} 
-                  type="button"
-                  aria-label="Aumentar nível"
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-base hover:bg-green-500/20 hover:border-green-500/40 active:scale-90 text-text-secondary hover:text-green-300 transition-all duration-200"
-                >
-                  +
-                </button>
-              </div>
-            ) : (
-              <span className="font-black text-lg bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-white shadow-sm mr-2">{t('skill_level', { level: skill.level })}</span>
-            )}
+            <span className="font-black text-lg bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-white shadow-sm mr-2">{t('skill_level', { level: skill.level })}</span>
             <button title={t('common:states.active')} onClick={() => onToggleSkillActive(skill.id)} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${skill.isActive ? 'bg-accent-primary' : 'bg-white/20'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${skill.isActive ? 'translate-x-4' : 'translate-x-0'}`}/>
             </button>
@@ -213,9 +180,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, 
     onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
     onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
-    currentUserRole, currentUser, selectedMemberUsername, onMemberChange,
-    onConfirmInitialLevels, onAdjustInitialSkillLevel, onAdjustRealmLevel, onUnlockInitialLevels,
-    isInitialSetupMode
+    currentUserRole, currentUser, selectedMemberUsername, onMemberChange
   } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -264,24 +229,6 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-  // True whenever a technician is viewing another member's tree (regardless of lock state)
-  const isTechnicianViewingMember = currentUserRole === 'technician' && selectedMemberUsername !== undefined && selectedMemberUsername !== currentUser;
-
-  // True when the technician can actively set initial levels (unlocked state)
-  const isInitialEditActive = isInitialSetupMode && isTechnicianViewingMember && !user.initialLevelsSet;
-
-  // Show the realm panel whenever technician is viewing a member AND levels are unlocked AND there are skills
-  const showRealmPanel = isInitialEditActive && !!onAdjustRealmLevel && Object.keys(skillsByRealm).length > 0;
-
-  // Compute average level per realm for the realm panel
-  const realmAverageLevels = Object.values(Realm).reduce((acc, realm) => {
-    const skills = skillsByRealm[realm as Realm] || [];
-    if (skills.length === 0) { acc[realm] = 1; return acc; }
-    const avg = Math.round(skills.reduce((s, sk) => s + sk.level, 0) / skills.length);
-    acc[realm] = avg;
-    return acc;
-  }, {} as Record<string, number>);
-
   return (
     <motion.div className="space-y-8" variants={containerVariants} initial="hidden" animate="visible">
       
@@ -306,34 +253,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </div>
       )}
 
-      {/* 2. Banner: Technician setting initial levels */}
-      {isInitialEditActive && onConfirmInitialLevels && (
-        <div className="max-w-2xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-md flex flex-col gap-4 shadow-glass">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="text-left">
-              <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                ⚠️ Modo de Ajuste de Níveis Iniciais — ATIVO
-              </h4>
-              <p className="text-xs text-text-secondary mt-1">
-                Defina o nível atual de cada habilidade de <strong className="text-white">{user.name}</strong> abaixo usando os botões <span className="inline-flex items-center gap-0.5 bg-white/10 px-1.5 py-0.5 rounded font-black text-amber-300">−</span> e <span className="inline-flex items-center gap-0.5 bg-white/10 px-1.5 py-0.5 rounded font-black text-amber-300">+</span> em cada card de habilidade.
-              </p>
-            </div>
-            <button
-              onClick={onConfirmInitialLevels}
-              type="button"
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shrink-0"
-            >
-              ✓ Confirmar e Travar Níveis de {user.name}
-            </button>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-amber-300/70 bg-amber-500/10 rounded-xl px-4 py-2 border border-amber-500/10">
-            <span>👇</span>
-            <span>Cada card abaixo tem os botões <strong>−</strong> e <strong>+</strong> ao lado do nível para ajustar. Mínimo: 1 · Máximo: 10</span>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Info Banner: Member waiting for setup */}
+      {/* 2. Info Banner: Member waiting for setup */}
       {currentUserRole === 'member' && !user.initialLevelsSet && (
         <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-center shadow-glass">
           <h4 className="text-sm text-amber-400 font-black uppercase tracking-wider flex items-center justify-center gap-2">
@@ -342,24 +262,6 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
           <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
             Seus níveis de habilidade iniciais ainda não foram configurados pelo Técnico. A progressão de XP e a conclusão de missões e tarefas serão liberadas assim que seus níveis iniciais forem travados.
           </p>
-        </div>
-      )}
-
-      {/* 4. Success State: Levels Locked — show prominent unlock button */}
-      {isInitialSetupMode && currentUserRole === 'technician' && user.initialLevelsSet && user.name !== currentUser && (
-        <div className="max-w-md mx-auto mb-6 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-center shadow-glass flex flex-col items-center gap-3">
-          <p className="text-sm text-emerald-400 font-black flex items-center gap-2">
-            🔒 Níveis iniciais de <span className="text-white">{user.name}</span> definidos e bloqueados.
-          </p>
-          {onUnlockInitialLevels && (
-            <button
-              onClick={onUnlockInitialLevels}
-              type="button"
-              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/30 text-amber-400 hover:text-amber-300 font-black text-xs uppercase tracking-wider py-2 px-5 rounded-xl transition-all duration-300 active:scale-95 hover:shadow-md"
-            >
-              🔓 Destravar para Reajustar Níveis
-            </button>
-          )}
         </div>
       )}
 
@@ -409,11 +311,9 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </motion.div>
       </div>
 
-      {/* Skills grid + Realm panel side by side */}
-      <div className={`flex flex-col ${showRealmPanel ? 'xl:flex-row' : ''} gap-6 items-start`}>
-
-        {/* LEFT: Skills grid */}
-        <div className="flex-1 min-w-0 space-y-6">
+      {/* Skills grid */}
+      <div className="w-full">
+        <div className="space-y-6">
           {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
             <motion.div variants={itemVariants} key={realm} className="bg-white/[0.02] p-6 rounded-3xl border border-white/[0.02]">
               <h3 className={`text-xl sm:text-2xl font-black mb-6 capitalize flex items-center gap-3 ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>
@@ -432,8 +332,6 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
                     onEditTopic={onEditTopic} onDeleteTopic={onDeleteTopic}
                     onOpenBulkAddModal={onOpenBulkAddModal} onUpdateSkillPriority={onUpdateSkillPriority}
                     onToggleSkillActive={onToggleSkillActive}
-                    isInitialEditActive={isInitialEditActive}
-                    onAdjustInitialSkillLevel={onAdjustInitialSkillLevel}
                   />
                 ))}
               </div>
@@ -445,84 +343,6 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
             </motion.div>
           )}
         </div>
-
-        {/* RIGHT: Realm level panel — only in initial edit mode */}
-        {showRealmPanel && (
-          <motion.div
-            variants={itemVariants}
-            className="xl:sticky xl:top-4 xl:w-72 w-full shrink-0"
-          >
-            <div className="bg-primary/60 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-5 shadow-glass flex flex-col gap-4">
-              {/* Panel header */}
-              <div className="flex items-center gap-2 pb-3 border-b border-amber-500/20">
-                <div className="p-1.5 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest">Ajuste por Reino</h4>
-                  <p className="text-[10px] text-text-muted mt-0.5">Nível aplicado a todas as habilidades</p>
-                </div>
-              </div>
-
-              {/* Realm rows */}
-              <div className="flex flex-col gap-2">
-                {Object.values(Realm).map(realm => {
-                  const config = realmConfig[realm as Realm];
-                  const currentLevel = realmAverageLevels[realm] ?? 1;
-                  const skillCount = (skillsByRealm[realm as Realm] || []).length;
-                  if (skillCount === 0) return null;
-                  return (
-                    <div
-                      key={realm}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-amber-500/20 transition-all duration-200 group"
-                    >
-                      {/* icon + name */}
-                      <div className={`flex items-center gap-2 min-w-0 ${config?.color || 'text-text-primary'}`}>
-                        <div className="shrink-0 p-1.5 bg-white/5 rounded-lg border border-white/10 group-hover:border-white/20 transition-all">
-                          <span className="w-3.5 h-3.5 block">{config?.icon}</span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-black truncate">{t(`common:realm.${realm}`)}</p>
-                          <p className="text-[9px] text-text-muted">{skillCount} habilidade{skillCount > 1 ? 's' : ''}</p>
-                        </div>
-                      </div>
-
-                      {/* level controls */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          aria-label={`Diminuir nível de ${realm}`}
-                          onClick={() => onAdjustRealmLevel(realm, currentLevel - 1)}
-                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 text-text-secondary transition-all duration-150"
-                        >
-                          −
-                        </button>
-                        <span className="w-10 text-center font-black text-sm bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-lg py-0.5">
-                          {currentLevel}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Aumentar nível de ${realm}`}
-                          onClick={() => onAdjustRealmLevel(realm, currentLevel + 1)}
-                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 text-text-secondary transition-all duration-150"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer tip */}
-              <p className="text-[9px] text-text-muted text-center pt-2 border-t border-white/5 leading-relaxed">
-                Esses controles ajustam <strong className="text-amber-400/70">todas</strong> as habilidades do reino de uma vez.
-                Os cards abaixo também têm controles individuais.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
       </div>
     </motion.div>
   );
