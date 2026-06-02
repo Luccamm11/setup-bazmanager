@@ -408,7 +408,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
       </div>
 
       {/* Skills grid + Realm panel side by side */}
-      <div className={`flex flex-col ${isInitialEditActive ? 'xl:flex-row' : ''} gap-6 items-start`}>
+      <div className={`flex flex-col ${showRealmPanel ? 'xl:flex-row' : ''} gap-6 items-start`}>
 
         {/* LEFT: Skills grid */}
         <div className="flex-1 min-w-0 space-y-6">
@@ -445,7 +445,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </div>
 
         {/* RIGHT: Realm level panel — only in initial edit mode */}
-        {isInitialEditActive && onAdjustRealmLevel && (
+        {showRealmPanel && (
           <motion.div
             variants={itemVariants}
             className="xl:sticky xl:top-4 xl:w-72 w-full shrink-0"
