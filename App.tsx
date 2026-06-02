@@ -270,10 +270,11 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (userRole === 'technician' && (view === 'skill_tree' || view === 'initial_levels') && selectedMember) {
+    // Only fetch when there's no data yet OR when the member changes (handled by handleMemberChange clearing to null)
+    if (userRole === 'technician' && (view === 'skill_tree' || view === 'initial_levels') && selectedMember && !selectedMemberData) {
       fetchSelectedMemberData(selectedMember);
     }
-  }, [view, selectedMember, userRole, fetchSelectedMemberData]);
+  }, [view, selectedMember, userRole, fetchSelectedMemberData, selectedMemberData]);
 
   const handleMemberChange = (username: string) => {
     setSelectedMember(username);
@@ -298,6 +299,16 @@ const App: React.FC = () => {
       };
 
       updatedUser.skill_tree = updatedSkillTree;
+
+      // Sync stats for this realm
+      const realm = skill.realm;
+      const skillsInRealm = Object.values(updatedSkillTree).filter((s: any) => s.realm === realm);
+      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+      updatedUser.stats = {
+        ...updatedUser.stats,
+        [realm]: sumLevels || 1
+      };
+
       return { ...prev, user: updatedUser };
     });
   };
@@ -323,6 +334,15 @@ const App: React.FC = () => {
       });
 
       updatedUser.skill_tree = updatedSkillTree;
+
+      // Sync stats for this realm
+      const skillsInRealm = Object.values(updatedSkillTree).filter((s: any) => s.realm === realm);
+      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+      updatedUser.stats = {
+        ...updatedUser.stats,
+        [realm]: sumLevels || 1
+      };
+
       return { ...prev, user: updatedUser };
     });
   };
@@ -340,6 +360,15 @@ const App: React.FC = () => {
     updatedUser.xp_total = 0;
     updatedUser.xpToNextLevel = getXpThresholdForLevel(baseLevel);
     updatedUser.rank = getRankForLevel(baseLevel);
+
+    // Sync all stats for all realms
+    const newStats: Record<string, number> = {};
+    Object.values(Realm).forEach(r => {
+      const skillsInRealm = Object.values(updatedUser.skill_tree).filter((s: any) => s.realm === r);
+      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+      newStats[r] = sumLevels || 1;
+    });
+    updatedUser.stats = newStats;
 
     const updatedState = { ...selectedMemberData, user: updatedUser };
 
@@ -2185,7 +2214,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             selectedMemberUsername={selectedMember}
             onMemberChange={handleMemberChange}
             onConfirmInitialLevels={handleConfirmInitialLevels}
-            onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
             onAdjustRealmLevel={handleAdjustRealmLevel}
             onUnlockInitialLevels={handleUnlockInitialLevels}
             currentUser={currentUser || ''}
