@@ -296,6 +296,31 @@ const App: React.FC = () => {
     });
   };
 
+  const handleAdjustRealmLevel = (realm: string, newLevel: number) => {
+    if (!selectedMemberData) return;
+    setSelectedMemberData((prev: any) => {
+      if (!prev) return prev;
+      const updatedUser = { ...prev.user };
+      const updatedSkillTree = { ...updatedUser.skill_tree };
+      const clamped = Math.max(1, Math.min(10, newLevel));
+
+      Object.keys(updatedSkillTree).forEach(skillId => {
+        const skill = updatedSkillTree[skillId];
+        if (skill && skill.realm === realm) {
+          updatedSkillTree[skillId] = {
+            ...skill,
+            level: clamped,
+            xp: 0,
+            xpToNextLevel: getXpThresholdForSkillLevel(clamped, skill.xpScale),
+          };
+        }
+      });
+
+      updatedUser.skill_tree = updatedSkillTree;
+      return { ...prev, user: updatedUser };
+    });
+  };
+
   const handleConfirmInitialLevels = async () => {
     if (!selectedMemberData || !selectedMember) return;
     setSyncStatus('syncing');
@@ -2220,6 +2245,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             onMemberChange={setSelectedMember}
             onConfirmInitialLevels={handleConfirmInitialLevels}
             onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
+            onAdjustRealmLevel={handleAdjustRealmLevel}
             onUnlockInitialLevels={handleUnlockInitialLevels}
           />
         );

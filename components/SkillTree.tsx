@@ -30,6 +30,7 @@ interface SkillTreeProps {
   onMemberChange?: (username: string) => void;
   onConfirmInitialLevels?: () => void;
   onAdjustInitialSkillLevel?: (skillId: string, delta: number) => void;
+  onAdjustRealmLevel?: (realm: string, level: number) => void;
   onUnlockInitialLevels?: () => void;
 }
 
@@ -212,7 +213,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
     onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
     onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
     currentUserRole, currentUser, selectedMemberUsername, onMemberChange,
-    onConfirmInitialLevels, onAdjustInitialSkillLevel, onUnlockInitialLevels
+    onConfirmInitialLevels, onAdjustInitialSkillLevel, onAdjustRealmLevel, onUnlockInitialLevels
   } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -247,7 +248,7 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const awardType = user.awardFocus as AwardType;
   const awardProfile = awardType ? getAwardProfile(awardType) : null;
   
-  const radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
+  const radarData = Object.values(Realm).map(realm => {
       const skillsInRealm = skillsByRealm[realm as Realm] || [];
       const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
       const subject = t(`common:realm.${realm}`);
@@ -261,8 +262,23 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-  // Detect if technician is configuring a member's initial skill levels
-  const isInitialEditActive = currentUserRole === 'technician' && !user.initialLevelsSet && user.name !== currentUser;
+  // True whenever a technician is viewing another member's tree (regardless of lock state)
+  const isTechnicianViewingMember = currentUserRole === 'technician' && selectedMemberUsername !== undefined && selectedMemberUsername !== currentUser;
+
+  // True when the technician can actively set initial levels (unlocked state)
+  const isInitialEditActive = isTechnicianViewingMember && !user.initialLevelsSet;
+
+  // Show the realm panel whenever technician is viewing a member AND levels are unlocked
+  const showRealmPanel = isInitialEditActive && !!onAdjustRealmLevel;
+
+  // Compute average level per realm for the realm panel
+  const realmAverageLevels = Object.values(Realm).reduce((acc, realm) => {
+    const skills = skillsByRealm[realm as Realm] || [];
+    if (skills.length === 0) { acc[realm] = 1; return acc; }
+    const avg = Math.round(skills.reduce((s, sk) => s + sk.level, 0) / skills.length);
+    acc[realm] = avg;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <motion.div className="space-y-8" variants={containerVariants} initial="hidden" animate="visible">
@@ -391,18 +407,23 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </motion.div>
       </div>
 
-      {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
-        <motion.div variants={itemVariants} key={realm} className="bg-white/[0.02] p-6 rounded-3xl border border-white/[0.02]">
-          <h3 className={`text-xl sm:text-2xl font-black mb-6 capitalize flex items-center gap-3 ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>
-              <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+      {/* Skills grid + Realm panel side by side */}
+      <div className={`flex flex-col ${isInitialEditActive ? 'xl:flex-row' : ''} gap-6 items-start`}>
+
+        {/* LEFT: Skills grid */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
+            <motion.div variants={itemVariants} key={realm} className="bg-white/[0.02] p-6 rounded-3xl border border-white/[0.02]">
+              <h3 className={`text-xl sm:text-2xl font-black mb-6 capitalize flex items-center gap-3 ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>
+                <div className="p-2 bg-white/5 rounded-xl border border-white/10">
                   {realmConfig[realm as Realm]?.icon}
-              </div>
-              {t(`common:realm.${realm}`)}
-              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4"></div>
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {skillData.map(({ skill, topics }) => (
-                <SkillCard 
+                </div>
+                {t(`common:realm.${realm}`)}
+                <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4"></div>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {skillData.map(({ skill, topics }) => (
+                  <SkillCard 
                     key={skill.id} skill={skill} topics={topics}
                     onUpdateTopicDifficulty={onUpdateTopicDifficulty} onEditSkill={onEditSkill}
                     onDeleteSkill={onDeleteSkill} onAddTopicToSkill={onAddTopicToSkill}
@@ -411,16 +432,96 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
                     onToggleSkillActive={onToggleSkillActive}
                     isInitialEditActive={isInitialEditActive}
                     onAdjustInitialSkillLevel={onAdjustInitialSkillLevel}
-                />
-            ))}
-          </div>
-        </motion.div>
-      ))}
-      {Object.keys(filteredSkillsByRealm).length === 0 && searchQuery && (
-        <motion.div variants={itemVariants} className="text-center py-10 bg-white/5 border border-dashed border-white/10 rounded-2xl w-full max-w-xl mx-auto backdrop-blur-sm">
-          <p className="text-text-secondary font-medium">{t('no_topics')}</p>
-        </motion.div>
-      )}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          ))}
+          {Object.keys(filteredSkillsByRealm).length === 0 && searchQuery && (
+            <motion.div variants={itemVariants} className="text-center py-10 bg-white/5 border border-dashed border-white/10 rounded-2xl w-full max-w-xl mx-auto backdrop-blur-sm">
+              <p className="text-text-secondary font-medium">{t('no_topics')}</p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* RIGHT: Realm level panel — only in initial edit mode */}
+        {isInitialEditActive && onAdjustRealmLevel && (
+          <motion.div
+            variants={itemVariants}
+            className="xl:sticky xl:top-4 xl:w-72 w-full shrink-0"
+          >
+            <div className="bg-primary/60 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-5 shadow-glass flex flex-col gap-4">
+              {/* Panel header */}
+              <div className="flex items-center gap-2 pb-3 border-b border-amber-500/20">
+                <div className="p-1.5 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest">Ajuste por Reino</h4>
+                  <p className="text-[10px] text-text-muted mt-0.5">Nível aplicado a todas as habilidades</p>
+                </div>
+              </div>
+
+              {/* Realm rows */}
+              <div className="flex flex-col gap-2">
+                {Object.values(Realm).map(realm => {
+                  const config = realmConfig[realm as Realm];
+                  const currentLevel = realmAverageLevels[realm] ?? 1;
+                  const skillCount = (skillsByRealm[realm as Realm] || []).length;
+                  if (skillCount === 0) return null;
+                  return (
+                    <div
+                      key={realm}
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-amber-500/20 transition-all duration-200 group"
+                    >
+                      {/* icon + name */}
+                      <div className={`flex items-center gap-2 min-w-0 ${config?.color || 'text-text-primary'}`}>
+                        <div className="shrink-0 p-1.5 bg-white/5 rounded-lg border border-white/10 group-hover:border-white/20 transition-all">
+                          <span className="w-3.5 h-3.5 block">{config?.icon}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black truncate">{t(`common:realm.${realm}`)}</p>
+                          <p className="text-[9px] text-text-muted">{skillCount} habilidade{skillCount > 1 ? 's' : ''}</p>
+                        </div>
+                      </div>
+
+                      {/* level controls */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          aria-label={`Diminuir nível de ${realm}`}
+                          onClick={() => onAdjustRealmLevel(realm, currentLevel - 1)}
+                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 text-text-secondary transition-all duration-150"
+                        >
+                          −
+                        </button>
+                        <span className="w-10 text-center font-black text-sm bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-lg py-0.5">
+                          {currentLevel}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Aumentar nível de ${realm}`}
+                          onClick={() => onAdjustRealmLevel(realm, currentLevel + 1)}
+                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 text-text-secondary transition-all duration-150"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer tip */}
+              <p className="text-[9px] text-text-muted text-center pt-2 border-t border-white/5 leading-relaxed">
+                Esses controles ajustam <strong className="text-amber-400/70">todas</strong> as habilidades do reino de uma vez.
+                Os cards abaixo também têm controles individuais.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+      </div>
     </motion.div>
   );
 };
