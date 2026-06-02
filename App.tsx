@@ -274,6 +274,11 @@ const App: React.FC = () => {
     }
   }, [view, selectedMember, userRole, fetchSelectedMemberData]);
 
+  const handleMemberChange = (username: string) => {
+    setSelectedMember(username);
+    setSelectedMemberData(null);
+  };
+
   const handleAdjustInitialSkillLevel = (skillId: string, delta: number) => {
     if (!selectedMemberData) return;
     setSelectedMemberData((prev: any) => {
@@ -2162,6 +2167,14 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
       case 'skill_tree': {
+        if (userRole === 'technician' && !selectedMemberData) {
+          return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+              <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-glow-primary"></div>
+              <p className="text-text-secondary text-sm font-medium animate-pulse">Carregando árvore do competidor...</p>
+            </div>
+          );
+        }
         const isEditingMember = userRole === 'technician' && selectedMemberData;
         const targetUser = isEditingMember ? selectedMemberData.user : user;
         const setTargetUser = isEditingMember
@@ -2242,7 +2255,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             currentUserRole={userRole}
             currentUser={currentUser || ''}
             selectedMemberUsername={selectedMember}
-            onMemberChange={setSelectedMember}
+            onMemberChange={handleMemberChange}
             onConfirmInitialLevels={handleConfirmInitialLevels}
             onAdjustInitialSkillLevel={handleAdjustInitialSkillLevel}
             onAdjustRealmLevel={handleAdjustRealmLevel}

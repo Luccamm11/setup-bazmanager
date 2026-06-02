@@ -268,8 +268,8 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   // True when the technician can actively set initial levels (unlocked state)
   const isInitialEditActive = isTechnicianViewingMember && !user.initialLevelsSet;
 
-  // Show the realm panel whenever technician is viewing a member AND levels are unlocked
-  const showRealmPanel = isInitialEditActive && !!onAdjustRealmLevel;
+  // Show the realm panel whenever technician is viewing a member AND levels are unlocked AND there are skills
+  const showRealmPanel = isInitialEditActive && !!onAdjustRealmLevel && Object.keys(skillsByRealm).length > 0;
 
   // Compute average level per realm for the realm panel
   const realmAverageLevels = Object.values(Realm).reduce((acc, realm) => {
