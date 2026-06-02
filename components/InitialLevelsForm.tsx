@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, Skill, Realm } from '../types';
-import { BookText, Users, Shield, Award, Mic2, ClipboardList, Code, Hammer, Globe, Zap, ArrowRight } from 'lucide-react';
+import { BookText, Users, Shield, Award, Mic2, ClipboardList, Code, Hammer, Globe, Zap } from 'lucide-react';
 import { ALL_MEMBERS } from '../data/members';
 
 interface InitialLevelsFormProps {
@@ -35,10 +35,8 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
   onUnlockInitialLevels,
   currentUser,
 }) => {
-  const isLocked = !!user.initialLevelsSet;
-
   // Group skills by realm
-  const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
+  const skillsByRealm = Object.values(user.skill_tree || {}).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
     const realm = skill.realm || Realm.Planning;
     if (!acc[realm]) acc[realm] = [];
     acc[realm].push(skill);
@@ -55,29 +53,27 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
   }, {} as Record<string, number>);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Page Header */}
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight flex items-center justify-center gap-2">
-          <Shield className="w-7 h-7 text-amber-500 animate-pulse" />
-          Ajuste de Níveis Iniciais
+          <Shield className="w-7 h-7 text-amber-500" />
+          Configurar Níveis de Partida
         </h2>
         <p className="text-text-secondary text-sm">
-          Defina o ponto de partida de cada competidor antes de iniciar as missões de XP.
+          Ajuste os níveis iniciais das habilidades de cada competidor.
         </p>
       </div>
 
-      {/* Selector and Status Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {/* Selector Card */}
-        <div className="p-5 rounded-2xl border border-white/5 bg-primary/40 backdrop-blur-xl shadow-glass flex flex-col gap-3">
-          <label className="text-[10px] uppercase tracking-widest font-black text-text-muted flex items-center gap-1.5 justify-center">
-            <Users className="w-3.5 h-3.5 text-accent-primary" /> Competidor Selecionado
-          </label>
+      {/* Control bar */}
+      <div className="p-4 rounded-2xl border border-white/5 bg-primary/40 backdrop-blur-xl shadow-glass flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Dropdown */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <span className="text-xs font-bold text-text-secondary whitespace-nowrap">Competidor:</span>
           <select
             value={selectedMemberUsername}
             onChange={(e) => onMemberChange(e.target.value)}
-            className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-primary transition-all cursor-pointer"
+            className="bg-[#18181b] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-accent-primary cursor-pointer w-full md:w-48"
           >
             {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
               <option key={m.username} value={m.username}>
@@ -87,92 +83,78 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
           </select>
         </div>
 
-        {/* Status / Actions Card */}
-        <div className="md:col-span-2">
-          {isLocked ? (
-            <div className="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-xl shadow-glass flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 justify-center sm:justify-start">
-                  🔒 Níveis Bloqueados
-                </h4>
-                <p className="text-xs text-text-secondary mt-1">
-                  Os níveis iniciais de <strong className="text-white">{user.name}</strong> estão consolidados e prontos para o fluxo de XP.
-                </p>
-              </div>
-              <button
-                onClick={onUnlockInitialLevels}
-                type="button"
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/30 text-amber-400 hover:text-amber-300 font-black text-xs uppercase tracking-wider py-2 px-5 rounded-xl transition-all duration-300 active:scale-95 shrink-0"
-              >
-                🔓 Destravar Ajuste
-              </button>
-            </div>
+        {/* Status Indicator */}
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-text-muted">Status Atual:</span>
+          {user.initialLevelsSet ? (
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold uppercase tracking-wider text-[10px]">
+              🔒 Definido
+            </span>
           ) : (
-            <div className="p-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-xl shadow-glass flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5 justify-center sm:justify-start">
-                  ⚠️ Ajuste Ativo
-                </h4>
-                <p className="text-xs text-text-secondary mt-1">
-                  Ajuste os níveis abaixo e clique no botão para travar a árvore de <strong className="text-white">{user.name}</strong>.
-                </p>
-              </div>
-              <button
-                onClick={onConfirmInitialLevels}
-                type="button"
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-6 rounded-xl shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shrink-0"
-              >
-                ✓ Confirmar Níveis
-              </button>
-            </div>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold uppercase tracking-wider text-[10px] animate-pulse">
+              🔓 Em Aberto
+            </span>
           )}
+        </div>
+
+        {/* Save button */}
+        <div className="flex gap-2 w-full md:w-auto justify-end">
+          {user.initialLevelsSet && (
+            <button
+              onClick={onUnlockInitialLevels}
+              type="button"
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 font-bold text-xs uppercase py-2 px-4 rounded-xl transition-all"
+            >
+              🔓 Destravar Edição
+            </button>
+          )}
+          <button
+            onClick={onConfirmInitialLevels}
+            type="button"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+          >
+            ✓ Salvar e Travar Níveis
+          </button>
         </div>
       </div>
 
-      {/* Main Form Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left/Middle: Skills list categorized by Realm */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Grid of skills */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Left/Middle: Skills list */}
+        <div className="md:col-span-2 space-y-6">
           {Object.entries(skillsByRealm).map(([realm, skills]) => {
             const config = realmConfig[realm as Realm];
             if (skills.length === 0) return null;
             return (
               <div key={realm} className="p-5 rounded-2xl border border-white/5 bg-primary/20 backdrop-blur-xl shadow-glass space-y-4">
-                {/* Realm Header */}
-                <h3 className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-white/5 ${config?.color || 'text-white'}`}>
-                  <div className={`p-1.5 rounded-lg ${config?.bg || 'bg-white/5'} border ${config?.border || 'border-white/10'}`}>
-                    {config?.icon}
-                  </div>
+                <h3 className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-white/5 ${config?.color || 'text-white'}`}>
+                  {config?.icon}
                   {realm}
                 </h3>
 
-                {/* Skills inside this Realm */}
                 <div className="divide-y divide-white/[0.03]">
                   {skills.map((skill) => (
-                    <div key={skill.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                    <div key={skill.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                       <div>
                         <h4 className="text-sm font-bold text-text-primary">{skill.name}</h4>
-                        <p className="text-[10px] text-text-muted mt-0.5">ID: {skill.id}</p>
                       </div>
 
-                      {/* Control buttons */}
+                      {/* Controls (Always active) */}
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          disabled={isLocked}
                           onClick={() => onAdjustInitialSkillLevel(skill.id, -1)}
-                          className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-text-secondary hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                          className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-text-secondary hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 transition-all"
                         >
                           −
                         </button>
-                        <span className="w-12 text-center font-black text-sm bg-white/5 border border-white/10 text-white rounded-lg py-1">
+                        <span className="w-10 text-center font-black text-sm bg-white/5 border border-white/10 text-white rounded-lg py-1">
                           {skill.level}
                         </span>
                         <button
                           type="button"
-                          disabled={isLocked}
                           onClick={() => onAdjustInitialSkillLevel(skill.id, 1)}
-                          className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-text-secondary hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                          className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-text-secondary hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -185,17 +167,12 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
           })}
         </div>
 
-        {/* Right: Realm Bulk adjustments */}
+        {/* Right side: bulk adjustment */}
         <div className="space-y-6">
           <div className="p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-xl shadow-glass flex flex-col gap-4">
             <div className="flex items-center gap-2 pb-3 border-b border-white/5">
-              <div className="p-1.5 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                <Zap className="w-4 h-4 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest">Ajuste em Bloco</h4>
-                <p className="text-[9px] text-text-muted mt-0.5">Preencher reino inteiro de uma vez</p>
-              </div>
+              <Zap className="w-4 h-4 text-amber-400" />
+              <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest">Ajuste por Reino</h4>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -207,24 +184,18 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
                 return (
                   <div
                     key={realm}
-                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-amber-500/10 transition-all"
+                    className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-amber-500/10 transition-all"
                   >
                     <div className={`flex items-center gap-2 min-w-0 ${config?.color || 'text-white'}`}>
-                      <div className="p-1 bg-white/5 rounded-md border border-white/10 shrink-0">
-                        {config?.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate">{realm}</p>
-                        <p className="text-[9px] text-text-muted">{skillCount} skill{skillCount > 1 ? 's' : ''}</p>
-                      </div>
+                      <div className="shrink-0">{config?.icon}</div>
+                      <p className="text-xs font-bold truncate">{realm}</p>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        disabled={isLocked}
                         onClick={() => onAdjustRealmLevel(realm, currentLevel - 1)}
-                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-xs hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-xs hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 active:scale-90 transition-all"
                       >
                         −
                       </button>
@@ -233,9 +204,8 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
                       </span>
                       <button
                         type="button"
-                        disabled={isLocked}
                         onClick={() => onAdjustRealmLevel(realm, currentLevel + 1)}
-                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-xs hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                        className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-xs hover:bg-green-500/20 hover:border-green-500/40 hover:text-green-300 active:scale-90 transition-all"
                       >
                         +
                       </button>
@@ -244,9 +214,6 @@ const InitialLevelsForm: React.FC<InitialLevelsFormProps> = ({
                 );
               })}
             </div>
-            <p className="text-[9px] text-text-muted text-center pt-1 leading-relaxed">
-              * O ajuste em bloco preenche <strong className="text-amber-400">todas</strong> as habilidades do reino selecionado com o nível escolhido.
-            </p>
           </div>
         </div>
       </div>
