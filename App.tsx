@@ -198,6 +198,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Team missions state
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
@@ -760,7 +761,7 @@ const App: React.FC = () => {
 
   // Autosave to Vercel KV on state change
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !isDataLoaded) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -791,7 +792,7 @@ const App: React.FC = () => {
     }, 1000);
 
   }, [
-    currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    currentUser, isDataLoaded, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory, journalEntries
   ]);
@@ -2412,6 +2413,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               if (missionsData.success) {
                 setTeamMissions(missionsData.missions);
               }
+              setIsDataLoaded(true);
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
@@ -2422,6 +2424,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               } else {
                 setUser(prev => ({ ...prev, name: username }));
               }
+              setIsDataLoaded(true);
             })
             .finally(() => setIsInitialLoading(false));
         }} 
