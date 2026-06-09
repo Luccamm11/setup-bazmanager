@@ -198,8 +198,9 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
-  // Ref (not state) so the autosave guard is synchronous — no extra render cycle.
-  const isLoadingDataRef = useRef(true);
+  // React state to safely gate autosave. Only set to true AFTER initial data has loaded
+  // and has been rendered by the component tree.
+  const [isSyncReady, setIsSyncReady] = useState(false);
 
   // Team missions state
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
@@ -733,10 +734,10 @@ const App: React.FC = () => {
   }, [setSystemMessages]);
 
   // Autosave to Vercel KV on state change.
-  // Blocked while isLoadingDataRef is true to prevent overwriting server data
+  // Blocked while isSyncReady is false to prevent overwriting server data
   // with the default (empty) in-memory state before the initial fetch completes.
   useEffect(() => {
-    if (!currentUser || isLoadingDataRef.current) return;
+    if (!currentUser || !isSyncReady) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -2359,11 +2360,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     return (
       <LoginModal 
         onLoginSuccess={(username, role) => {
-          // Block the autosave BEFORE setting currentUser, because setting
-          // currentUser causes the autosave useEffect to run on the next render.
-          // If the ref is true, the autosave will see it and skip — preventing
-          // it from overwriting server data with the empty default in-memory state.
-          isLoadingDataRef.current = true;
+          // Block the autosave by setting isSyncReady to false.
+          setIsSyncReady(false);
           setCurrentUser(username);
           setUserRole(role);
           setIsInitialLoading(true);
@@ -2394,10 +2392,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                 setTeamMissions(missionsData.missions);
               }
               // Data is now loaded into React state — unblock the autosave.
-              // This is a ref write (synchronous), so the NEXT time the autosave
-              // effect fires (triggered by the state updates above), the guard
-              // will already be false and it will save the CORRECT loaded data.
-              isLoadingDataRef.current = false;
+              setIsSyncReady(true);
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
@@ -2409,7 +2404,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
                 setUser(prev => ({ ...prev, name: username }));
               }
               // Even on error, unblock the autosave so the app keeps working.
-              isLoadingDataRef.current = false;
+              setIsSyncReady(true);
             })
             .finally(() => setIsInitialLoading(false));
         }} 
