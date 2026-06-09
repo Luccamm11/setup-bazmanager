@@ -198,7 +198,8 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  // Ref (not state) so the autosave guard is synchronous — no extra render cycle.
+  const isLoadingDataRef = useRef(true);
 
   // Team missions state
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
@@ -209,7 +210,6 @@ const App: React.FC = () => {
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
-  const memberSaveTimeoutRef = useRef<number | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('googleAiApiKey') || '');
   const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
@@ -452,36 +452,9 @@ const App: React.FC = () => {
   };
 
 
-  // Autosave selected member data for technicians
-  useEffect(() => {
-    if (userRole !== 'technician' || !selectedMember || !selectedMemberData) return;
+  // NOTE: Member data is saved explicitly via handleConfirmInitialLevels.
+  // There is NO separate autosave for selectedMemberData to avoid race conditions.
 
-    if (memberSaveTimeoutRef.current) clearTimeout(memberSaveTimeoutRef.current);
-    memberSaveTimeoutRef.current = window.setTimeout(() => {
-        setSyncStatus('syncing');
-        fetch('/api/persistence', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: selectedMember, data: selectedMemberData })
-        }).then(res => res.json())
-          .then(data => {
-              if (data.success) {
-                  setSyncStatus('synced');
-                  setTimeout(() => setSyncStatus('idle'), 1500);
-              } else {
-                  throw new Error(data.error);
-              }
-          })
-          .catch(err => {
-              console.error("Could not save member state to Vercel KV", err);
-              setSyncStatus('error');
-          });
-    }, 2000);
-
-    return () => {
-        if (memberSaveTimeoutRef.current) clearTimeout(memberSaveTimeoutRef.current);
-    };
-  }, [selectedMemberData, selectedMember, userRole]);
 
   useEffect(() => {
     if (user.name === "Awakened") {
@@ -759,9 +732,11 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
   }, [setSystemMessages]);
 
-  // Autosave to Vercel KV on state change
+  // Autosave to Vercel KV on state change.
+  // Blocked while isLoadingDataRef is true to prevent overwriting server data
+  // with the default (empty) in-memory state before the initial fetch completes.
   useEffect(() => {
-    if (!currentUser || !isDataLoaded) return;
+    if (!currentUser || isLoadingDataRef.current) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -789,10 +764,10 @@ const App: React.FC = () => {
               console.error("Could not save state to Vercel KV", err);
               setSyncStatus('error');
           });
-    }, 1000);
+    }, 1500);
 
   }, [
-    currentUser, isDataLoaded, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory, journalEntries
   ]);
@@ -2384,19 +2359,24 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     return (
       <LoginModal 
         onLoginSuccess={(username, role) => {
+          // Block the autosave BEFORE setting currentUser, because setting
+          // currentUser causes the autosave useEffect to run on the next render.
+          // If the ref is true, the autosave will see it and skip — preventing
+          // it from overwriting server data with the empty default in-memory state.
+          isLoadingDataRef.current = true;
           setCurrentUser(username);
           setUserRole(role);
           setIsInitialLoading(true);
-          
+
           // Load user data and team missions in parallel
           Promise.all([
-            fetch(`/api/persistence?username=${username}`).then(res => res.json()),
-            fetch(`/api/team-missions?member=${username}`).then(res => res.json()),
+            fetch(`/api/persistence?username=${encodeURIComponent(username)}`).then(res => res.json()),
+            fetch(`/api/team-missions?member=${encodeURIComponent(username)}`).then(res => res.json()),
           ])
             .then(([userData, missionsData]) => {
               if (userData.success && userData.data) {
                 const migratedData = migrateLoadedState(userData.data);
-                if (!migratedData.user.name || migratedData.user.name === "Awakened") {
+                if (!migratedData.user.name || migratedData.user.name === 'Awakened') {
                   migratedData.user.name = username;
                 }
                 setStateFromData(migratedData);
@@ -2413,7 +2393,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               if (missionsData.success) {
                 setTeamMissions(missionsData.missions);
               }
-              setIsDataLoaded(true);
+              // Data is now loaded into React state — unblock the autosave.
+              // This is a ref write (synchronous), so the NEXT time the autosave
+              // effect fires (triggered by the state updates above), the guard
+              // will already be false and it will save the CORRECT loaded data.
+              isLoadingDataRef.current = false;
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
@@ -2424,7 +2408,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               } else {
                 setUser(prev => ({ ...prev, name: username }));
               }
-              setIsDataLoaded(true);
+              // Even on error, unblock the autosave so the app keeps working.
+              isLoadingDataRef.current = false;
             })
             .finally(() => setIsInitialLoading(false));
         }} 
