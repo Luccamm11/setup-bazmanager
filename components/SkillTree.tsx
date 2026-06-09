@@ -75,7 +75,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
     onUpdateSkillPriority, onToggleSkillActive 
   } = props;
   const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
-  const progress = (skill.xp / skill.xpToNextLevel) * 100;
+  const progress = skill.xpToNextLevel > 0 ? (skill.xp / skill.xpToNextLevel) * 100 : 0;
 
   const difficultyConfig: { level: TopicDifficulty; label: string; colorClass: string }[] = [
     { level: TopicDifficulty.Easy,      label: t('common:topic_difficulty.easy')[0].toUpperCase(),      colorClass: 'bg-accent-green' },
@@ -113,7 +113,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
       
       <div className="mb-4">
         <div className="flex justify-between text-[11px] font-bold tracking-widest uppercase text-text-secondary mb-1.5 items-center">
-            <span>{t('total_xp')}</span>
+            <span>XP</span>
             <span className="text-white">{skill.xp} / {skill.xpToNextLevel}</span>
         </div>
         <div className="w-full bg-black/40 rounded-full h-2.5 border border-white/5 p-px shadow-inner overflow-hidden">

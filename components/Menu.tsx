@@ -20,7 +20,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     ...(userRole === 'technician' ? [
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
       { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },
-      { view: 'initial_levels' as View, label: 'Níveis Iniciais', desc: 'Ajuste inicial da árvore de habilidades dos competidores', icon: Dna, techOnly: true },
+      { view: 'initial_levels' as View, label: t('nav.initial_levels', 'Níveis Iniciais'), desc: t('nav.initial_levels_desc', 'Ajuste inicial da árvore de habilidades dos competidores'), icon: Dna, techOnly: true },
     ] : []),
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
     { view: 'kanban' as View,   label: t('nav.kanban', 'Quadro Kanban'), desc: t('nav.kanban_desc', 'Gerencie tarefas e missões no formato Kanban'), icon: BarChart2 },

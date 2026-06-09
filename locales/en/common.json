@@ -71,7 +71,9 @@
     "printer_queue": "3D Printer Queue",
     "printer_queue_desc": "Manage usage queue for our 3D printer",
     "5w2h": "5W2H Planning",
-    "5w2h_desc": "Create individual or group action plans"
+    "5w2h_desc": "Create individual or group action plans",
+    "initial_levels": "Initial Levels",
+    "initial_levels_desc": "Initial adjustment of the competitor's skill tree"
   },
   "awards": {
     "Sustainability": "Sustainability",

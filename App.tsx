@@ -173,34 +173,20 @@ const recalculateSkillTree = (
     currentKnowledgeBase: { [id: string]: KnowledgeTopic }
 ): { [id: string]: Skill } => {
     const newSkillTree = JSON.parse(JSON.stringify(currentSkillTree)); // Deep copy
-    // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
-    const topicsBySkill = (Object.values(currentKnowledgeBase) as KnowledgeTopic[]).reduce((acc, topic) => {
-        if (!acc[topic.skillId]) acc[topic.skillId] = [];
-        acc[topic.skillId].push(topic);
-        return acc;
-    }, {} as Record<string, KnowledgeTopic[]>);
-
     for (const skillId in newSkillTree) {
         const skill = newSkillTree[skillId];
-        const skillTopics = topicsBySkill[skillId] || [];
+        const clampedLevel = Math.max(0, Math.min(100, skill.level));
         
-        const totalXp = skillTopics.reduce((sum, topic) => sum + (TOPIC_XP_MAP[topic.difficulty] || 0), 0);
-        
-        let remainingXp = totalXp;
-        let newLevel = 1;
-        let xpForNextLevel = getXpThresholdForSkillLevel(1, skill.xpScale);
-
-        while (remainingXp >= xpForNextLevel) {
-            remainingXp -= xpForNextLevel;
-            newLevel++;
-            xpForNextLevel = getXpThresholdForSkillLevel(newLevel, skill.xpScale);
+        let currentXp = skill.xp;
+        if (currentXp < 0 || currentXp >= 100) {
+            currentXp = 0;
         }
 
         newSkillTree[skillId] = {
             ...skill,
-            level: newLevel,
-            xp: Math.floor(remainingXp),
-            xpToNextLevel: xpForNextLevel,
+            level: clampedLevel,
+            xp: currentXp,
+            xpToNextLevel: 100,
         };
     }
     return newSkillTree;
@@ -291,24 +277,32 @@ const App: React.FC = () => {
       const skill = updatedSkillTree[skillId];
       if (!skill) return prev;
 
-      const newLevel = Math.max(1, Math.min(10, skill.level + delta));
+      const newLevel = Math.max(0, Math.min(100, skill.level + delta));
       updatedSkillTree[skillId] = {
         ...skill,
         level: newLevel,
         xp: 0,
-        xpToNextLevel: getXpThresholdForSkillLevel(newLevel, skill.xpScale),
+        xpToNextLevel: 100,
       };
 
       updatedUser.skill_tree = updatedSkillTree;
 
-      // Sync stats for this realm
+      // Sync stats for this realm (average of skill levels in this realm)
       const realm = skill.realm;
       const skillsInRealm = Object.values(updatedSkillTree).filter((s: any) => s.realm === realm);
       const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+      const averageLevel = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
       updatedUser.stats = {
         ...updatedUser.stats,
-        [realm]: sumLevels || 1
+        [realm]: averageLevel
       };
+
+      // Recalculate overall level as the average of all realms
+      const realmValues = Object.values(updatedUser.stats) as number[];
+      const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
+      const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
+      updatedUser.level_overall = Math.max(0, Math.min(100, overallAvg));
+      updatedUser.rank = getRankForLevel(updatedUser.level_overall);
 
       return { ...prev, user: updatedUser };
     });
@@ -320,7 +314,7 @@ const App: React.FC = () => {
       if (!prev) return prev;
       const updatedUser = { ...prev.user };
       const updatedSkillTree = { ...updatedUser.skill_tree };
-      const clamped = Math.max(1, Math.min(10, newLevel));
+      const clamped = Math.max(0, Math.min(100, newLevel));
 
       Object.keys(updatedSkillTree).forEach(skillId => {
         const skill = updatedSkillTree[skillId];
@@ -329,7 +323,7 @@ const App: React.FC = () => {
             ...skill,
             level: clamped,
             xp: 0,
-            xpToNextLevel: getXpThresholdForSkillLevel(clamped, skill.xpScale),
+            xpToNextLevel: 100,
           };
         }
       });
@@ -337,12 +331,17 @@ const App: React.FC = () => {
       updatedUser.skill_tree = updatedSkillTree;
 
       // Sync stats for this realm
-      const skillsInRealm = Object.values(updatedSkillTree).filter((s: any) => s.realm === realm);
-      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
       updatedUser.stats = {
         ...updatedUser.stats,
-        [realm]: sumLevels || 1
+        [realm]: clamped
       };
+
+      // Recalculate overall level as the average of all realms
+      const realmValues = Object.values(updatedUser.stats) as number[];
+      const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
+      const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
+      updatedUser.level_overall = Math.max(0, Math.min(100, overallAvg));
+      updatedUser.rank = getRankForLevel(updatedUser.level_overall);
 
       return { ...prev, user: updatedUser };
     });
@@ -355,21 +354,24 @@ const App: React.FC = () => {
     const updatedUser = { ...selectedMemberData.user };
     updatedUser.initialLevelsSet = true;
 
-    const totalSkillLevels = Object.values(updatedUser.skill_tree).reduce((sum: number, s: any) => sum + s.level, 0);
-    const baseLevel = Math.max(1, Math.floor(totalSkillLevels / 4));
-    updatedUser.level_overall = baseLevel;
-    updatedUser.xp_total = 0;
-    updatedUser.xpToNextLevel = getXpThresholdForLevel(baseLevel);
-    updatedUser.rank = getRankForLevel(baseLevel);
-
-    // Sync all stats for all realms
+    // Sync all stats for all realms (average of skill levels)
     const newStats: Record<string, number> = {};
     Object.values(Realm).forEach(r => {
       const skillsInRealm = Object.values(updatedUser.skill_tree).filter((s: any) => s.realm === r);
       const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-      newStats[r] = sumLevels || 1;
+      newStats[r] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
     });
     updatedUser.stats = newStats;
+
+    // Calculate overall level as the average of all realms
+    const realmValues = Object.values(updatedUser.stats) as number[];
+    const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
+    const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
+    const baseLevel = Math.max(0, Math.min(100, overallAvg));
+    updatedUser.level_overall = baseLevel;
+    updatedUser.xp_total = 0;
+    updatedUser.xpToNextLevel = 100;
+    updatedUser.rank = getRankForLevel(baseLevel);
 
     const updatedState = { ...selectedMemberData, user: updatedUser };
 
@@ -1088,7 +1090,7 @@ const App: React.FC = () => {
     realm: Realm,
     activitySource: string, // e.g., questId, 'lootbox', topicId
     userUpdateFn?: (user: User) => Partial<User> // Optional function for additional updates
-) => {
+ ) => {
     setUser(prevUser => {
         // --- 1. Calculate final amounts
         let finalXp = Math.abs(baseXp);
@@ -1110,37 +1112,56 @@ const App: React.FC = () => {
              setRewardNotifications(prev => [...prev, { id: `reward-cr-${Date.now()}`, type: 'credits', originalAmount: baseCredits, finalAmount: finalCredits }]);
         }
 
-        // --- 3. Calculate level up
-        let newXpTotal = prevUser.xp_total + finalXp;
-        let newLevel = prevUser.level_overall;
-        let newRank = prevUser.rank;
-        let xpForNext = prevUser.xpToNextLevel;
+        // --- 3. Update skill tree skills for the specific realm
+        const newSkillTree = { ...prevUser.skill_tree };
+        Object.keys(newSkillTree).forEach(skillId => {
+            const skill = newSkillTree[skillId];
+            if (skill && skill.realm === realm) {
+                const currentTotalXp = (skill.level * 100) + skill.xp;
+                const newTotalXp = currentTotalXp + finalXp;
+                const newLevel = Math.max(0, Math.min(100, Math.floor(newTotalXp / 100)));
+                const remainingXp = newTotalXp % 100;
+                newSkillTree[skillId] = {
+                    ...skill,
+                    level: newLevel,
+                    xp: remainingXp,
+                    xpToNextLevel: 100,
+                };
+            }
+        });
 
-        while (newXpTotal >= xpForNext) {
-            newXpTotal -= xpForNext;
-            newLevel++;
-            xpForNext = getXpThresholdForLevel(newLevel);
-            newRank = getRankForLevel(newLevel);
-        }
-        
-        // --- 4. Log Activity
+        // --- 4. Recalculate stats for the realms (average of skill levels)
+        const newStats = { ...prevUser.stats };
+        const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
+        const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+        newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
+
+        // --- 5. Calculate overall level as the average of all realms
+        const realmValues = Object.values(newStats) as number[];
+        const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
+        const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
+        const newOverallLevel = Math.max(0, Math.min(100, overallAvg));
+        const newRank = getRankForLevel(newOverallLevel);
+
+        // --- 6. Log Activity
         const todayStr = getCurrentDate().toISOString().split('T')[0];
         if (finalXp > 0) {
             setActivityLog(prev => [...prev, { date: todayStr, skillId: activitySource, xp: finalXp }]);
         }
-        
-        // --- 5. Construct the new user state
+
+        // --- 7. Construct the new user state
         let updatedUser: User = {
             ...prevUser,
-            level_overall: newLevel,
+            level_overall: newOverallLevel,
             rank: newRank,
-            xp_total: newXpTotal,
-            xpToNextLevel: xpForNext,
-            stats: { ...prevUser.stats, [realm]: (prevUser.stats[realm] || 0) + 1 },
+            xp_total: prevUser.xp_total + finalXp,
+            xpToNextLevel: 100,
+            stats: newStats,
+            skill_tree: newSkillTree,
             wallet: { ...prevUser.wallet, credits: prevUser.wallet.credits + finalCredits },
         };
 
-        // --- 6. Apply any additional updates
+        // --- 8. Apply any additional updates
         if (userUpdateFn) {
             const additionalUpdates = userUpdateFn(updatedUser);
             updatedUser = { ...updatedUser, ...additionalUpdates };
@@ -1148,7 +1169,7 @@ const App: React.FC = () => {
 
         return updatedUser;
     });
-}, [getCurrentDate]);
+ }, [getCurrentDate]);
   const addDevelopmentLog = useCallback((title: string, narrative: string) => {
     const newEntry: StoryLogEntry = {
       id: `dev-log-${Date.now()}`,
@@ -1336,44 +1357,47 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             newKnowledgeBase[topicId].difficulty = newDifficulty;
         }
 
-        // 2. Recalculate skill tree based on new knowledge base
-        const newSkillTree = recalculateSkillTree(prevUser.skill_tree, newKnowledgeBase);
-
-        // 3. Handle User Level and XP
-        let newXpTotal = prevUser.xp_total + xpDifference;
-        let newLevel = prevUser.level_overall;
-        let newRank = prevUser.rank;
-        let xpForNext = prevUser.xpToNextLevel;
-
-        if (xpDifference > 0) {
-            while (newXpTotal >= xpForNext) {
-                newXpTotal -= xpForNext;
-                newLevel++;
-                xpForNext = getXpThresholdForLevel(newLevel);
-                newRank = getRankForLevel(newLevel);
-            }
-        } else if (xpDifference < 0) {
-            while (newXpTotal < 0) {
-                if (newLevel === 1) {
-                    newXpTotal = 0;
-                    break;
-                }
-                newLevel--;
-                const prevLevelXpThreshold = getXpThresholdForLevel(newLevel);
-                newXpTotal += prevLevelXpThreshold;
-                xpForNext = prevLevelXpThreshold;
-                newRank = getRankForLevel(newLevel);
-            }
+        // 2. Update specific skill total XP and level
+        const newSkillTree = { ...prevUser.skill_tree };
+        const skillId = topic.skillId;
+        const skill = newSkillTree[skillId];
+        if (skill) {
+            const currentTotalXp = (skill.level * 100) + skill.xp;
+            const newTotalXp = Math.max(0, currentTotalXp + xpDifference);
+            const newLevel = Math.max(0, Math.min(100, Math.floor(newTotalXp / 100)));
+            newSkillTree[skillId] = {
+                ...skill,
+                level: newLevel,
+                xp: newTotalXp % 100,
+                xpToNextLevel: 100,
+            };
         }
-        
+
+        // 3. Recalculate stats for the realms (average of skill levels)
+        const newStats = { ...prevUser.stats };
+        if (skill) {
+            const realm = skill.realm;
+            const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
+            const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+            newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
+        }
+
+        // 4. Calculate overall level as the average of all realms
+        const realmValues = Object.values(newStats) as number[];
+        const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
+        const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
+        const newOverallLevel = Math.max(0, Math.min(100, overallAvg));
+        const newRank = getRankForLevel(newOverallLevel);
+
         return {
             ...prevUser,
             knowledgeBase: newKnowledgeBase,
             skill_tree: newSkillTree,
-            level_overall: newLevel,
+            stats: newStats,
+            level_overall: newOverallLevel,
             rank: newRank,
-            xp_total: Math.floor(newXpTotal),
-            xpToNextLevel: xpForNext,
+            xp_total: prevUser.xp_total + xpDifference,
+            xpToNextLevel: 100,
         };
     });
 }, [user.knowledgeBase]);
