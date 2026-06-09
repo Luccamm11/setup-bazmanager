@@ -356,12 +356,14 @@ const App: React.FC = () => {
     const updatedUser = { ...selectedMemberData.user };
     updatedUser.initialLevelsSet = true;
 
-    // Sync all stats for all realms (average of skill levels)
-    const newStats: Record<string, number> = {};
+    // Sync all stats for all realms (average of skill levels, keeping configured values for realms without skills)
+    const newStats: Record<string, number> = { ...updatedUser.stats };
     Object.values(Realm).forEach(r => {
       const skillsInRealm = Object.values(updatedUser.skill_tree).filter((s: any) => s.realm === r);
-      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-      newStats[r] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
+      if (skillsInRealm.length > 0) {
+        const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
+        newStats[r] = Math.round(sumLevels / skillsInRealm.length);
+      }
     });
     updatedUser.stats = newStats;
 
@@ -1111,7 +1113,7 @@ const App: React.FC = () => {
         const newStats = { ...prevUser.stats };
         const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
         const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-        newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
+        newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : (prevUser.stats[realm] || 0);
 
         // --- 5. Calculate overall level as the average of all realms
         const realmValues = Object.values(newStats) as number[];
@@ -1356,7 +1358,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             const realm = skill.realm;
             const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
             const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-            newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
+            newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : (prevUser.stats[realm] || 0);
         }
 
         // 4. Calculate overall level as the average of all realms
