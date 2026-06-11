@@ -74,9 +74,7 @@
     "printer_queue": "Fila de Impressora 3D",
     "printer_queue_desc": "Gerencie a fila de uso da nossa impressora 3D",
     "5w2h": "Planejamento 5W2H",
-    "5w2h_desc": "Crie planos de ação individuais ou em grupo",
-    "initial_levels": "Níveis Iniciais",
-    "initial_levels_desc": "Ajuste inicial da árvore de habilidades dos competidores"
+    "5w2h_desc": "Crie planos de ação individuais ou em grupo"
   },
   "awards": {
     "Sustentabilidade": "Sustentabilidade",

@@ -1,33 +1,27 @@
 import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Shield, Award, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getAwardProfile } from '../data/awardProfiles';
-import { ALL_MEMBERS } from '../data/members';
 import type { AwardType } from '../data/members';
 
 interface SkillTreeProps {
   user: User;
-  onUpdateTopicDifficulty: (topicId: string, difficulty: TopicDifficulty) => void;
-  onAddSkill: () => void;
-  onEditSkill: (skill: Skill) => void;
-  onDeleteSkill: (skillId: string) => void;
-  onAddTopicToSkill: (skillId: string) => void;
-  onEditTopic: (topic: KnowledgeTopic) => void;
-  onDeleteTopic: (topicId: string) => void;
-  onOpenBulkAddModal: (skill: Skill) => void;
-  onUpdateSkillPriority: (skillId: string, priority: number) => void;
-  onToggleSkillActive: (skillId: string) => void;
-  onGenerateRecommendations: () => void;
-  
-  // Technician role view props
-  currentUserRole?: string;
-  currentUser?: string;
-  selectedMemberUsername?: string;
-  onMemberChange?: (username: string) => void;
+  onUpdateTopicDifficulty?: (topicId: string, difficulty: TopicDifficulty) => void;
+  onAddSkill?: () => void;
+  onEditSkill?: (skill: Skill) => void;
+  onDeleteSkill?: (skillId: string) => void;
+  onAddTopicToSkill?: (skillId: string) => void;
+  onEditTopic?: (topic: KnowledgeTopic) => void;
+  onDeleteTopic?: (topicId: string) => void;
+  onOpenBulkAddModal?: (skill: Skill) => void;
+  onUpdateSkillPriority?: (skillId: string, priority: number) => void;
+  onToggleSkillActive?: (skillId: string) => void;
+  onGenerateRecommendations?: () => void;
+  readOnly?: boolean;
 }
 
 const realmConfig = {
@@ -41,12 +35,13 @@ const realmConfig = {
   [Realm.FirstCulture]:     { icon: <Globe size={20} />,       color: "text-cyan-400" },
 };
 
-const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficulty; label: string; colorClass: string; onClick: () => void }> = ({ level, current, label, colorClass, onClick }) => {
+const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficulty; label: string; colorClass: string; onClick: () => void; disabled?: boolean }> = ({ level, current, label, colorClass, onClick, disabled }) => {
     const isActive = level === current;
     return (
         <button 
-            onClick={onClick} 
-            className={`w-6 h-6 text-xs font-bold rounded transition-all duration-200 ${isActive ? `${colorClass} text-white shadow-md` : 'bg-border-color text-text-secondary hover:bg-opacity-80'}`}
+            onClick={disabled ? undefined : onClick} 
+            disabled={disabled}
+            className={`w-6 h-6 text-xs font-bold rounded transition-all duration-200 ${isActive ? `${colorClass} text-white shadow-md` : 'bg-border-color text-text-secondary hover:bg-opacity-80'} ${disabled ? 'cursor-default opacity-80' : ''}`}
         >
             {label}
         </button>
@@ -56,26 +51,23 @@ const DifficultyButton: React.FC<{ level: TopicDifficulty; current: TopicDifficu
 interface SkillCardProps {
   skill: Skill; 
   topics: KnowledgeTopic[]; 
-  onUpdateTopicDifficulty: (topicId: string, difficulty: TopicDifficulty) => void;
-  onEditSkill: (skill: Skill) => void;
-  onDeleteSkill: (skillId: string) => void;
-  onAddTopicToSkill: (skillId: string) => void;
-  onEditTopic: (topic: KnowledgeTopic) => void;
-  onDeleteTopic: (topicId: string) => void;
-  onOpenBulkAddModal: (skill: Skill) => void;
-  onUpdateSkillPriority: (skillId: string, priority: number) => void;
-  onToggleSkillActive: (skillId: string) => void;
+  onUpdateTopicDifficulty?: (topicId: string, difficulty: TopicDifficulty) => void;
+  onEditSkill?: (skill: Skill) => void;
+  onDeleteSkill?: (skillId: string) => void;
+  onAddTopicToSkill?: (skillId: string) => void;
+  onEditTopic?: (topic: KnowledgeTopic) => void;
+  onDeleteTopic?: (topicId: string) => void;
+  onOpenBulkAddModal?: (skill: Skill) => void;
+  onUpdateSkillPriority?: (skillId: string, priority: number) => void;
+  onToggleSkillActive?: (skillId: string) => void;
+  readOnly?: boolean;
 }
 
 const SkillCard: React.FC<SkillCardProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
-  const { 
-    skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, 
-    onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
-    onUpdateSkillPriority, onToggleSkillActive 
-  } = props;
+  const { skill, topics, onUpdateTopicDifficulty, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, readOnly } = props;
   const config = realmConfig[skill.realm] || realmConfig[Realm.Planning];
-  const progress = skill.xpToNextLevel > 0 ? (skill.xp / skill.xpToNextLevel) * 100 : 0;
+  const progress = (skill.xp / skill.xpToNextLevel) * 100;
 
   const difficultyConfig: { level: TopicDifficulty; label: string; colorClass: string }[] = [
     { level: TopicDifficulty.Easy,      label: t('common:topic_difficulty.easy')[0].toUpperCase(),      colorClass: 'bg-accent-green' },
@@ -103,17 +95,21 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
         </div>
         <div className='flex items-center space-x-2'>
             <span className="font-black text-lg bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-white shadow-sm mr-2">{t('skill_level', { level: skill.level })}</span>
-            <button title={t('common:states.active')} onClick={() => onToggleSkillActive(skill.id)} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${skill.isActive ? 'bg-accent-primary' : 'bg-white/20'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${skill.isActive ? 'translate-x-4' : 'translate-x-0'}`}/>
-            </button>
-            <button onClick={() => onEditSkill(skill)} className="p-1.5 rounded-md text-text-secondary hover:bg-white/10 hover:text-white transition-colors"><Edit size={16} /></button>
-            <button onClick={() => onDeleteSkill(skill.id)} className="p-1.5 rounded-md text-text-secondary hover:bg-accent-red/20 hover:text-accent-red transition-colors"><Trash2 size={16} /></button>
+            {!readOnly && (
+              <>
+                <button title={t('common:states.active')} onClick={() => onToggleSkillActive?.(skill.id)} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${skill.isActive ? 'bg-accent-primary' : 'bg-white/20'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${skill.isActive ? 'translate-x-4' : 'translate-x-0'}`}/>
+                </button>
+                <button onClick={() => onEditSkill?.(skill)} className="p-1.5 rounded-md text-text-secondary hover:bg-white/10 hover:text-white transition-colors"><Edit size={16} /></button>
+                <button onClick={() => onDeleteSkill?.(skill.id)} className="p-1.5 rounded-md text-text-secondary hover:bg-accent-red/20 hover:text-accent-red transition-colors"><Trash2 size={16} /></button>
+              </>
+            )}
         </div>
       </div>
       
       <div className="mb-4">
         <div className="flex justify-between text-[11px] font-bold tracking-widest uppercase text-text-secondary mb-1.5 items-center">
-            <span>XP</span>
+            <span>{t('total_xp')}</span>
             <span className="text-white">{skill.xp} / {skill.xpToNextLevel}</span>
         </div>
         <div className="w-full bg-black/40 rounded-full h-2.5 border border-white/5 p-px shadow-inner overflow-hidden">
@@ -139,10 +135,12 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
       <div className="mt-4 border-t border-border-color pt-3 flex-grow flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-sm font-semibold text-text-secondary">{t('no_topics')}</h4>
-             <div className="flex items-center space-x-1">
-                <button onClick={() => onAddTopicToSkill(skill.id)} className="text-text-secondary hover:text-accent-primary transition-colors" aria-label={t('add_topic')}><PlusCircle size={18} /></button>
-                <button onClick={() => onOpenBulkAddModal(skill)} className="text-text-secondary hover:text-accent-primary transition-colors" aria-label={t('bulk_add_topics')}><Layers size={18} /></button>
-            </div>
+            {!readOnly && (
+               <div className="flex items-center space-x-1">
+                  <button onClick={() => onAddTopicToSkill?.(skill.id)} className="text-text-secondary hover:text-accent-primary transition-colors" aria-label={t('add_topic')}><PlusCircle size={18} /></button>
+                  <button onClick={() => onOpenBulkAddModal?.(skill)} className="text-text-secondary hover:text-accent-primary transition-colors" aria-label={t('bulk_add_topics')}><Layers size={18} /></button>
+              </div>
+            )}
           </div>
           {topics.length > 0 ? (
             <div className="space-y-2 flex-grow">
@@ -155,10 +153,14 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
                             </div>
                             <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
                                 {difficultyConfig.map(d => (
-                                    <DifficultyButton key={d.level} level={d.level} current={topic.difficulty} label={d.label} colorClass={d.colorClass} onClick={() => onUpdateTopicDifficulty(topic.id, d.level)} />
+                                    <DifficultyButton key={d.level} level={d.level} current={topic.difficulty} label={d.label} colorClass={d.colorClass} disabled={readOnly} onClick={() => onUpdateTopicDifficulty?.(topic.id, d.level)} />
                                 ))}
-                                <button onClick={() => onEditTopic(topic)} className="text-text-secondary hover:text-white ml-2"><Edit size={14} /></button>
-                                <button onClick={() => onDeleteTopic(topic.id)} className="text-text-secondary hover:text-accent-red"><Trash2 size={14} /></button>
+                                {!readOnly && (
+                                  <>
+                                    <button onClick={() => onEditTopic?.(topic)} className="text-text-secondary hover:text-white ml-2"><Edit size={14} /></button>
+                                    <button onClick={() => onDeleteTopic?.(topic.id)} className="text-text-secondary hover:text-accent-red"><Trash2 size={14} /></button>
+                                  </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -176,12 +178,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
 
 const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
-  const { 
-    user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, 
-    onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, 
-    onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations,
-    currentUserRole, currentUser, selectedMemberUsername, onMemberChange
-  } = props;
+  const { user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations, readOnly } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
   const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
@@ -214,12 +211,13 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
 
   const awardType = user.awardFocus as AwardType;
   const awardProfile = awardType ? getAwardProfile(awardType) : null;
-  
-  const radarData = Object.values(Realm).map(realm => {
+  let radarData;
+
+  radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
       const skillsInRealm = skillsByRealm[realm as Realm] || [];
       const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
       const subject = t(`common:realm.${realm}`);
-      const val = totalLevel + Math.floor(user.level_overall / 4); 
+      const val = totalLevel + Math.floor(user.level_overall / 4); // Small bonus based on overall level
       return { subject, A: val, fullMark: Math.max(30, val + 5) };
   });
 
@@ -231,44 +229,8 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
 
   return (
     <motion.div className="space-y-8" variants={containerVariants} initial="hidden" animate="visible">
-      
-      {/* 1. Technician Member Selection Dropdown */}
-      {currentUserRole === 'technician' && onMemberChange && (
-        <div className="max-w-xs mx-auto mb-2 p-4 rounded-2xl border border-white/5 bg-primary/30 backdrop-blur-md flex flex-col gap-2 shadow-inner">
-          <label className="text-[10px] uppercase tracking-widest font-black text-text-muted text-center flex items-center justify-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-accent-primary" /> Visualizar Árvore do Competidor
-          </label>
-          <select
-            value={selectedMemberUsername || ''}
-            onChange={(e) => onMemberChange(e.target.value)}
-            style={{ backgroundColor: '#18181b', color: '#ffffff' }}
-            className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-primary transition-all duration-300 cursor-pointer"
-          >
-            {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
-              <option key={m.username} value={m.username} style={{ backgroundColor: '#18181b', color: '#ffffff' }}>
-                {m.displayName} ({m.awardFocus || 'Geral'})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* 2. Info Banner: Member waiting for setup */}
-      {currentUserRole === 'member' && !user.initialLevelsSet && (
-        <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-center shadow-glass">
-          <h4 className="text-sm text-amber-400 font-black uppercase tracking-wider flex items-center justify-center gap-2">
-            ⚠️ Aguardando Definição de Níveis Iniciais
-          </h4>
-          <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
-            Seus níveis de habilidade iniciais ainda não foram configurados pelo Técnico. A progressão de XP e a conclusão de missões e tarefas serão liberadas assim que seus níveis iniciais forem travados.
-          </p>
-        </div>
-      )}
-
       <div className='text-center'>
-        <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">
-          {t('skill_tree')} {user.name !== currentUser ? `— ${user.name}` : ''}
-        </h2>
+        <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">{t('skill_tree')}</h2>
         <p className="text-text-secondary mb-6">{t('skill_tree_subtitle')}</p>
         
         <motion.div variants={itemVariants} className="w-full max-w-2xl mx-auto h-[350px] sm:h-[400px] bg-primary/20 backdrop-blur-xl border border-white/5 rounded-3xl p-4 shadow-glass mb-10 relative overflow-hidden group">
@@ -284,16 +246,18 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
             </ResponsiveContainer>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex justify-center items-center gap-3 sm:gap-4 mb-8 flex-wrap">
-            <button onClick={onAddSkill} className="flex items-center space-x-2 bg-gradient-to-r from-accent-green to-emerald-500 hover:from-emerald-500 hover:to-accent-green text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-primary hover:shadow-glow-secondary active:scale-95 border border-white/10">
-                <PlusCircle size={18} />
-                <span>{t('add_skill')}</span>
-            </button>
-             <button onClick={onGenerateRecommendations} className="flex items-center space-x-2 bg-gradient-to-r from-accent-tertiary to-purple-500 hover:from-purple-500 hover:to-accent-tertiary text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-tertiary hover:shadow-glow-primary active:scale-95 border border-white/10">
-                <Wand2 size={18} />
-                <span>{t('generate_topics')}</span>
-            </button>
-        </motion.div>
+        {!readOnly && (
+          <motion.div variants={itemVariants} className="flex justify-center items-center gap-3 sm:gap-4 mb-8 flex-wrap">
+              <button onClick={onAddSkill} className="flex items-center space-x-2 bg-gradient-to-r from-accent-green to-emerald-500 hover:from-emerald-500 hover:to-accent-green text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-primary hover:shadow-glow-secondary active:scale-95 border border-white/10">
+                  <PlusCircle size={18} />
+                  <span>{t('add_skill')}</span>
+              </button>
+               <button onClick={onGenerateRecommendations} className="flex items-center space-x-2 bg-gradient-to-r from-accent-tertiary to-purple-500 hover:from-purple-500 hover:to-accent-tertiary text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-tertiary hover:shadow-glow-primary active:scale-95 border border-white/10">
+                  <Wand2 size={18} />
+                  <span>{t('generate_topics')}</span>
+              </button>
+          </motion.div>
+        )}
         
         <motion.div variants={itemVariants} className="max-w-xl mx-auto mb-10">
             <div className="relative group">
@@ -311,39 +275,35 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
         </motion.div>
       </div>
 
-      {/* Skills grid */}
-      <div className="w-full">
-        <div className="space-y-6">
-          {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
-            <motion.div variants={itemVariants} key={realm} className="bg-white/[0.02] p-6 rounded-3xl border border-white/[0.02]">
-              <h3 className={`text-xl sm:text-2xl font-black mb-6 capitalize flex items-center gap-3 ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>
-                <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+      {Object.entries(filteredSkillsByRealm).map(([realm, skillData]) => (
+        <motion.div variants={itemVariants} key={realm} className="bg-white/[0.02] p-6 rounded-3xl border border-white/[0.02]">
+          <h3 className={`text-xl sm:text-2xl font-black mb-6 capitalize flex items-center gap-3 ${realmConfig[realm as Realm]?.color || 'text-text-primary'}`}>
+              <div className="p-2 bg-white/5 rounded-xl border border-white/10">
                   {realmConfig[realm as Realm]?.icon}
-                </div>
-                {t(`common:realm.${realm}`)}
-                <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4"></div>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {skillData.map(({ skill, topics }) => (
-                  <SkillCard 
+              </div>
+              {t(`common:realm.${realm}`)}
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4"></div>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {skillData.map(({ skill, topics }) => (
+                <SkillCard 
                     key={skill.id} skill={skill} topics={topics}
                     onUpdateTopicDifficulty={onUpdateTopicDifficulty} onEditSkill={onEditSkill}
                     onDeleteSkill={onDeleteSkill} onAddTopicToSkill={onAddTopicToSkill}
                     onEditTopic={onEditTopic} onDeleteTopic={onDeleteTopic}
                     onOpenBulkAddModal={onOpenBulkAddModal} onUpdateSkillPriority={onUpdateSkillPriority}
                     onToggleSkillActive={onToggleSkillActive}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          ))}
-          {Object.keys(filteredSkillsByRealm).length === 0 && searchQuery && (
-            <motion.div variants={itemVariants} className="text-center py-10 bg-white/5 border border-dashed border-white/10 rounded-2xl w-full max-w-xl mx-auto backdrop-blur-sm">
-              <p className="text-text-secondary font-medium">{t('no_topics')}</p>
-            </motion.div>
-          )}
-        </div>
-      </div>
+                    readOnly={readOnly}
+                />
+            ))}
+          </div>
+        </motion.div>
+      ))}
+      {Object.keys(filteredSkillsByRealm).length === 0 && searchQuery && (
+        <motion.div variants={itemVariants} className="text-center py-10 bg-white/5 border border-dashed border-white/10 rounded-2xl w-full max-w-xl mx-auto backdrop-blur-sm">
+          <p className="text-text-secondary font-medium">{t('no_topics')}</p>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

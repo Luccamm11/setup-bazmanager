@@ -9,7 +9,7 @@ import Header from './components/Header';
 import Home from './components/Home';
 import Dashboard from './components/DashboardTab';
 import SkillTree from './components/SkillTree';
-import InitialLevelsForm from './components/InitialLevelsForm';
+import TechSkillOverview from './components/TechSkillOverview';
 import StoryLog from './components/StoryLog';
 import Analytics from './components/Analytics';
 import Store from './components/Store';
@@ -57,7 +57,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare } from 'lucide-react';
 
-type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'initial_levels';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -173,20 +173,34 @@ const recalculateSkillTree = (
     currentKnowledgeBase: { [id: string]: KnowledgeTopic }
 ): { [id: string]: Skill } => {
     const newSkillTree = JSON.parse(JSON.stringify(currentSkillTree)); // Deep copy
+    // Fix: Cast Object.values to KnowledgeTopic[] to ensure correct type inference.
+    const topicsBySkill = (Object.values(currentKnowledgeBase) as KnowledgeTopic[]).reduce((acc, topic) => {
+        if (!acc[topic.skillId]) acc[topic.skillId] = [];
+        acc[topic.skillId].push(topic);
+        return acc;
+    }, {} as Record<string, KnowledgeTopic[]>);
+
     for (const skillId in newSkillTree) {
         const skill = newSkillTree[skillId];
-        const clampedLevel = Math.max(0, Math.min(100, skill.level));
+        const skillTopics = topicsBySkill[skillId] || [];
         
-        let currentXp = skill.xp;
-        if (currentXp < 0 || currentXp >= 100) {
-            currentXp = 0;
+        const totalXp = skillTopics.reduce((sum, topic) => sum + (TOPIC_XP_MAP[topic.difficulty] || 0), 0);
+        
+        let remainingXp = totalXp;
+        let newLevel = 1;
+        let xpForNextLevel = getXpThresholdForSkillLevel(1, skill.xpScale);
+
+        while (remainingXp >= xpForNextLevel) {
+            remainingXp -= xpForNextLevel;
+            newLevel++;
+            xpForNextLevel = getXpThresholdForSkillLevel(newLevel, skill.xpScale);
         }
 
         newSkillTree[skillId] = {
             ...skill,
-            level: clampedLevel,
-            xp: currentXp,
-            xpToNextLevel: 100,
+            level: newLevel,
+            xp: Math.floor(remainingXp),
+            xpToNextLevel: xpForNextLevel,
         };
     }
     return newSkillTree;
@@ -198,9 +212,6 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
-  // React state to safely gate autosave. Only set to true AFTER initial data has loaded
-  // and has been rendered by the component tree.
-  const [isSyncReady, setIsSyncReady] = useState(false);
 
   // Team missions state
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
@@ -231,233 +242,6 @@ const App: React.FC = () => {
   const [isLoadingQuests, setIsLoadingQuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(null);
-
-  // --- Technician View & Initial Levels States ---
-  const [selectedMember, setSelectedMember] = useState<string>('Lucca');
-  const [selectedMemberData, setSelectedMemberData] = useState<any | null>(null);
-
-  const fetchSelectedMemberData = useCallback(async (username: string) => {
-    try {
-      const res = await fetch(`/api/persistence?username=${username}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        const migrated = migrateLoadedState(data.data);
-        if (!migrated.user.name || migrated.user.name === "Awakened") {
-          migrated.user.name = username;
-        }
-        setSelectedMemberData(migrated);
-      } else {
-        const member = getMemberByUsername(username);
-        if (member) {
-          const initial = getInitialUserData(member);
-          setSelectedMemberData(initial);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch selected member data:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Only fetch when there's no data yet OR when the member changes (handled by handleMemberChange clearing to null)
-    if (userRole === 'technician' && (view === 'skill_tree' || view === 'initial_levels') && selectedMember && !selectedMemberData) {
-      fetchSelectedMemberData(selectedMember);
-    }
-  }, [view, selectedMember, userRole, fetchSelectedMemberData, selectedMemberData]);
-
-  const handleMemberChange = (username: string) => {
-    setSelectedMember(username);
-    setSelectedMemberData(null);
-  };
-
-  const handleAdjustInitialSkillLevel = (skillId: string, delta: number) => {
-    if (!selectedMemberData) return;
-    setSelectedMemberData((prev: any) => {
-      if (!prev) return prev;
-      const updatedUser = { ...prev.user };
-      const updatedSkillTree = { ...updatedUser.skill_tree };
-      const skill = updatedSkillTree[skillId];
-      if (!skill) return prev;
-
-      const newLevel = Math.max(0, Math.min(100, skill.level + delta));
-      updatedSkillTree[skillId] = {
-        ...skill,
-        level: newLevel,
-        xp: 0,
-        xpToNextLevel: 100,
-      };
-
-      updatedUser.skill_tree = updatedSkillTree;
-
-      // Sync stats for this realm (average of skill levels in this realm)
-      const realm = skill.realm;
-      const skillsInRealm = Object.values(updatedSkillTree).filter((s: any) => s.realm === realm);
-      const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-      const averageLevel = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : 0;
-      updatedUser.stats = {
-        ...updatedUser.stats,
-        [realm]: averageLevel
-      };
-
-      // Recalculate overall level as the average of all realms
-      const realmValues = Object.values(updatedUser.stats) as number[];
-      const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
-      const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
-      updatedUser.level_overall = Math.max(0, Math.min(100, overallAvg));
-      updatedUser.rank = getRankForLevel(updatedUser.level_overall);
-
-      return { ...prev, user: updatedUser };
-    });
-  };
-
-  const handleAdjustRealmLevel = (realm: string, newLevel: number) => {
-    if (!selectedMemberData) return;
-    setSelectedMemberData((prev: any) => {
-      if (!prev) return prev;
-      const updatedUser = { ...prev.user };
-      const updatedSkillTree = { ...updatedUser.skill_tree };
-      const clamped = Math.max(0, Math.min(100, newLevel));
-
-      Object.keys(updatedSkillTree).forEach(skillId => {
-        const skill = updatedSkillTree[skillId];
-        if (skill && skill.realm === realm) {
-          updatedSkillTree[skillId] = {
-            ...skill,
-            level: clamped,
-            xp: 0,
-            xpToNextLevel: 100,
-          };
-        }
-      });
-
-      updatedUser.skill_tree = updatedSkillTree;
-
-      // Sync stats for this realm
-      updatedUser.stats = {
-        ...updatedUser.stats,
-        [realm]: clamped
-      };
-
-      // Recalculate overall level as the average of all realms
-      const realmValues = Object.values(updatedUser.stats) as number[];
-      const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
-      const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
-      updatedUser.level_overall = Math.max(0, Math.min(100, overallAvg));
-      updatedUser.rank = getRankForLevel(updatedUser.level_overall);
-
-      return { ...prev, user: updatedUser };
-    });
-  };
-
-  const handleConfirmInitialLevels = async () => {
-    if (!selectedMemberData || !selectedMember) return;
-    setSyncStatus('syncing');
-
-    const updatedUser = { ...selectedMemberData.user };
-    updatedUser.initialLevelsSet = true;
-
-    // Sync all stats for all realms (average of skill levels, keeping configured values for realms without skills)
-    const newStats: Record<string, number> = { ...updatedUser.stats };
-    Object.values(Realm).forEach(r => {
-      const skillsInRealm = Object.values(updatedUser.skill_tree).filter((s: any) => s.realm === r);
-      if (skillsInRealm.length > 0) {
-        const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-        newStats[r] = Math.round(sumLevels / skillsInRealm.length);
-      }
-    });
-    updatedUser.stats = newStats;
-
-    // Calculate overall level as the average of all realms
-    const realmValues = Object.values(updatedUser.stats) as number[];
-    const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
-    const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
-    const baseLevel = Math.max(0, Math.min(100, overallAvg));
-    updatedUser.level_overall = baseLevel;
-    updatedUser.xp_total = 0;
-    updatedUser.xpToNextLevel = 100;
-    updatedUser.rank = getRankForLevel(baseLevel);
-
-    const updatedState = { ...selectedMemberData, user: updatedUser };
-
-    try {
-      const res = await fetch('/api/persistence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: selectedMember, data: updatedState }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSelectedMemberData(updatedState);
-        setSyncStatus('synced');
-        setSystemMessages(prev => [
-          { 
-            id: `initial-levels-confirmed-${Date.now()}`, 
-            text: `Níveis iniciais de ${selectedMember} definidos com sucesso! Nível Geral: ${baseLevel}.`, 
-            timestamp: 'Just now', 
-            type: 'reward' 
-          }, 
-          ...prev
-        ]);
-        setTimeout(() => setSyncStatus('idle'), 1500);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (err) {
-      console.error("Failed to save initial levels:", err);
-      setSyncStatus('error');
-    }
-  };
-
-  const handleUnlockInitialLevels = async () => {
-    if (!selectedMemberData || !selectedMember) return;
-
-    // Build the new state with initialLevelsSet = false
-    const unlockedState = {
-      ...selectedMemberData,
-      user: {
-        ...selectedMemberData.user,
-        initialLevelsSet: false,
-      },
-    };
-
-    // Update local state immediately so UI re-renders right away
-    setSelectedMemberData(unlockedState);
-
-    // Persist to server immediately (don't wait for autosave debounce)
-    try {
-      setSyncStatus('syncing');
-      const res = await fetch('/api/persistence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: selectedMember, data: unlockedState }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSyncStatus('synced');
-        setTimeout(() => setSyncStatus('idle'), 1500);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (err) {
-      console.error('Failed to unlock initial levels on server:', err);
-      setSyncStatus('error');
-    }
-
-    setSystemMessages(prev => [
-      {
-        id: `initial-levels-unlocked-${Date.now()}`,
-        text: `Níveis iniciais de ${selectedMember} destravados para edição. Use os botões +/- em cada habilidade para definir o nível.`,
-        timestamp: 'Just now',
-        type: 'info'
-      },
-      ...prev
-    ]);
-  };
-
-
-  // NOTE: Member data is saved explicitly via handleConfirmInitialLevels.
-  // There is NO separate autosave for selectedMemberData to avoid race conditions.
-
 
   useEffect(() => {
     if (user.name === "Awakened") {
@@ -735,11 +519,9 @@ const App: React.FC = () => {
     setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
   }, [setSystemMessages]);
 
-  // Autosave to Vercel KV on state change.
-  // Blocked while isSyncReady is false to prevent overwriting server data
-  // with the default (empty) in-memory state before the initial fetch completes.
+  // Autosave to Vercel KV on state change
   useEffect(() => {
-    if (!currentUser || !isSyncReady) return;
+    if (!currentUser) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -767,7 +549,7 @@ const App: React.FC = () => {
               console.error("Could not save state to Vercel KV", err);
               setSyncStatus('error');
           });
-    }, 1500);
+    }, 1000);
 
   }, [
     currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -1069,7 +851,7 @@ const App: React.FC = () => {
     realm: Realm,
     activitySource: string, // e.g., questId, 'lootbox', topicId
     userUpdateFn?: (user: User) => Partial<User> // Optional function for additional updates
- ) => {
+) => {
     setUser(prevUser => {
         // --- 1. Calculate final amounts
         let finalXp = Math.abs(baseXp);
@@ -1091,56 +873,37 @@ const App: React.FC = () => {
              setRewardNotifications(prev => [...prev, { id: `reward-cr-${Date.now()}`, type: 'credits', originalAmount: baseCredits, finalAmount: finalCredits }]);
         }
 
-        // --- 3. Update skill tree skills for the specific realm
-        const newSkillTree = { ...prevUser.skill_tree };
-        Object.keys(newSkillTree).forEach(skillId => {
-            const skill = newSkillTree[skillId];
-            if (skill && skill.realm === realm) {
-                const currentTotalXp = (skill.level * 100) + skill.xp;
-                const newTotalXp = currentTotalXp + finalXp;
-                const newLevel = Math.max(0, Math.min(100, Math.floor(newTotalXp / 100)));
-                const remainingXp = newTotalXp % 100;
-                newSkillTree[skillId] = {
-                    ...skill,
-                    level: newLevel,
-                    xp: remainingXp,
-                    xpToNextLevel: 100,
-                };
-            }
-        });
+        // --- 3. Calculate level up
+        let newXpTotal = prevUser.xp_total + finalXp;
+        let newLevel = prevUser.level_overall;
+        let newRank = prevUser.rank;
+        let xpForNext = prevUser.xpToNextLevel;
 
-        // --- 4. Recalculate stats for the realms (average of skill levels)
-        const newStats = { ...prevUser.stats };
-        const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
-        const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-        newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : (prevUser.stats[realm] || 0);
-
-        // --- 5. Calculate overall level as the average of all realms
-        const realmValues = Object.values(newStats) as number[];
-        const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
-        const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
-        const newOverallLevel = Math.max(0, Math.min(100, overallAvg));
-        const newRank = getRankForLevel(newOverallLevel);
-
-        // --- 6. Log Activity
+        while (newXpTotal >= xpForNext) {
+            newXpTotal -= xpForNext;
+            newLevel++;
+            xpForNext = getXpThresholdForLevel(newLevel);
+            newRank = getRankForLevel(newLevel);
+        }
+        
+        // --- 4. Log Activity
         const todayStr = getCurrentDate().toISOString().split('T')[0];
         if (finalXp > 0) {
             setActivityLog(prev => [...prev, { date: todayStr, skillId: activitySource, xp: finalXp }]);
         }
-
-        // --- 7. Construct the new user state
+        
+        // --- 5. Construct the new user state
         let updatedUser: User = {
             ...prevUser,
-            level_overall: newOverallLevel,
+            level_overall: newLevel,
             rank: newRank,
-            xp_total: prevUser.xp_total + finalXp,
-            xpToNextLevel: 100,
-            stats: newStats,
-            skill_tree: newSkillTree,
+            xp_total: newXpTotal,
+            xpToNextLevel: xpForNext,
+            stats: { ...prevUser.stats, [realm]: (prevUser.stats[realm] || 0) + 1 },
             wallet: { ...prevUser.wallet, credits: prevUser.wallet.credits + finalCredits },
         };
 
-        // --- 8. Apply any additional updates
+        // --- 6. Apply any additional updates
         if (userUpdateFn) {
             const additionalUpdates = userUpdateFn(updatedUser);
             updatedUser = { ...updatedUser, ...additionalUpdates };
@@ -1148,7 +911,7 @@ const App: React.FC = () => {
 
         return updatedUser;
     });
- }, [getCurrentDate]);
+}, [getCurrentDate]);
   const addDevelopmentLog = useCallback((title: string, narrative: string) => {
     const newEntry: StoryLogEntry = {
       id: `dev-log-${Date.now()}`,
@@ -1336,47 +1099,44 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             newKnowledgeBase[topicId].difficulty = newDifficulty;
         }
 
-        // 2. Update specific skill total XP and level
-        const newSkillTree = { ...prevUser.skill_tree };
-        const skillId = topic.skillId;
-        const skill = newSkillTree[skillId];
-        if (skill) {
-            const currentTotalXp = (skill.level * 100) + skill.xp;
-            const newTotalXp = Math.max(0, currentTotalXp + xpDifference);
-            const newLevel = Math.max(0, Math.min(100, Math.floor(newTotalXp / 100)));
-            newSkillTree[skillId] = {
-                ...skill,
-                level: newLevel,
-                xp: newTotalXp % 100,
-                xpToNextLevel: 100,
-            };
+        // 2. Recalculate skill tree based on new knowledge base
+        const newSkillTree = recalculateSkillTree(prevUser.skill_tree, newKnowledgeBase);
+
+        // 3. Handle User Level and XP
+        let newXpTotal = prevUser.xp_total + xpDifference;
+        let newLevel = prevUser.level_overall;
+        let newRank = prevUser.rank;
+        let xpForNext = prevUser.xpToNextLevel;
+
+        if (xpDifference > 0) {
+            while (newXpTotal >= xpForNext) {
+                newXpTotal -= xpForNext;
+                newLevel++;
+                xpForNext = getXpThresholdForLevel(newLevel);
+                newRank = getRankForLevel(newLevel);
+            }
+        } else if (xpDifference < 0) {
+            while (newXpTotal < 0) {
+                if (newLevel === 1) {
+                    newXpTotal = 0;
+                    break;
+                }
+                newLevel--;
+                const prevLevelXpThreshold = getXpThresholdForLevel(newLevel);
+                newXpTotal += prevLevelXpThreshold;
+                xpForNext = prevLevelXpThreshold;
+                newRank = getRankForLevel(newLevel);
+            }
         }
-
-        // 3. Recalculate stats for the realms (average of skill levels)
-        const newStats = { ...prevUser.stats };
-        if (skill) {
-            const realm = skill.realm;
-            const skillsInRealm = Object.values(newSkillTree).filter((s: any) => s.realm === realm);
-            const sumLevels = skillsInRealm.reduce((sum: number, s: any) => sum + s.level, 0);
-            newStats[realm] = skillsInRealm.length > 0 ? Math.round(sumLevels / skillsInRealm.length) : (prevUser.stats[realm] || 0);
-        }
-
-        // 4. Calculate overall level as the average of all realms
-        const realmValues = Object.values(newStats) as number[];
-        const sumRealms = realmValues.reduce((sum: number, val: number) => sum + val, 0);
-        const overallAvg = realmValues.length > 0 ? Math.round(sumRealms / realmValues.length) : 0;
-        const newOverallLevel = Math.max(0, Math.min(100, overallAvg));
-        const newRank = getRankForLevel(newOverallLevel);
-
+        
         return {
             ...prevUser,
             knowledgeBase: newKnowledgeBase,
             skill_tree: newSkillTree,
-            stats: newStats,
-            level_overall: newOverallLevel,
+            level_overall: newLevel,
             rank: newRank,
-            xp_total: prevUser.xp_total + xpDifference,
-            xpToNextLevel: 100,
+            xp_total: Math.floor(newXpTotal),
+            xpToNextLevel: xpForNext,
         };
     });
 }, [user.knowledgeBase]);
@@ -2200,123 +1960,11 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     switch(view) {
       case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
-      case 'initial_levels': {
-        if (userRole !== 'technician') {
-          return <Menu onNavigate={setView} userRole={userRole} />;
+      case 'skill_tree':
+        if (userRole === 'technician') {
+          return <TechSkillOverview currentUser={currentUser || ''} />;
         }
-        if (!selectedMemberData) {
-          return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-              <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-glow-primary"></div>
-              <p className="text-text-secondary text-sm font-medium animate-pulse">Carregando formulário...</p>
-            </div>
-          );
-        }
-        return (
-          <InitialLevelsForm 
-            user={selectedMemberData.user}
-            selectedMemberUsername={selectedMember}
-            onMemberChange={handleMemberChange}
-            onConfirmInitialLevels={handleConfirmInitialLevels}
-            onAdjustRealmLevel={handleAdjustRealmLevel}
-            onUnlockInitialLevels={handleUnlockInitialLevels}
-            currentUser={currentUser || ''}
-          />
-        );
-      }
-      case 'skill_tree': {
-        if (userRole === 'technician' && !selectedMemberData) {
-          return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-              <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-glow-primary"></div>
-              <p className="text-text-secondary text-sm font-medium animate-pulse">Carregando árvore do competidor...</p>
-            </div>
-          );
-        }
-        const isEditingMember = userRole === 'technician' && selectedMemberData;
-        const targetUser = isEditingMember ? selectedMemberData.user : user;
-        const setTargetUser = isEditingMember
-          ? (updater: any) => setSelectedMemberData((prev: any) => ({ ...prev, user: typeof updater === 'function' ? updater(prev.user) : updater }))
-          : setUser;
-
-        const handleUpdateTopicDifficultyWrapped = (topicId: string, newDifficulty: TopicDifficulty) => {
-          const topic = targetUser.knowledgeBase[topicId];
-          if (!topic || topic.difficulty === newDifficulty) return;
-          const oldDifficulty = topic.difficulty;
-          const oldTopicXp = TOPIC_XP_MAP[oldDifficulty] || 0;
-          const newTopicXp = TOPIC_XP_MAP[newDifficulty] || 0;
-          const xpDifference = newTopicXp - oldTopicXp;
-          setTargetUser((prevUser: User) => {
-            const newKnowledgeBase = { ...prevUser.knowledgeBase };
-            if (newKnowledgeBase[topicId]) {
-              newKnowledgeBase[topicId].difficulty = newDifficulty;
-            }
-            const skillId = topic.skillId;
-            const skill = prevUser.skill_tree[skillId];
-            let newSkillTree = { ...prevUser.skill_tree };
-            if (skill) {
-              const oldSkillXp = skill.xp;
-              const newSkillXp = Math.max(0, oldSkillXp + xpDifference);
-              let calcLevel = 1;
-              let calcXpForNext = getXpThresholdForSkillLevel(1, skill.xpScale);
-              let remainingXp = newSkillXp;
-              while (remainingXp >= calcXpForNext) {
-                remainingXp -= calcXpForNext;
-                calcLevel++;
-                calcXpForNext = getXpThresholdForSkillLevel(calcLevel, skill.xpScale);
-              }
-              newSkillTree[skillId] = {
-                ...skill,
-                level: calcLevel,
-                xp: Math.floor(remainingXp),
-                xpToNextLevel: calcXpForNext,
-              };
-            }
-            return { ...prevUser, skill_tree: newSkillTree, knowledgeBase: newKnowledgeBase };
-          });
-        };
-
-        const handleUpdateSkillPriorityWrapped = (skillId: string, priority: number) => {
-          setTargetUser((prevUser: User) => {
-            const newSkillTree = { ...prevUser.skill_tree };
-            if (newSkillTree[skillId]) {
-              newSkillTree[skillId].priority = priority;
-            }
-            return { ...prevUser, skill_tree: newSkillTree };
-          });
-        };
-
-        const handleToggleSkillActiveWrapped = (skillId: string) => {
-          setTargetUser((prevUser: User) => {
-            const newSkillTree = { ...prevUser.skill_tree };
-            if (newSkillTree[skillId]) {
-              newSkillTree[skillId].isActive = !newSkillTree[skillId].isActive;
-            }
-            return { ...prevUser, skill_tree: newSkillTree };
-          });
-        };
-
-        return (
-          <SkillTree 
-            user={targetUser} 
-            onUpdateTopicDifficulty={handleUpdateTopicDifficultyWrapped} 
-            onAddSkill={() => setIsSkillModalOpen(true)} 
-            onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} 
-            onDeleteSkill={handleDeleteSkill} 
-            onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} 
-            onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} 
-            onDeleteTopic={handleDeleteTopic} 
-            onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} 
-            onUpdateSkillPriority={handleUpdateSkillPriorityWrapped} 
-            onToggleSkillActive={handleToggleSkillActiveWrapped} 
-            onGenerateRecommendations={handleGenerateRecommendations}
-            currentUserRole={userRole}
-            currentUser={currentUser || ''}
-            selectedMemberUsername={selectedMember}
-            onMemberChange={handleMemberChange}
-          />
-        );
-      }
+        return <SkillTree user={user} onUpdateTopicDifficulty={handleUpdateTopicDifficulty} onAddSkill={() => setIsSkillModalOpen(true)} onEditSkill={(skill) => { setEditingSkill(skill); setIsSkillModalOpen(true); }} onDeleteSkill={handleDeleteSkill} onAddTopicToSkill={(skillId) => { setDefaultSkillForTopic(skillId); setIsTopicModalOpen(true); }} onEditTopic={(topic) => { setEditingTopic(topic); setIsTopicModalOpen(true); }} onDeleteTopic={handleDeleteTopic} onOpenBulkAddModal={(skill) => { setSkillForBulkAdd(skill); setIsBulkAddModalOpen(true); }} onUpdateSkillPriority={handleUpdateSkillPriority} onToggleSkillActive={handleToggleSkillActive} onGenerateRecommendations={handleGenerateRecommendations} />;
       case 'chatbot': return <Chatbot history={chatHistory} onSendMessage={handleSendMessage} isLoading={isChatbotLoading} completedMajorGoals={user.completedMajorGoals || []} onJournalSubmit={handleJournalSubmit} />;
       case 'inventory': return <RoboticsInventory />;
       case 'store': return <Store items={storeItems} onBuyItem={handleBuyItem} userCredits={user.wallet.credits} onAddItem={() => setIsStoreItemModalOpen(true)} onEditItem={(item) => { setEditingStoreItem(item); setIsStoreItemModalOpen(true); }} onDeleteItem={handleDeleteStoreItem} />;
@@ -2362,21 +2010,19 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
     return (
       <LoginModal 
         onLoginSuccess={(username, role) => {
-          // Block the autosave by setting isSyncReady to false.
-          setIsSyncReady(false);
           setCurrentUser(username);
           setUserRole(role);
           setIsInitialLoading(true);
-
+          
           // Load user data and team missions in parallel
           Promise.all([
-            fetch(`/api/persistence?username=${encodeURIComponent(username)}`).then(res => res.json()),
-            fetch(`/api/team-missions?member=${encodeURIComponent(username)}`).then(res => res.json()),
+            fetch(`/api/persistence?username=${username}`).then(res => res.json()),
+            fetch(`/api/team-missions?member=${username}`).then(res => res.json()),
           ])
             .then(([userData, missionsData]) => {
               if (userData.success && userData.data) {
                 const migratedData = migrateLoadedState(userData.data);
-                if (!migratedData.user.name || migratedData.user.name === 'Awakened') {
+                if (!migratedData.user.name || migratedData.user.name === "Awakened") {
                   migratedData.user.name = username;
                 }
                 setStateFromData(migratedData);
@@ -2393,8 +2039,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               if (missionsData.success) {
                 setTeamMissions(missionsData.missions);
               }
-              // Data is now loaded into React state — unblock the autosave.
-              setIsSyncReady(true);
             })
             .catch(err => {
               console.error('Failed to load user state from server:', err);
@@ -2405,8 +2049,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
               } else {
                 setUser(prev => ({ ...prev, name: username }));
               }
-              // Even on error, unblock the autosave so the app keeps working.
-              setIsSyncReady(true);
             })
             .finally(() => setIsInitialLoading(false));
         }} 
