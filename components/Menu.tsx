@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -20,6 +20,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     ...(userRole === 'technician' ? [
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
       { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },
+      { view: 'member_management' as View, label: 'Gerenciar Membros', desc: 'Adicione, edite ou inative membros da equipe', icon: UserCog, techOnly: true },
     ] : []),
     { view: 'journey',          label: t('nav.journey', 'Jornada'), desc: t('nav.journey_desc', 'Gere o markdown do portfólio de engenharia'), icon: FileDown },
     { view: 'kanban' as View,   label: t('nav.kanban', 'Quadro Kanban'), desc: t('nav.kanban_desc', 'Gerencie tarefas e missões no formato Kanban'), icon: BarChart2 },

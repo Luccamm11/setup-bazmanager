@@ -1,8 +1,38 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
-const REDIS_KEY = 'levelup_team_members_v2';
-const TECHNICIANS = ['Jonas', 'Ramon'];
+const TECHNICIAN_USERNAMES = ['Jonas', 'Ramon'];
+const MEMBERS_REGISTRY_KEY = 'levelup_members_registry';
+
+// Fallback list in case registry is not yet seeded
+const FALLBACK_MEMBERS = [
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo',
+  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
+  'Sara Galdino',
+];
+
+async function getActiveMemberUsernames(): Promise<string[]> {
+  try {
+    const raw = await redis.get(MEMBERS_REGISTRY_KEY);
+    if (!raw) return FALLBACK_MEMBERS;
+    const members: { username: string; active: boolean }[] = JSON.parse(raw);
+    return members.filter(m => m.active).map(m => m.username);
+  } catch {
+    return FALLBACK_MEMBERS;
+  }
+}
+
+async function getAwardFocusFromRegistry(username: string): Promise<string | null> {
+  try {
+    const raw = await redis.get(MEMBERS_REGISTRY_KEY);
+    if (!raw) return null;
+    const members: { username: string; awardFocus: string | null }[] = JSON.parse(raw);
+    const member = members.find(m => m.username === username);
+    return member?.awardFocus || null;
+  } catch {
+    return null;
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -11,35 +41,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { username, password } = req.body;
 
-  try {
-    const rawData = await redis.get(REDIS_KEY);
-    const members = rawData ? JSON.parse(rawData) : null;
-    
-    const activeMembers = members 
-      ? members.filter((m: any) => m.active !== false)
-      : [];
+  const isTechnician = TECHNICIAN_USERNAMES.includes(username);
+  const activeMembers = await getActiveMemberUsernames();
+  const allValid = [...TECHNICIAN_USERNAMES, ...activeMembers];
 
-    const allValidUsernames = activeMembers.length > 0 
-      ? activeMembers.map((m: any) => m.username)
-      : ['Jonas', 'Ramon', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende', 'Sara Galdino'];
-
-    if (!allValidUsernames.includes(username)) {
-      return res.status(401).json({ success: false, message: 'Usuário inválido.' });
-    }
-
-    if (password === '021083') {
-      const isTech = TECHNICIANS.includes(username);
-      const role = isTech ? 'technician' : 'member';
-      
-      const userObj = activeMembers.find((m: any) => m.username === username);
-      const awardFocus = userObj ? userObj.awardFocus : null;
-
-      return res.status(200).json({ success: true, username, role, awardFocus });
-    }
-
-    return res.status(401).json({ success: false, message: 'Senha incorreta.' });
-  } catch (error) {
-    console.error('Error logging in:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+  if (!allValid.includes(username)) {
+    return res.status(401).json({ success: false, message: 'Usuário inválido ou inativo.' });
   }
+
+  if (password === '021083') {
+    const role = isTechnician ? 'technician' : 'member';
+    const awardFocus = isTechnician ? null : await getAwardFocusFromRegistry(username);
+    return res.status(200).json({ success: true, username, role, awardFocus });
+  }
+
+  return res.status(401).json({ success: false, message: 'Senha incorreta.' });
 }

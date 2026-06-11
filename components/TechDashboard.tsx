@@ -17,9 +17,6 @@ interface MemberProgress {
   streak: number;
 }
 
-import MemberManagement from './tech/MemberManagement';
-import { MemberProfile } from '../data/members';
-
 interface TechDashboardProps {
   currentUser: string;
   missions: TeamMission[];
@@ -27,7 +24,6 @@ interface TechDashboardProps {
   onDeleteMission: (missionId: string) => void;
   onRefreshMissions: () => void;
   isMissionsLoading: boolean;
-  onMembersUpdated: (members: MemberProfile[]) => void;
 }
 
 const RANK_LABELS: { [key: string]: string } = {
@@ -55,12 +51,11 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
   onDeleteMission,
   onRefreshMissions,
   isMissionsLoading,
-  onMembersUpdated,
 }) => {
   const { t } = useTranslation(['dashboard']);
   const [membersProgress, setMembersProgress] = useState<MemberProgress[]>([]);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'missions' | 'members' | 'manage'>('missions');
+  const [activeTab, setActiveTab] = useState<'missions' | 'members'>('missions');
   const [missionFilter, setMissionFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const fetchProgress = useCallback(async () => {
@@ -161,17 +156,17 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-white/[0.03] border border-white/10 rounded-2xl">
-        {(['missions', 'members', 'manage'] as const).map(tab => (
+        {(['missions', 'members'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all"
-            style={{
-              backgroundColor: activeTab === tab ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-              color: activeTab === tab ? '#fff' : '#888'
-            }}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all ${
+              activeTab === tab
+                ? 'bg-white/10 text-white shadow-lg'
+                : 'text-text-secondary hover:text-white'
+            }`}
           >
-            {tab === 'missions' ? t('dashboard:tech.tabs.missions') : tab === 'members' ? t('dashboard:tech.tabs.members') : 'Gerenciar Equipe'}
+            {tab === 'missions' ? t('dashboard:tech.tabs.missions') : t('dashboard:tech.tabs.members')}
           </button>
         ))}
       </div>
@@ -400,11 +395,6 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
             </div>
           )}
         </div>
-      )}
-
-      {/* Member Management Tab */}
-      {activeTab === 'manage' && (
-        <MemberManagement currentUser={currentUser} onMembersUpdated={onMembersUpdated} />
       )}
     </div>
   );

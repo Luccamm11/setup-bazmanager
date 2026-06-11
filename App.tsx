@@ -47,6 +47,7 @@ import PrinterQueue from './components/PrinterQueue';
 import CreateTeamMissionModal from './components/CreateTeamMissionModal';
 import JourneyTab from './components/JourneyTab';
 import AttendanceDashboard from './components/tech/AttendanceDashboard';
+import MemberManagement from './components/tech/MemberManagement';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
 import LearningTrails from './components/LearningTrails';
@@ -57,7 +58,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare } from 'lucide-react';
 
-type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -217,29 +218,6 @@ const App: React.FC = () => {
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
   const [isTeamMissionsLoading, setIsTeamMissionsLoading] = useState(false);
   const [isCreateMissionModalOpen, setIsCreateMissionModalOpen] = useState(false);
-
-  const [membersRevision, setMembersRevision] = useState(0);
-
-  const handleMembersUpdated = useCallback((updatedMembers: any[]) => {
-    import('./data/members').then(({ updateMembersList }) => {
-      updateMembersList(updatedMembers);
-      setMembersRevision(prev => prev + 1);
-    });
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/members')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.members) {
-          import('./data/members').then(({ updateMembersList }) => {
-            updateMembersList(data.members);
-            setMembersRevision(prev => prev + 1);
-          });
-        }
-      })
-      .catch(err => console.error('Failed to load dynamic members on start:', err));
-  }, []);
 
   // User picture is kept in local state for now, but could be migrated
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
@@ -2001,7 +1979,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
-      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} onMembersUpdated={handleMembersUpdated} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'attendance': return userRole === 'technician' ? <AttendanceDashboard /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
@@ -2009,6 +1987,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} onNotify={sendNotifications} />;
       case 'learning_trails': return <LearningTrails currentUser={currentUser || ''} userRole={userRole} />;
       case 'chat': return <TeamChat currentUser={currentUser || ''} />;
+      case 'member_management': return userRole === 'technician' ? <MemberManagement currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
     }

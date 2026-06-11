@@ -1,593 +1,472 @@
-import React, { useState, useEffect } from 'react';
-import { MemberProfile } from '../../data/members';
-import { 
-  Users, UserPlus, Edit2, Trash2, Save, X, Search, Check, AlertTriangle, 
-  Dna, GraduationCap, Trophy, Calendar, Award, Loader2, RefreshCw
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
+import {
+  UserPlus, UserX, Edit3, Check, X, RefreshCw,
+  Users, AlertTriangle, ChevronDown, Award, Search,
+} from 'lucide-react';
+
+interface MemberEntry {
+  username: string;
+  displayName: string;
+  awardFocus: string | null;
+  active: boolean;
+}
 
 interface MemberManagementProps {
   currentUser: string;
-  onMembersUpdated: (members: MemberProfile[]) => void;
 }
 
 const AWARD_OPTIONS = [
-  { value: null, label: 'Nenhum / Geral' },
-  { value: 'Sustentabilidade', label: '🌱 Sustentabilidade' },
+  { value: 'Sustentabilidade',   label: '🌱 Sustentabilidade' },
   { value: 'PensamentoCriativo', label: '💡 Pensamento Criativo' },
-  { value: 'Conexao', label: '🤝 Conexão' },
-  { value: 'Alcance', label: '📢 Alcance' },
-  { value: 'Controle', label: '🤖 Controle' },
-  { value: 'Inovacao', label: '🚀 Inovação' },
-  { value: 'Design', label: '🔧 Design Industrial' },
+  { value: 'Conexao',            label: '🤝 Conexão' },
+  { value: 'Alcance',            label: '📢 Alcance' },
+  { value: 'Controle',           label: '🤖 Controle' },
+  { value: 'Inovacao',           label: '🚀 Inovação' },
+  { value: 'Design',             label: '🔧 Design Industrial' },
 ];
 
-const awardColors: Record<string, string> = {
-  Sustentabilidade: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10',
-  PensamentoCriativo: 'border-violet-500/30 text-violet-400 bg-violet-500/10',
-  Conexao: 'border-rose-500/30 text-rose-400 bg-rose-500/10',
-  Alcance: 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10',
-  Controle: 'border-blue-500/30 text-blue-400 bg-blue-500/10',
-  Inovacao: 'border-amber-500/30 text-amber-400 bg-amber-500/10',
-  Design: 'border-orange-500/30 text-orange-400 bg-orange-500/10',
+const AWARD_LABEL: Record<string, string> = Object.fromEntries(
+  AWARD_OPTIONS.map(o => [o.value, o.label])
+);
+
+// ─── Inline Edit Form ────────────────────────────────────────────────────────
+
+interface EditFormProps {
+  member: MemberEntry;
+  onSave: (data: Partial<MemberEntry>) => Promise<void>;
+  onCancel: () => void;
+}
+
+const EditForm: React.FC<EditFormProps> = ({ member, onSave, onCancel }) => {
+  const [displayName, setDisplayName] = useState(member.displayName);
+  const [awardFocus, setAwardFocus] = useState(member.awardFocus || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave({ displayName, awardFocus: awardFocus || null });
+    setSaving(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="mt-3 pt-3 border-t border-white/10 space-y-3"
+    >
+      <div>
+        <label className="text-xs text-text-secondary mb-1 block">Nome de exibição</label>
+        <input
+          value={displayName}
+          onChange={e => setDisplayName(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-primary/60"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-text-secondary mb-1 block">Foco de Prêmio</label>
+        <div className="relative">
+          <select
+            value={awardFocus}
+            onChange={e => setAwardFocus(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white appearance-none focus:outline-none focus:border-accent-primary/60 pr-8"
+          >
+            <option value="">— Nenhum —</option>
+            {AWARD_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-bold hover:bg-green-500/30 transition-all disabled:opacity-50"
+        >
+          {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+          Salvar
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
 };
 
-export const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser, onMembersUpdated }) => {
-  const { t } = useTranslation(['analytics', 'common']);
-  const [members, setMembers] = useState<MemberProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+// ─── Member Card ─────────────────────────────────────────────────────────────
+
+interface MemberCardProps {
+  member: MemberEntry;
+  currentUser: string;
+  onEdit: (data: Partial<MemberEntry>) => Promise<void>;
+  onToggleActive: (active: boolean) => Promise<void>;
+}
+
+const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, onToggleActive }) => {
+  const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`relative p-4 rounded-xl border transition-all duration-300 ${
+        member.active
+          ? 'bg-white/[0.03] border-white/10 hover:border-white/20'
+          : 'bg-red-500/5 border-red-500/20 opacity-60'
+      }`}
+    >
+      {!member.active && (
+        <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold uppercase tracking-wider">
+          Inativo
+        </span>
+      )}
+
+      <div className="flex items-start gap-3">
+        {/* Avatar placeholder */}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary/30 to-accent-tertiary/30 flex items-center justify-center shrink-0 text-white font-bold text-sm border border-white/10">
+          {member.displayName.charAt(0)}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-white text-sm">{member.displayName}</span>
+            <span className="text-xs text-text-muted">@{member.username}</span>
+          </div>
+          {member.awardFocus && (
+            <div className="flex items-center gap-1 mt-1">
+              <Award className="w-3 h-3 text-yellow-400" />
+              <span className="text-xs text-yellow-300">{AWARD_LABEL[member.awardFocus] || member.awardFocus}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-1.5 shrink-0">
+          {member.active && (
+            <button
+              onClick={() => setEditing(v => !v)}
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-text-secondary transition-all"
+              title="Editar"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {member.active ? (
+            confirming ? (
+              <div className="flex gap-1">
+                <button
+                  onClick={async () => { await onToggleActive(false); setConfirming(false); }}
+                  className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-all"
+                  title="Confirmar inativação"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirming(true)}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-text-secondary transition-all"
+                title="Inativar membro"
+              >
+                <UserX className="w-3.5 h-3.5" />
+              </button>
+            )
+          ) : (
+            <button
+              onClick={() => onToggleActive(true)}
+              className="p-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-all"
+              title="Reativar membro"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {editing && (
+          <EditForm
+            member={member}
+            onSave={async data => { await onEdit(data); setEditing(false); }}
+            onCancel={() => setEditing(false)}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// ─── Add Member Form ──────────────────────────────────────────────────────────
+
+interface AddMemberFormProps {
+  currentUser: string;
+  onAdded: () => void;
+}
+
+const AddMemberForm: React.FC<AddMemberFormProps> = ({ currentUser, onAdded }) => {
+  const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [awardFocus, setAwardFocus] = useState('');
   const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  // Modals state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    username: '',
-    displayName: '',
-    fullName: '',
-    role: 'member' as 'member' | 'technician',
-    grade: '',
-    awardFocus: null as string | null,
-    coreMission: '',
-    seasonGoal: '',
-    shortTermGoal: '',
-    seasons: [] as string[]
-  });
-
-  const loadMembers = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/members');
-      const data = await res.json();
-      if (data.success) {
-        setMembers(data.members || []);
-        onMembersUpdated(data.members || []);
-      }
-    } catch (err) {
-      console.error('Failed to load members:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMembers();
-  }, []);
-
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      displayName: '',
-      fullName: '',
-      role: 'member',
-      grade: '',
-      awardFocus: null,
-      coreMission: '',
-      seasonGoal: '',
-      shortTermGoal: '',
-      seasons: []
-    });
-  };
-
-  const openAddModal = () => {
-    resetForm();
-    setModalMode('add');
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (member: MemberProfile) => {
-    setFormData({
-      username: member.username,
-      displayName: member.displayName,
-      fullName: member.fullName || '',
-      role: member.role,
-      grade: member.grade || '',
-      awardFocus: member.awardFocus || null,
-      coreMission: member.coreMission || '',
-      seasonGoal: member.seasonGoal || '',
-      shortTermGoal: member.shortTermGoal || '',
-      seasons: member.seasons || []
-    });
-    setModalMode('edit');
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.username || !formData.displayName) {
-      alert('Login e Nome de Exibição são obrigatórios.');
+  const handleAdd = async () => {
+    if (!username.trim() || !displayName.trim()) {
+      setError('Preencha o username e o nome de exibição.');
       return;
     }
-
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: modalMode,
-          member: formData,
-          username: currentUser
-        })
+        body: JSON.stringify({ requester: currentUser, username: username.trim(), displayName: displayName.trim(), awardFocus: awardFocus || null }),
       });
       const data = await res.json();
-      if (data.success) {
-        setMembers(data.members);
-        onMembersUpdated(data.members);
-        setIsModalOpen(false);
-        resetForm();
-      } else {
-        alert('Erro ao salvar membro: ' + data.error);
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert('Erro de conexão ao salvar.');
+      if (!data.success) throw new Error(data.error);
+      setUsername(''); setDisplayName(''); setAwardFocus('');
+      setOpen(false);
+      onAdded();
+    } catch (e: any) {
+      setError(e.message || 'Erro ao adicionar membro.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleRemove = async (username: string) => {
-    if (username === currentUser) {
-      alert('Você não pode desativar seu próprio usuário.');
-      return;
-    }
+  return (
+    <div className="mb-6">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary/20 to-accent-tertiary/20 border border-accent-primary/30 text-accent-primary font-bold text-sm hover:from-accent-primary/30 hover:to-accent-tertiary/30 transition-all"
+      >
+        <UserPlus className="w-4 h-4" />
+        Adicionar Membro
+      </button>
 
-    const confirmMsg = `Tem certeza que deseja DESATIVAR o membro ${username}?\n\nEle não aparecerá mais nas listas de login e gráficos, mas os dados de progresso dele no banco de dados serão preservados.`;
-    if (!window.confirm(confirmMsg)) return;
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+              <p className="text-sm font-bold text-text-secondary uppercase tracking-wider">Novo Membro</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-text-secondary mb-1 block">Username (login)</label>
+                  <input
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder="Ex: Maria"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/60"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-text-secondary mb-1 block">Nome de exibição</label>
+                  <input
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    placeholder="Ex: Maria Souza"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/60"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-text-secondary mb-1 block">Foco de Prêmio</label>
+                <div className="relative">
+                  <select
+                    value={awardFocus}
+                    onChange={e => setAwardFocus(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white appearance-none focus:outline-none focus:border-accent-primary/60 pr-8"
+                  >
+                    <option value="">— Nenhum —</option>
+                    {AWARD_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
+                </div>
+              </div>
+              {error && (
+                <p className="flex items-center gap-1.5 text-xs text-red-400">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {error}
+                </p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleAdd}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-accent-primary/20 border border-accent-primary/30 text-accent-primary text-sm font-bold hover:bg-accent-primary/30 transition-all disabled:opacity-50"
+                >
+                  {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Confirmar
+                </button>
+                <button
+                  onClick={() => { setOpen(false); setError(null); }}
+                  className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
+  const [members, setMembers] = useState<MemberEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showInactive, setShowInactive] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/members', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'remove',
-          member: { username },
-          username: currentUser
-        })
-      });
+      const res = await fetch(`/api/members?requester=${encodeURIComponent(currentUser)}&includeInactive=true`);
       const data = await res.json();
-      if (data.success) {
-        setMembers(data.members);
-        onMembersUpdated(data.members);
-      } else {
-        alert('Erro ao desativar membro: ' + data.error);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Erro de conexão.');
+      if (data.success) setMembers(data.members);
     } finally {
       setLoading(false);
     }
+  }, [currentUser]);
+
+  useEffect(() => { fetchMembers(); }, [fetchMembers]);
+
+  const handleEdit = async (username: string, data: Partial<MemberEntry>) => {
+    await fetch('/api/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requester: currentUser, username, ...data }),
+    });
+    await fetchMembers();
   };
 
-  const filteredMembers = members.filter(m => {
-    const term = search.toLowerCase();
-    const matchesSearch = m.displayName.toLowerCase().includes(term) || 
-                          m.username.toLowerCase().includes(term) || 
-                          (m.fullName && m.fullName.toLowerCase().includes(term));
-    return matchesSearch;
+  const handleToggleActive = async (username: string, active: boolean) => {
+    await fetch('/api/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requester: currentUser, username, active }),
+    });
+    await fetchMembers();
+  };
+
+  const filtered = members.filter(m => {
+    if (!showInactive && !m.active) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return m.username.toLowerCase().includes(q) || m.displayName.toLowerCase().includes(q);
+    }
+    return true;
   });
 
-  return (
-    <div className="space-y-6">
-      {/* Header Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-primary/20 backdrop-blur-md p-4 rounded-3xl border border-white/5 shadow-glass">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Pesquisar membro..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-2xl py-2.5 pl-11 pr-4 text-text-primary focus:outline-none focus:ring-1 focus:ring-accent-primary shadow-inner text-sm font-medium transition-all"
-          />
-        </div>
+  const activeCount = members.filter(m => m.active).length;
+  const inactiveCount = members.filter(m => !m.active).length;
 
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button 
-            onClick={loadMembers}
-            className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-text-secondary hover:text-white transition-all shadow-sm flex items-center justify-center"
-            title="Recarregar"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </button>
-          
-          <button
-            onClick={openAddModal}
-            className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-gradient-to-r from-accent-primary to-accent-secondary hover:from-accent-secondary hover:to-accent-primary text-white font-bold py-2.5 px-5 rounded-2xl transition-all shadow-glow-primary active:scale-98 text-sm"
-          >
-            <UserPlus size={18} />
-            <span>Adicionar Membro</span>
-          </button>
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 pb-10">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-black text-white flex items-center gap-2">
+            <Users className="w-6 h-6 text-accent-primary" />
+            Gerenciar Membros
+          </h1>
+          <p className="text-sm text-text-secondary mt-1">
+            <span className="text-green-400 font-bold">{activeCount}</span> ativos
+            {inactiveCount > 0 && (
+              <> · <span className="text-red-400 font-bold">{inactiveCount}</span> inativos</>
+            )}
+          </p>
         </div>
+        <button
+          onClick={fetchMembers}
+          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-text-secondary hover:text-white transition-all"
+          title="Atualizar lista"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      {/* Members Grid / List */}
+      {/* Add Member */}
+      <AddMemberForm currentUser={currentUser} onAdded={fetchMembers} />
+
+      {/* Filters */}
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar membro…"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/40"
+          />
+        </div>
+        <button
+          onClick={() => setShowInactive(v => !v)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
+            showInactive
+              ? 'bg-red-500/20 border-red-500/30 text-red-400'
+              : 'bg-white/5 border-white/10 text-text-secondary hover:text-white'
+          }`}
+        >
+          <UserX className="w-4 h-4" />
+          {showInactive ? 'Ocultar inativos' : 'Ver inativos'}
+        </button>
+      </div>
+
+      {/* List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-3">
-          <Loader2 className="animate-spin text-accent-primary w-10 h-10" />
-          <span className="text-text-muted text-sm font-semibold">Carregando lista de membros...</span>
+        <div className="text-center py-16 text-text-secondary">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+          Carregando membros…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-text-secondary">
+          <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          Nenhum membro encontrado.
         </div>
       ) : (
-        <div className="bg-primary/20 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden shadow-glass">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm text-text-secondary">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.01]">
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px]">{t('user', 'Membro')}</th>
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px]">Login (Username)</th>
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px]">Cargo</th>
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px]">Foco de Prêmio</th>
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px]">Status</th>
-                  <th className="p-4 font-black text-text-primary uppercase tracking-wider text-[11px] text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredMembers.map(member => {
-                  const isActive = member.active !== false;
-                  return (
-                    <tr 
-                      key={member.username} 
-                      className={`hover:bg-white/[0.02] transition-colors ${!isActive ? 'opacity-50 bg-black/10' : ''}`}
-                    >
-                      {/* Name/Display */}
-                      <td className="p-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center font-black text-white text-xs">
-                            {member.displayName[0]}
-                          </div>
-                          <div>
-                            <p className="font-bold text-white leading-none">{member.displayName}</p>
-                            {member.fullName && <p className="text-[11px] text-text-muted mt-1 truncate max-w-[180px]">{member.fullName}</p>}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Username */}
-                      <td className="p-4 font-mono text-xs text-text-secondary">{member.username}</td>
-
-                      {/* Role */}
-                      <td className="p-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${member.role === 'technician' ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400' : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'}`}>
-                          {member.role === 'technician' ? '🛡️ Técnico' : 'Membro'}
-                        </span>
-                      </td>
-
-                      {/* Award Focus */}
-                      <td className="p-4">
-                        {member.awardFocus ? (
-                          <span className={`px-2 py-0.5 rounded-md border text-[10px] font-extrabold uppercase tracking-wide ${awardColors[member.awardFocus] || 'border-white/10 text-white bg-white/5'}`}>
-                            {member.awardFocus}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-text-muted italic">Geral</span>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="p-4">
-                        {isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-glow-primary"></span>
-                            Ativo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-text-muted border border-white/5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
-                            Inativo
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button 
-                            onClick={() => openEditModal(member)}
-                            className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-text-secondary hover:text-white transition-all"
-                            title="Editar Dossiê"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          
-                          {isActive ? (
-                            <button 
-                              onClick={() => handleRemove(member.username)}
-                              disabled={member.username === currentUser}
-                              className="p-2 bg-white/5 hover:bg-accent-red/10 rounded-xl text-text-secondary hover:text-accent-red transition-all disabled:opacity-40"
-                              title="Desativar"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          ) : (
-                            <button 
-                              onClick={async () => {
-                                setFormData({
-                                  username: member.username,
-                                  displayName: member.displayName,
-                                  fullName: member.fullName || '',
-                                  role: member.role,
-                                  grade: member.grade || '',
-                                  awardFocus: member.awardFocus || null,
-                                  coreMission: member.coreMission || '',
-                                  seasonGoal: member.seasonGoal || '',
-                                  shortTermGoal: member.shortTermGoal || '',
-                                  seasons: member.seasons || []
-                                });
-                                // Reactivate
-                                setLoading(true);
-                                try {
-                                  const res = await fetch('/api/members', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      action: 'add',
-                                      member: { ...member, active: true },
-                                      username: currentUser
-                                    })
-                                  });
-                                  const data = await res.json();
-                                  if (data.success) {
-                                    setMembers(data.members);
-                                    onMembersUpdated(data.members);
-                                  }
-                                } catch (err) {
-                                  console.error(err);
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }}
-                              className="p-2 bg-white/5 hover:bg-emerald-500/10 rounded-xl text-text-secondary hover:text-emerald-400 transition-all"
-                              title="Reativar"
-                            >
-                              <Check size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {filteredMembers.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-text-muted italic">Nenhum membro encontrado.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <motion.div layout className="space-y-3">
+          <AnimatePresence mode="popLayout">
+            {filtered.map(member => (
+              <MemberCard
+                key={member.username}
+                member={member}
+                currentUser={currentUser}
+                onEdit={data => handleEdit(member.username, data)}
+                onToggleActive={active => handleToggleActive(member.username, active)}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
-
-      {/* Modal - Add / Edit */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-background/80 backdrop-blur-xl"
-              onClick={() => setIsModalOpen(false)}
-            />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl bg-primary/90 border border-white/10 rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
-            >
-              {/* Modal Header */}
-              <div className="p-8 pb-4 flex items-center justify-between border-b border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-accent-primary/20 rounded-2xl text-accent-primary">
-                    <Dna size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white">
-                      {modalMode === 'add' ? 'Adicionar Novo Membro' : `Editar Dossiê: ${formData.username}`}
-                    </h3>
-                    <p className="text-xs text-text-secondary mt-0.5">Defina os parâmetros técnicos e pessoais do perfil.</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-white/5 rounded-xl transition-all"
-                >
-                  <X size={20} className="text-text-muted" />
-                </button>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSave} className="p-8 space-y-6 max-h-[65vh] overflow-y-auto pr-4 custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Username (Login) */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Login (Username)</label>
-                    <input 
-                      type="text" 
-                      value={formData.username}
-                      onChange={(e) => setFormData({...formData, username: e.target.value})}
-                      disabled={modalMode === 'edit'}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all disabled:opacity-50"
-                      placeholder="Ex: Luiz"
-                      required
-                    />
-                  </div>
-
-                  {/* Display Name */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Nome de Exibição (DisplayName)</label>
-                    <input 
-                      type="text" 
-                      value={formData.displayName}
-                      onChange={(e) => setFormData({...formData, displayName: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                      placeholder="Ex: Luiz Silva"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Full Name */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Nome Completo</label>
-                    <input 
-                      type="text" 
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                      placeholder="Ex: Luiz Henrique Silva"
-                    />
-                  </div>
-
-                  {/* Grade */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Série / Grau Escolar</label>
-                    <input 
-                      type="text" 
-                      value={formData.grade}
-                      onChange={(e) => setFormData({...formData, grade: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                      placeholder="Ex: 3º Ano Ensino Médio"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Role */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Cargo</label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({...formData, role: e.target.value as any})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="member" className="bg-zinc-900">Membro</option>
-                      <option value="technician" className="bg-zinc-900">🛡️ Técnico</option>
-                    </select>
-                  </div>
-
-                  {/* Award Focus */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Foco de Prêmio (Realms)</label>
-                    <select
-                      value={formData.awardFocus || ''}
-                      onChange={(e) => setFormData({...formData, awardFocus: e.target.value || null})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all appearance-none cursor-pointer"
-                    >
-                      {AWARD_OPTIONS.map(opt => (
-                        <option key={opt.value || 'null'} value={opt.value || ''} className="bg-zinc-900">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="h-px bg-white/5 my-4" />
-
-                {/* Core Mission */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Missão Principal (Core Mission)</label>
-                  <textarea 
-                    value={formData.coreMission}
-                    onChange={(e) => setFormData({...formData, coreMission: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all h-20 resize-none"
-                    placeholder="Descrição da missão individual do membro..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Season Goal */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Meta da Temporada (LongTerm)</label>
-                    <textarea 
-                      value={formData.seasonGoal}
-                      onChange={(e) => setFormData({...formData, seasonGoal: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all h-20 resize-none"
-                      placeholder="Meta a longo prazo na robótica..."
-                    />
-                  </div>
-
-                  {/* Short Term Goal */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Meta de Curto Prazo (ShortTerm)</label>
-                    <textarea 
-                      value={formData.shortTermGoal}
-                      onChange={(e) => setFormData({...formData, shortTermGoal: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all h-20 resize-none"
-                      placeholder="Próximos passos práticos..."
-                    />
-                  </div>
-                </div>
-
-                {modalMode === 'add' && (
-                  <div className="flex items-center space-x-2 text-text-muted text-xs bg-yellow-500/5 border border-yellow-500/10 p-3 rounded-xl">
-                    <AlertTriangle className="text-yellow-500 shrink-0" size={16} />
-                    <span>Ao salvar, a senha de login padrão será configurada como <strong>021083</strong>. O membro poderá alterar depois.</span>
-                  </div>
-                )}
-
-                {/* Footer Buttons */}
-                <div className="pt-4 border-t border-white/5 flex gap-3 justify-end">
-                  <button 
-                    type="button" 
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-text-secondary hover:text-white transition-all uppercase tracking-wider"
-                  >
-                    {t('common:actions.cancel', 'Cancelar')}
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={saving}
-                    className="px-6 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary hover:from-accent-secondary hover:to-accent-primary text-white border border-transparent rounded-xl text-xs font-bold transition-all shadow-glow-primary active:scale-98 disabled:opacity-50 disabled:pointer-events-none uppercase tracking-wider flex items-center gap-2"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="animate-spin" size={14} />
-                        <span>Salvando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save size={14} />
-                        <span>{t('common:actions.save', 'Salvar')}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

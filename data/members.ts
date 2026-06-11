@@ -25,7 +25,6 @@ export interface MemberProfile {
   coreMission: string;
   seasonGoal: string;
   shortTermGoal: string;
-  active?: boolean;
 }
 
 // --- Technicians ---
@@ -164,51 +163,23 @@ const SARA: MemberProfile = {
   shortTermGoal: 'Organizar o cronograma de visitas técnicas e reuniões com potenciais parceiros',
 };
 
-const INITIAL_MEMBERS: MemberProfile[] = [
+// --- Exports ---
+export const ALL_MEMBERS: MemberProfile[] = [
   JONAS, RAMON,
   LUCCA, CLARICE, ANA_CLARA, BERNARDO,
   ENZO_SOARES, PEDRO, YAN, GUILHERME, ENZO_RESENDE,
   SARA,
 ];
 
-INITIAL_MEMBERS.forEach(m => {
-  if (m.active === undefined) m.active = true;
-});
-
-// --- Exports ---
-export const ALL_MEMBERS: MemberProfile[] = [...INITIAL_MEMBERS];
-
 export const TECHNICIAN_USERNAMES: string[] = ALL_MEMBERS
   .filter(m => m.role === 'technician')
   .map(m => m.username);
 
 export const MEMBER_USERNAMES: string[] = ALL_MEMBERS
-  .filter(m => m.role === 'member' && m.active !== false)
+  .filter(m => m.role === 'member')
   .map(m => m.username);
 
 export const ALL_USERNAMES: string[] = ALL_MEMBERS.map(m => m.username);
 
 export const getMemberByUsername = (username: string): MemberProfile | undefined =>
   ALL_MEMBERS.find(m => m.username === username);
-
-export function updateMembersList(newMembers: MemberProfile[]) {
-  ALL_MEMBERS.length = 0;
-  TECHNICIAN_USERNAMES.length = 0;
-  MEMBER_USERNAMES.length = 0;
-  ALL_USERNAMES.length = 0;
-
-  ALL_MEMBERS.push(...newMembers);
-  
-  const techUsernames = ALL_MEMBERS
-    .filter(m => m.role === 'technician')
-    .map(m => m.username);
-  TECHNICIAN_USERNAMES.push(...techUsernames);
-
-  const memberUsernames = ALL_MEMBERS
-    .filter(m => m.role === 'member' && m.active !== false)
-    .map(m => m.username);
-  MEMBER_USERNAMES.push(...memberUsernames);
-
-  const allUsernames = ALL_MEMBERS.map(m => m.username);
-  ALL_USERNAMES.push(...allUsernames);
-}

@@ -10,6 +10,8 @@ interface LoginModalProps {
   isLoading: boolean;
 }
 
+const VALID_USERS = ALL_MEMBERS.map(m => m.username);
+
 // Award focus labels for display
 const AWARD_LABELS: Record<string, string> = {
   Sustentabilidade: '🌱 Sustentabilidade',
@@ -23,12 +25,7 @@ const AWARD_LABELS: Record<string, string> = {
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {
   const { t } = useTranslation('common');
-  
-  const validUsers = ALL_MEMBERS.map(m => m.username);
-  const [selectedUser, setSelectedUser] = useState<string>(() => {
-    const nonTech = ALL_MEMBERS.filter(m => m.role === 'member' && m.active !== false);
-    return nonTech.length > 0 ? nonTech[0].username : (ALL_MEMBERS[0]?.username || '');
-  });
+  const [selectedUser, setSelectedUser] = useState<string>(VALID_USERS[2]); // Default to first non-technician
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -122,7 +119,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
               >
                 {/* Technicians group */}
                 <optgroup label="Técnicos">
-                  {ALL_MEMBERS.filter(m => m.role === 'technician' && m.active !== false).map(m => (
+                  {ALL_MEMBERS.filter(m => m.role === 'technician').map(m => (
                     <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
                       🛡️ {m.displayName}
                     </option>
@@ -130,7 +127,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 </optgroup>
                 {/* Members group */}
                 <optgroup label="Membros">
-                  {ALL_MEMBERS.filter(m => m.role === 'member' && m.active !== false).map(m => (
+                  {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
                     <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
                       {m.displayName} — {m.awardFocus ? AWARD_LABELS[m.awardFocus] || m.awardFocus : ''}
                     </option>
@@ -174,9 +171,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all font-mono tracking-widest text-center text-lg hover:bg-white/10 placeholder:text-white/10"
               />
             </div>
-            <p className="text-[10px] text-zinc-500 text-center mt-1.5">
-              Senha padrão de acesso: <span className="font-mono text-zinc-400 font-bold bg-white/5 px-1.5 py-0.5 rounded">021083</span>
-            </p>
             
             <AnimatePresence mode="wait">
                 {error && (
@@ -222,7 +216,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
         <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-5">
             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{t('authorizedTeam')}</h3>
             <div className="flex flex-wrap justify-center gap-2">
-                {ALL_MEMBERS.filter(member => member.active !== false).map((member, idx) => {
+                {ALL_MEMBERS.map((member, idx) => {
                     const isTech = member.role === 'technician';
                     return (
                     <motion.div 
@@ -254,7 +248,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                     );
                 })}
             </div>
-            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: ALL_MEMBERS.filter(m => m.active !== false).length })}</p>
+            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: ALL_MEMBERS.length })}</p>
         </div>
       </motion.div>
     </div>
