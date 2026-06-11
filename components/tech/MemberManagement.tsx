@@ -30,6 +30,67 @@ const AWARD_LABEL: Record<string, string> = Object.fromEntries(
   AWARD_OPTIONS.map(o => [o.value, o.label])
 );
 
+// ─── Custom Award Dropdown (avoid native select white-bg OS bug) ──────────────
+
+interface AwardSelectProps {
+  value: string;
+  onChange: (v: string) => void;
+}
+
+const AwardSelect: React.FC<AwardSelectProps> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const selected = AWARD_OPTIONS.find(o => o.value === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between gap-2 bg-[#1a1d2e] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none hover:border-white/20 transition-all"
+      >
+        <span className={selected ? 'text-white' : 'text-white/40'}>
+          {selected ? selected.label : '— Nenhum —'}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-text-secondary shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.12 }}
+            className="absolute z-50 top-full mt-1 w-full bg-[#1a1d2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+          >
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-white/10 ${
+                !value ? 'text-white bg-white/5' : 'text-white/40'
+              }`}
+            >
+              — Nenhum —
+            </button>
+            {AWARD_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-white/10 ${
+                  value === opt.value ? 'text-white bg-accent-primary/20' : 'text-white/80'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // ─── Inline Edit Form ────────────────────────────────────────────────────────
 
 interface EditFormProps {
@@ -66,19 +127,7 @@ const EditForm: React.FC<EditFormProps> = ({ member, onSave, onCancel }) => {
       </div>
       <div>
         <label className="text-xs text-text-secondary mb-1 block">Foco de Prêmio</label>
-        <div className="relative">
-          <select
-            value={awardFocus}
-            onChange={e => setAwardFocus(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white appearance-none focus:outline-none focus:border-accent-primary/60 pr-8"
-          >
-            <option value="">— Nenhum —</option>
-            {AWARD_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
-        </div>
+        <AwardSelect value={awardFocus} onChange={setAwardFocus} />
       </div>
       <div className="flex gap-2">
         <button
@@ -295,19 +344,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ currentUser, onAdded }) =
               </div>
               <div>
                 <label className="text-xs text-text-secondary mb-1 block">Foco de Prêmio</label>
-                <div className="relative">
-                  <select
-                    value={awardFocus}
-                    onChange={e => setAwardFocus(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white appearance-none focus:outline-none focus:border-accent-primary/60 pr-8"
-                  >
-                    <option value="">— Nenhum —</option>
-                    {AWARD_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
-                </div>
+                <AwardSelect value={awardFocus} onChange={setAwardFocus} />
               </div>
               {error && (
                 <p className="flex items-center gap-1.5 text-xs text-red-400">
