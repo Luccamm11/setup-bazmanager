@@ -1,8 +1,49 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
+async function ensureSystemReset() {
+  try {
+    const resetDone = await redis.get('levelup_system_reset_done_v2');
+    if (resetDone === 'true') {
+      return;
+    }
+
+    console.log("Starting automatic database reset for all members...");
+    const keys = await redis.keys("levelup_user_*");
+    for (const key of keys) {
+      const username = key.replace("levelup_user_", "");
+      if (username === "Jonas" || username === "Ramon") {
+        console.log(`Skipping technician: ${username}`);
+        continue;
+      }
+
+      const rawData = await redis.get(key);
+      if (rawData) {
+        const data = JSON.parse(rawData);
+        if (data.user) {
+          data.user.initialLevelsSet = false;
+          if (data.user.stats) {
+            for (const realm in data.user.stats) {
+              data.user.stats[realm] = 1;
+            }
+          }
+          data.user.level_overall = 1;
+          data.user.rank = "e_rank";
+          await redis.set(key, JSON.stringify(data));
+          console.log(`Automatically reset ${username} to pending.`);
+        }
+      }
+    }
+    await redis.set('levelup_system_reset_done_v2', 'true');
+    console.log("Automatic database reset completed successfully!");
+  } catch (error) {
+    console.error("Failed to run automatic reset:", error);
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method } = req;
+  await ensureSystemReset();
 
   if (method === 'GET') {
     const { username } = req.query;
