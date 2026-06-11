@@ -153,16 +153,6 @@ const ENZO_RESENDE: MemberProfile = {
   shortTermGoal: 'Aprender os fundamentos de CAD/Onshape e projetar o primeiro componente do robô',
 };
 
-const GABRIELA: MemberProfile = {
-  username: 'Gabriela Chaves',
-  displayName: 'Gabriela',
-  role: 'member',
-  awardFocus: 'Alcance',
-  coreMission: 'Fortalecer o impacto da Bazinga! 73 na comunidade e inspirar jovens através da robótica',
-  seasonGoal: 'Desenvolver e executar pelo menos 3 ações de alcance social documentadas e mensuráveis',
-  shortTermGoal: 'Planejar a primeira oficina de robótica para escolas públicas da região',
-};
-
 const SARA: MemberProfile = {
   username: 'Sara Galdino',
   displayName: 'Sara',
@@ -178,7 +168,7 @@ export const ALL_MEMBERS: MemberProfile[] = [
   JONAS, RAMON,
   LUCCA, CLARICE, ANA_CLARA, BERNARDO,
   ENZO_SOARES, PEDRO, YAN, GUILHERME, ENZO_RESENDE,
-  GABRIELA, SARA,
+  SARA,
 ];
 
 export const TECHNICIAN_USERNAMES: string[] = ALL_MEMBERS
