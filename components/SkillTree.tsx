@@ -214,10 +214,8 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   let radarData;
 
   radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
-      const skillsInRealm = skillsByRealm[realm as Realm] || [];
-      const totalLevel = skillsInRealm.reduce((sum, skill) => sum + skill.level, 0);
       const subject = t(`common:realm.${realm}`);
-      const val = totalLevel + Math.floor(user.level_overall / 4); // Small bonus based on overall level
+      const val = user.stats[realm as Realm] || 0;
       return { subject, A: val, fullMark: Math.max(30, val + 5) };
   });
 
