@@ -218,6 +218,29 @@ const App: React.FC = () => {
   const [isTeamMissionsLoading, setIsTeamMissionsLoading] = useState(false);
   const [isCreateMissionModalOpen, setIsCreateMissionModalOpen] = useState(false);
 
+  const [membersRevision, setMembersRevision] = useState(0);
+
+  const handleMembersUpdated = useCallback((updatedMembers: any[]) => {
+    import('./data/members').then(({ updateMembersList }) => {
+      updateMembersList(updatedMembers);
+      setMembersRevision(prev => prev + 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/members')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.members) {
+          import('./data/members').then(({ updateMembersList }) => {
+            updateMembersList(data.members);
+            setMembersRevision(prev => prev + 1);
+          });
+        }
+      })
+      .catch(err => console.error('Failed to load dynamic members on start:', err));
+  }, []);
+
   // User picture is kept in local state for now, but could be migrated
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
@@ -1978,7 +2001,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
-      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} onMembersUpdated={handleMembersUpdated} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'attendance': return userRole === 'technician' ? <AttendanceDashboard /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;

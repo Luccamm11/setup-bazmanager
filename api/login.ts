@@ -1,47 +1,45 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import redis from './_lib/redis.js';
 
-// Centralized member data — single source of truth
-const TECHNICIAN_USERNAMES = ['Jonas', 'Ramon'];
-const ALL_VALID_USERNAMES = [
-  'Jonas', 'Ramon',
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo',
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende',
-  'Sara Galdino',
-];
+const REDIS_KEY = 'levelup_team_members_v2';
+const TECHNICIANS = ['Jonas', 'Ramon'];
 
-// Award focus per member (for API response enrichment)
-const AWARD_FOCUS: Record<string, string | null> = {
-  'Jonas': null,
-  'Ramon': null,
-  'Lucca': 'Sustentabilidade',
-  'Clarice': 'PensamentoCriativo',
-  'Ana Clara': 'PensamentoCriativo',
-  'Bernardo': 'Conexao',
-
-  'Enzo Soares': 'Controle',
-  'Pedro': 'Controle',
-  'Yan': 'Inovacao',
-  'Guilherme': 'Design',
-  'Enzo Resende': 'Design',
-  'Sara Galdino': 'Conexao',
-};
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   const { username, password } = req.body;
 
-  if (!ALL_VALID_USERNAMES.includes(username)) {
-    return res.status(401).json({ success: false, message: 'Usuário inválido.' });
-  }
+  try {
+    const rawData = await redis.get(REDIS_KEY);
+    const members = rawData ? JSON.parse(rawData) : null;
+    
+    const activeMembers = members 
+      ? members.filter((m: any) => m.active !== false)
+      : [];
 
-  if (password === '021083') {
-    const role = TECHNICIAN_USERNAMES.includes(username) ? 'technician' : 'member';
-    const awardFocus = AWARD_FOCUS[username] || null;
-    return res.status(200).json({ success: true, username, role, awardFocus });
-  }
+    const allValidUsernames = activeMembers.length > 0 
+      ? activeMembers.map((m: any) => m.username)
+      : ['Jonas', 'Ramon', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende', 'Sara Galdino'];
 
-  return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+    if (!allValidUsernames.includes(username)) {
+      return res.status(401).json({ success: false, message: 'Usuário inválido.' });
+    }
+
+    if (password === '021083') {
+      const isTech = TECHNICIANS.includes(username);
+      const role = isTech ? 'technician' : 'member';
+      
+      const userObj = activeMembers.find((m: any) => m.username === username);
+      const awardFocus = userObj ? userObj.awardFocus : null;
+
+      return res.status(200).json({ success: true, username, role, awardFocus });
+    }
+
+    return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 }

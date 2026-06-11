@@ -2,11 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 
 const TECHNICIANS = ['Jonas', 'Ramon'];
-const ALL_MEMBERS = [
-  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende', 'Sara Galdino'
-];
-
+const REDIS_MEMBERS_KEY = 'levelup_team_members_v2';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -21,9 +17,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const rawMembers = await redis.get(REDIS_MEMBERS_KEY);
+    const allMembersParsed = rawMembers ? JSON.parse(rawMembers) : null;
+
+    const membersList = allMembersParsed
+      ? allMembersParsed.filter((m: any) => m.role === 'member' && m.active !== false).map((m: any) => m.username)
+      : ['Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende', 'Sara Galdino'];
+
     const membersProgress = [];
 
-    for (const member of ALL_MEMBERS) {
+    for (const member of membersList) {
       const rawData = await redis.get(`levelup_user_${member}`);
       if (rawData) {
         const userData = JSON.parse(rawData);
