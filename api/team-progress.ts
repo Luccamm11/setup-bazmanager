@@ -3,8 +3,8 @@ import redis from './_lib/redis.js';
 
 const TECHNICIANS = ['Jonas', 'Ramon'];
 const ALL_MEMBERS = [
-  'Jonas', 'Ramon', 'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
-  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende'
+  'Lucca', 'Clarice', 'Ana Clara', 'Bernardo', 
+  'Enzo Soares', 'Pedro', 'Yan', 'Guilherme', 'Enzo Resende', 'Sara Galdino'
 ];
 
 
