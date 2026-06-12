@@ -384,3 +384,25 @@ export interface FiveW2HPlan {
   reviewedAt?: string;
   reviewNote?: string;
 }
+
+// ─── Mentor & Mentorship Record Types ───────────────────────────────────────
+
+export interface Mentor {
+  id: string;
+  name: string;
+  area: string;
+  organization?: string;
+  active: boolean;
+}
+
+export interface MentorshipRecord {
+  id: string;
+  mentorId: string;
+  date: string; // ISO string ou YYYY-MM-DD
+  type: 'online' | 'presential';
+  locationType?: 'our_lab' | 'visited_them' | 'other';
+  locationName?: string; // Nome do local customizado
+  area: string; // Área em que ajudou
+  participants: string[]; // usernames dos membros participantes
+  advantages: string; // texto livre
+}

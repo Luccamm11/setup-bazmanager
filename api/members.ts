@@ -37,13 +37,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { requester, includeInactive } = req.query;
 
-    if (!requester || typeof requester !== 'string' || !TECHNICIANS.includes(requester)) {
-      return res.status(403).json({ error: 'Apenas técnicos podem gerenciar membros.' });
+    if (!requester || typeof requester !== 'string') {
+      return res.status(400).json({ error: 'requester é obrigatório.' });
     }
 
     try {
       const members = await getRegistry();
-      const list = includeInactive === 'true' ? members : members.filter((m: any) => m.active);
+      const isActiveMember = members.some((m: any) => m.username === requester && m.active);
+      const isTech = TECHNICIANS.includes(requester);
+
+      if (!isTech && !isActiveMember) {
+        return res.status(403).json({ error: 'Apenas membros ou técnicos ativos podem acessar a lista.' });
+      }
+
+      const showInactive = includeInactive === 'true' && isTech;
+      const list = showInactive ? members : members.filter((m: any) => m.active);
       return res.status(200).json({ success: true, members: list });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
