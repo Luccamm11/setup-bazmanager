@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles, ChevronLeft, Bookmark, Copy, Check } from 'lucide-react';
 import { ALL_MEMBERS, getMemberByUsername } from '../../data/members';
 import { TeamChatMessage } from '../../types';
 
@@ -18,6 +18,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   
   // Mobile responsive view toggle: 'contacts' list or active 'chat' thread
   const [mobileView, setMobileView] = useState<'contacts' | 'chat'>('contacts');
+
+  // Copy message feedback state
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  const handleCopyText = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedMessageId(id);
+    setTimeout(() => {
+      setCopiedMessageId(null);
+    }, 2000);
+  };
 
   // Unread messages state, stored in LocalStorage by currentUser
   const [lastRead, setLastRead] = useState<Record<string, string>>(() => {
@@ -223,6 +234,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   });
 
   const isGroupChat = selectedConversationId === 'team';
+  const selfConversationId = `dm_${currentUser}_${currentUser}`;
+  const isSelfChat = selectedConversationId === selfConversationId;
+  const selfMatchSearch = !searchTerm || 
+                          'meu espaço anotações mensagens salvas'.includes(searchTerm.toLowerCase()) || 
+                          currentUser.toLowerCase().includes(searchTerm.toLowerCase());
   const recipient = isGroupChat ? null : getDmRecipient(selectedConversationId);
   const activeMessages = messages.filter(m => m.conversationId === selectedConversationId);
 
@@ -332,6 +348,39 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
           {/* DM Separator */}
           {activeTab !== 'group' && (
             <>
+              {selfMatchSearch && (activeTab !== 'unread' || getUnreadCount(selfConversationId) > 0) && (
+                <button
+                  onClick={() => handleSelectConversation(selfConversationId)}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-500 border group text-left ${
+                    selectedConversationId === selfConversationId
+                      ? 'bg-white/[0.04] border-accent-primary/30 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                      : 'bg-transparent border-transparent text-text-secondary hover:bg-white/[0.01] hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border transition-all duration-500 ${
+                        selectedConversationId === selfConversationId
+                          ? 'bg-gradient-to-br from-accent-primary/20 to-accent-tertiary/20 border-accent-primary/30 text-white shadow-glow-primary'
+                          : 'bg-white/[0.02] border-white/5 text-text-secondary group-hover:text-white group-hover:border-white/10'
+                      }`}>
+                        <Bookmark className="w-5 h-5 text-accent-primary" />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-text-primary truncate">Meu Espaço (Anotações)</div>
+                      <div className="text-[10px] text-text-muted truncate">Textos, links e notas pessoais</div>
+                    </div>
+                  </div>
+
+                  {getUnreadCount(selfConversationId) > 0 && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary border border-accent-primary/30 font-black shrink-0 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.3)]">
+                      {getUnreadCount(selfConversationId)}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {filteredMembers.length > 0 && (
                 <div className="px-3 pt-4 pb-2 text-[9px] uppercase tracking-widest font-black text-text-muted flex items-center gap-2">
                   <span>Mensagens Diretas</span>
@@ -440,6 +489,16 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                   <p className="text-[10px] text-text-muted truncate">Avisos e coordenação do time</p>
                 </div>
               </>
+            ) : isSelfChat ? (
+              <>
+                <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center shrink-0">
+                  <Bookmark className="w-5 h-5 text-accent-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-black text-sm text-white tracking-wide truncate">MEU ESPAÇO (ANOTAÇÕES)</h3>
+                  <p className="text-[10px] text-text-muted truncate">Guarde textos, links e notas pessoais entre dispositivos</p>
+                </div>
+              </>
             ) : recipient ? (
               <>
                 <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center font-black text-sm text-accent-primary shrink-0">
@@ -508,14 +567,27 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                         )}
 
                         <div
-                          className={`px-3 sm:px-4 py-2 border transition-all duration-300 text-sm shadow-md ${
+                          className={`relative group/bubble px-3 sm:px-4 py-2 border transition-all duration-300 text-sm shadow-md ${
                             isOwnMessage
                               ? 'bg-accent-primary/10 border-accent-primary/30 text-white rounded-2xl rounded-tr-none shadow-[0_0_16px_rgba(59,130,246,0.05)]'
                               : 'bg-white/[0.02] border-white/5 text-text-primary rounded-2xl rounded-tl-none'
                           }`}
                         >
-                          <p className="whitespace-pre-wrap break-words leading-relaxed">{renderMessageContent(msg.text)}</p>
+                          <p className="whitespace-pre-wrap break-words leading-relaxed pr-6">{renderMessageContent(msg.text)}</p>
                           
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText(msg.text, msg.id)}
+                            className="absolute top-1 right-1 opacity-0 group-hover/bubble:opacity-100 focus:opacity-100 transition-opacity duration-300 p-1 rounded bg-black/40 border border-white/5 hover:bg-black/60 hover:border-white/10 text-text-secondary hover:text-white"
+                            title="Copiar mensagem"
+                          >
+                            {copiedMessageId === msg.id ? (
+                              <Check className="w-3.5 h-3.5 text-green-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+
                           <div className="text-[8px] text-text-muted mt-1.5 text-right font-black tracking-wider uppercase">
                             {formatTime(msg.timestamp)}
                           </div>
