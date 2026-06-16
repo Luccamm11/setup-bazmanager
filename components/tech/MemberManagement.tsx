@@ -315,10 +315,9 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ currentUser, onAdded }) =
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0, marginTop: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-            exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, height: 0, marginTop: 0, overflow: 'hidden' }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 12, transitionEnd: { overflow: 'visible' } }}
+            exit={{ opacity: 0, height: 0, marginTop: 0, overflow: 'hidden' }}
           >
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
               <p className="text-sm font-bold text-text-secondary uppercase tracking-wider">Novo Membro</p>
