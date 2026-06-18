@@ -332,14 +332,15 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
       </div>
 
       <AnimatePresence mode="wait">
+        <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+        >
         {activeTab === 'queue' && (
-            <motion.div 
-                key="queue"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-            >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Form & Form */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* ENTRAR NA FILA FORM */}
@@ -585,17 +586,11 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         )}
 
         {activeTab === 'stats' && (
-            <motion.div 
-                key="stats"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-8"
-            >
+            <div className="space-y-8">
                 {/* Stats Highlights */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="bg-primary/40 p-6 rounded-3xl border border-white/10 shadow-glass flex items-center gap-5">
@@ -734,17 +729,11 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         )}
 
         {activeTab === 'history' && (
-            <motion.div 
-                key="history"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-            >
+            <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {historyItems.map(item => (
                         <div key={item.id} className="bg-primary/40 p-6 rounded-3xl border border-white/5 hover:border-white/20 transition-all group overflow-hidden relative">
@@ -792,8 +781,9 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                     ))}
                     {historyItems.length === 0 && <div className="col-span-full py-20 text-center text-text-muted italic opacity-50">Nenhum registro no histórico de impressão.</div>}
                 </div>
-            </motion.div>
+            </div>
         )}
+        </motion.div>
       </AnimatePresence>
 
       {/* FEEDBACK MODAL */}
