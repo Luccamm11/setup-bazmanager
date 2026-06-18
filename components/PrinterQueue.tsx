@@ -598,7 +598,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         <div className="p-4 bg-accent-primary/10 rounded-2xl text-accent-primary"><Layers size={24} /></div>
                         <div>
                             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Gasto (Membro)</p>
-                            <h4 className="text-2xl font-black text-white">{Object.values(stats.materialUsage).reduce((a: number, b: number) => a + b, 0)}g</h4>
+                            <h4 className="text-2xl font-black text-white">{Object.values(stats.materialUsage).reduce((a: number, b: number) => a + b, 0).toLocaleString('pt-BR')}g</h4>
                         </div>
                     </div>
                     <div className="bg-primary/40 p-6 rounded-3xl border border-white/10 shadow-glass flex items-center gap-5">
