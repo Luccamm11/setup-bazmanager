@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useId } from 'react';
 import { PrinterQueueItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -50,6 +50,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
   const [queue, setQueue] = useState<PrinterQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'queue' | 'stats' | 'history'>('queue');
+  const gradientId = useId().replace(/:/g, '');
   
   // Form State
   const [formData, setFormData] = useState({
@@ -604,7 +605,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         <div className="p-4 bg-accent-secondary/10 rounded-2xl text-accent-secondary"><Box size={24} /></div>
                         <div>
                             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Material Favorito</p>
-                            <h4 className="text-2xl font-black text-white">{stats.materialPieData.sort((a, b) => b.value - a.value)[0]?.name || '---'}</h4>
+                            <h4 className="text-2xl font-black text-white">{[...stats.materialPieData].sort((a, b) => b.value - a.value)[0]?.name || '---'}</h4>
                         </div>
                     </div>
                     <div className="bg-primary/40 p-6 rounded-3xl border border-white/10 shadow-glass flex items-center gap-5">
@@ -633,7 +634,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={stats.chartUsage}>
                                     <defs>
-                                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
                                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                         </linearGradient>
@@ -645,7 +646,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                         contentStyle={{ backgroundColor: '#0f172a', borderRadius: '16px', border: '1px solid #ffffff10', fontSize: '12px' }}
                                         itemStyle={{ color: '#3b82f6' }}
                                     />
-                                    <Area type="monotone" dataKey="amount" stroke="#3b82f6" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
+                                    <Area type="monotone" dataKey="amount" stroke="#3b82f6" fillOpacity={1} fill={`url(#${gradientId})`} strokeWidth={3} />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
