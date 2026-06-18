@@ -248,7 +248,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
   // Stats Calculations
   const stats = useMemo(() => {
     const materialUsage = { PLA: 0, ABS: 0, TPU: 0, PETG: 0 };
-    const brandRatings: Record<string, { total: number, count: number }> = {};
+    const brandRatings: Record<string, { total: number, count: number, displayName: string }> = {};
     const dailyUsage: Record<string, number> = {};
     const problems: any[] = [];
 
@@ -256,9 +256,10 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
         if (item.materialType) materialUsage[item.materialType] += item.materialQuantity || 0;
         
         if (item.brand) {
-            if (!brandRatings[item.brand]) brandRatings[item.brand] = { total: 0, count: 0 };
-            brandRatings[item.brand].total += item.quality || 0;
-            brandRatings[item.brand].count += 1;
+            const key = item.brand.trim().toLowerCase();
+            if (!brandRatings[key]) brandRatings[key] = { total: 0, count: 0, displayName: item.brand.trim() };
+            brandRatings[key].total += item.quality || 0;
+            brandRatings[key].count += 1;
         }
 
         const date = item.completedAt ? item.completedAt.split('T')[0] : '';
@@ -275,8 +276,8 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
         }
     });
 
-    const brandList = Object.entries(brandRatings).map(([name, data]) => ({
-        name,
+    const brandList = Object.entries(brandRatings).map(([, data]) => ({
+        name: data.displayName,
         avgQuality: (data.total / data.count).toFixed(1),
         count: data.count
     })).sort((a, b) => Number(b.avgQuality) - Number(a.avgQuality));
