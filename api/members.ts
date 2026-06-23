@@ -52,7 +52,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const showInactive = includeInactive === 'true' && isTech;
       const list = showInactive ? members : members.filter((m: any) => m.active);
-      return res.status(200).json({ success: true, members: list });
+
+      // Dynamically add technicians to the list so they are treated as valid members in dropdowns/chats
+      const techniciansList = TECHNICIANS.map(t => ({
+        username: t,
+        displayName: t,
+        fullName: t === 'Jonas' ? 'Jonas Lemos' : 'Ramon Montorri',
+        role: 'technician',
+        awardFocus: null,
+        active: true
+      }));
+
+      const mergedList = [...techniciansList, ...list];
+      return res.status(200).json({ success: true, members: mergedList });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

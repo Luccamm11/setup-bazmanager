@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Hash, Users, Shield, Award, Search, Sparkles, ChevronLeft, Bookmark, Copy, Check } from 'lucide-react';
-import { ALL_MEMBERS, getMemberByUsername } from '../../data/members';
+import { getMemberByUsername } from '../../data/members';
+import { useMembers } from '../../hooks/useMembers';
 import { TeamChatMessage } from '../../types';
 
 interface TeamChatProps {
@@ -15,6 +16,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  
+  const { members: dynamicMembers } = useMembers(currentUser);
   
   // Mobile responsive view toggle: 'contacts' list or active 'chat' thread
   const [mobileView, setMobileView] = useState<'contacts' | 'chat'>('contacts');
@@ -160,7 +163,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
     if (!convId.startsWith('dm_')) return null;
     const parts = convId.replace('dm_', '').split('_');
     const recipientUsername = parts.find(u => u !== currentUser);
-    return recipientUsername ? getMemberByUsername(recipientUsername) : null;
+    return recipientUsername ? dynamicMembers.find(m => m.username === recipientUsername) : null;
   };
 
   // Format date/time
@@ -214,24 +217,26 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
   };
 
   // Filter members list based on search and selected tab
-  const filteredMembers = ALL_MEMBERS.filter(m => {
-    if (m.username === currentUser) return false;
-    
-    const searchMatch = m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (!searchMatch) return false;
+  const filteredMembers = dynamicMembers
+    .filter(m => m.active)
+    .filter(m => {
+      if (m.username === currentUser) return false;
+      
+      const searchMatch = m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (!searchMatch) return false;
 
-    if (activeTab === 'all') return true;
-    if (activeTab === 'group') return false; 
-    if (activeTab === 'dm') return true;
-    
-    if (activeTab === 'unread') {
-      const convId = getDmConversationId(currentUser, m.username);
-      return getUnreadCount(convId) > 0;
-    }
-    
-    return true;
-  });
+      if (activeTab === 'all') return true;
+      if (activeTab === 'group') return false; 
+      if (activeTab === 'dm') return true;
+      
+      if (activeTab === 'unread') {
+        const convId = getDmConversationId(currentUser, m.username);
+        return getUnreadCount(convId) > 0;
+      }
+      
+      return true;
+    });
 
   const isGroupChat = selectedConversationId === 'team';
   const selfConversationId = `dm_${currentUser}_${currentUser}`;
