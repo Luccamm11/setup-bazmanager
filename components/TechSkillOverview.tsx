@@ -3,6 +3,8 @@ import { User, Realm } from '../types';
 import { useMembers } from '../hooks/useMembers';
 import { SKILL_REALMS, RANKS } from '../constants';
 import SkillTree from './SkillTree';
+import { getMemberByUsername } from '../data/members';
+import { getInitialUserData } from '../data/initialData';
 import { 
   ArrowLeft, Search, Sliders, Save, CheckCircle2, User as UserIcon, 
   BookText, Users as UsersIcon, Mic2, ClipboardList, Zap, Code, Hammer, Globe,
