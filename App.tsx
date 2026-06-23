@@ -939,9 +939,35 @@ const App: React.FC = () => {
       if (data.success) {
         setTeamMissions(prev => prev.map(m => m.id === missionId ? { ...m, completedBy: [...m.completedBy, currentUser] } : m));
 
-        mission.realmRewards.forEach(rr => {
-          handleGrantReward(rr.xp, 0, rr.realm, `team-mission-${missionId}-${rr.realm}`);
+        // Apply slower growth logic to user competency stats
+        let totalGrantedXp = 0;
+        setUser(prevUser => {
+          const newStats = { ...prevUser.stats };
+          
+          mission.realmRewards.forEach(rr => {
+            const currentScore = prevUser.stats[rr.realm] || 0;
+            // Ganho Real = Pontos Competência * ((100 - Nota Atual) / 100)
+            const calculatedGain = rr.xp * ((100 - currentScore) / 100);
+            const realGain = Math.min(10, Math.max(0, calculatedGain));
+            
+            // Update stat
+            newStats[rr.realm] = Math.round((currentScore + realGain) * 100) / 100;
+            
+            // Add to total XP granted to level up general progress too
+            totalGrantedXp += Math.round(realGain);
+          });
+
+          return {
+            ...prevUser,
+            stats: newStats
+          };
         });
+
+        // Grant the calculated XP to the user's general leveling bar
+        if (totalGrantedXp > 0) {
+          handleGrantReward(totalGrantedXp, 0, Realm.Planning, `team-mission-${missionId}`);
+        }
+
         if (mission.credit_reward > 0) {
           handleGrantReward(0, mission.credit_reward, Realm.Planning, `team-mission-credits-${missionId}`);
         }

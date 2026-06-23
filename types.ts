@@ -8,11 +8,13 @@ export interface RealmXpReward {
   xp: number;
 }
 
+export type EvidenceType = 'conclusion' | 'certificate' | 'practical_application' | 'practical_presentation';
+
 export interface TeamMission {
   id: string;
   title: string;
   description: string;
-  realmRewards: RealmXpReward[];
+  realmRewards: RealmXpReward[]; // Used for backward compatibility/saving calculated XP
   credit_reward: number;
   difficulty: Difficulty;
   duration_est_min: number;
@@ -21,6 +23,12 @@ export interface TeamMission {
   assignedTo: string[];   // empty = all members
   completedBy: string[];
   createdAt: string;
+
+  // New leveling math fields
+  missionLevel: number; // 1 to 5
+  evidenceType: EvidenceType;
+  evidenceMultiplier: number; // 1.0, 1.2, 1.5, 2.0
+  competencyWeights?: { realm: Realm; percentage: number }[]; // weights totaling exactly 100
 }
 
 export type KanbanStatus = 'todo' | 'in_progress' | 'done';
