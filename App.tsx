@@ -1981,7 +1981,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
       case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
-      case 'attendance': return userRole === 'technician' ? <AttendanceDashboard /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'attendance': return userRole === 'technician' ? <AttendanceDashboard currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
@@ -2135,7 +2135,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {isBadgeModalOpen && <AddEditBadgeModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} onSave={handleSaveBadge} badgeToEdit={editingBadge} onGenerateBadge={(prompt) => generateBadge(apiKey, prompt)} />}
       {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} apiKey={apiKey} />}
       {isRecommendationsModalOpen && <RecommendationsModal isOpen={isRecommendationsModalOpen} onClose={() => setIsRecommendationsModalOpen(false)} recommendations={aiRecommendations} onSave={handleSaveRecommendations} isLoading={isGeneratingRecommendations} userSkills={user.skill_tree} />}
-      {isCreateMissionModalOpen && <CreateTeamMissionModal isOpen={isCreateMissionModalOpen} onClose={() => setIsCreateMissionModalOpen(false)} onSave={handleCreateTeamMission} />}
+      {isCreateMissionModalOpen && <CreateTeamMissionModal isOpen={isCreateMissionModalOpen} onClose={() => setIsCreateMissionModalOpen(false)} onSave={handleCreateTeamMission} currentUser={currentUser || ''} />}
 
       {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} onClose={() => setLevelUpData(null)} />}
       <RewardToast notifications={rewardNotifications} onRemove={(id) => setRewardNotifications(prev => prev.filter(n => n.id !== id))} />

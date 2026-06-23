@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Realm } from '../types';
-import { ALL_MEMBERS } from '../data/members';
-import { getInitialUserData } from '../data/initialData';
-import { getMemberByUsername } from '../data/members';
+import { useMembers } from '../hooks/useMembers';
 import { SKILL_REALMS, RANKS } from '../constants';
 import SkillTree from './SkillTree';
 import { 
@@ -55,6 +53,7 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
   const [memberData, setMemberData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { members: dynamicMembers, loading: membersLoading } = useMembers(currentUser);
   
   // Nivelamento form state (1 to 100)
   const [levelValues, setLevelValues] = useState<Record<Realm, number>>({
@@ -75,9 +74,10 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
   // Fetch status of all members on load to display indicator
   useEffect(() => {
     async function loadMembersStatus() {
+      if (membersLoading || dynamicMembers.length === 0) return;
       setStatusLoading(true);
       const statuses: Record<string, boolean> = {};
-      const members = ALL_MEMBERS.filter(m => m.role === 'member');
+      const members = dynamicMembers.filter(m => m.role === 'member' && m.active);
       
       try {
         await Promise.all(
@@ -99,7 +99,7 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
       }
     }
     loadMembersStatus();
-  }, []);
+  }, [dynamicMembers, membersLoading]);
 
   // Fetch specific member data when selected
   useEffect(() => {
@@ -207,8 +207,8 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
     }
   };
 
-  const filteredMembers = ALL_MEMBERS
-    .filter(m => m.role === 'member')
+  const filteredMembers = dynamicMembers
+    .filter(m => m.role === 'member' && m.active)
     .filter(m => m.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                  (m.fullName && m.fullName.toLowerCase().includes(searchTerm.toLowerCase())));
 

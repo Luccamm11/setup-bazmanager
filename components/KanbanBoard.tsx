@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-import { ALL_MEMBERS } from '../constants';
-export const TEAM_MEMBERS = ALL_MEMBERS;
+import { useMembers } from '../hooks/useMembers';
 import { KanbanTask, KanbanStatus, TeamMission, UserRole } from '../types';
 import { Plus, GripVertical, Users, Shield, Target, X, Clock, AlignLeft, Edit2 } from 'lucide-react';
 
@@ -19,6 +17,8 @@ const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ currentUser, userRole, missions, onCompleteMission }) => {
+  const { members: dynamicMembers } = useMembers(currentUser);
+  const TEAM_MEMBERS = dynamicMembers.filter(m => m.active).map(m => m.username);
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<string>(currentUser);

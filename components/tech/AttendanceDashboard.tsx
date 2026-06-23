@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-import { MEMBER_USERNAMES } from '../../data/members';
-const ALL_MEMBERS = MEMBER_USERNAMES;
+import { useMembers } from '../../hooks/useMembers';
 import { Calendar, CheckSquare, XSquare, BriefcaseMedical, Clock, Plane, Loader2, Save, ListTodo } from 'lucide-react';
 
 type AttendanceStatus = 'Atestado Medico' | 'Itinerario' | 'Falta' | 'Presenca' | 'Ferias';
@@ -12,7 +10,13 @@ interface AttendanceRecord {
     };
 }
 
-const AttendanceDashboard: React.FC = () => {
+interface AttendanceDashboardProps {
+    currentUser: string;
+}
+
+const AttendanceDashboard: React.FC<AttendanceDashboardProps> = ({ currentUser }) => {
+    const { members: dynamicMembers } = useMembers(currentUser);
+    const ALL_MEMBERS = dynamicMembers.filter(m => m.role === 'member' && m.active).map(m => m.username);
     const [attendance, setAttendance] = useState<AttendanceRecord>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

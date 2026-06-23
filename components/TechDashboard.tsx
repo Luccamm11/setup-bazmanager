@@ -90,13 +90,15 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
   });
 
   function getMissionTotalMembers(m: TeamMission): number {
-    return m.assignedTo.length === 0 ? ALL_MEMBERS.length : m.assignedTo.length;
+    return m.assignedTo.length === 0 ? membersProgress.length : m.assignedTo.length;
   }
 
   const totalXp = (mission: TeamMission) => mission.realmRewards.reduce((s, r) => s + r.xp, 0);
 
   const getMemberCompletionForMission = (mission: TeamMission) => {
-    const assignedMembers = mission.assignedTo.length === 0 ? ALL_MEMBERS : mission.assignedTo;
+    const assignedMembers = mission.assignedTo.length === 0 
+      ? membersProgress.map(m => m.username) 
+      : mission.assignedTo;
     return {
       total: assignedMembers.length,
       completed: mission.completedBy.length,
@@ -133,7 +135,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: t('dashboard:tech.stats.members'), value: ALL_MEMBERS.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: t('dashboard:tech.stats.members'), value: membersProgress.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
           { label: t('dashboard:tech.stats.active_missions'), value: missions.filter(m => new Date(m.deadline) > now).length, icon: Target, color: 'text-orange-400', bg: 'bg-orange-500/10' },
           { label: t('dashboard:tech.stats.completed'), value: missions.reduce((s, m) => s + m.completedBy.length, 0), icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10' },
           { label: t('dashboard:tech.stats.total_missions'), value: missions.length, icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },

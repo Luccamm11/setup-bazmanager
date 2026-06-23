@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Realm, Difficulty, RealmXpReward, TeamMission } from '../types';
-import { ALL_MEMBERS, SKILL_REALMS } from '../constants';
+import { SKILL_REALMS } from '../constants';
+import { useMembers } from '../hooks/useMembers';
 
 interface CreateTeamMissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (mission: Omit<TeamMission, 'id' | 'createdBy' | 'completedBy' | 'createdAt'>) => void;
   missionToEdit?: TeamMission | null;
+  currentUser: string;
 }
 
-const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen, onClose, onSave, missionToEdit }) => {
+const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen, onClose, onSave, missionToEdit, currentUser }) => {
   const { t } = useTranslation(['common']);
+  const { members: dynamicMembers } = useMembers(currentUser);
   const [title, setTitle] = useState(missionToEdit?.title || '');
   const [description, setDescription] = useState(missionToEdit?.description || '');
   const [difficulty, setDifficulty] = useState<Difficulty>(missionToEdit?.difficulty || Difficulty.Medium);
@@ -223,20 +226,23 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
             </div>
             {!assignAll && (
               <div className="flex flex-wrap gap-2">
-                {ALL_MEMBERS.map(member => (
-                  <button
-                    key={member}
-                    type="button"
-                    onClick={() => toggleMember(member)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      selectedMembers.includes(member)
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        : 'bg-background border border-border-color text-text-secondary hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    {member}
-                  </button>
-                ))}
+                {dynamicMembers
+                  .filter(m => m.role === 'member' && m.active)
+                  .map(m => m.username)
+                  .map(member => (
+                    <button
+                      key={member}
+                      type="button"
+                      onClick={() => toggleMember(member)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        selectedMembers.includes(member)
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                          : 'bg-background border border-border-color text-text-secondary hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      {member}
+                    </button>
+                  ))}
               </div>
             )}
           </div>
