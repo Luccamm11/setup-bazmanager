@@ -23,13 +23,18 @@ const AWARD_LABELS: Record<string, string> = {
   Design: '🔧 Design Industrial',
 };
 
+import { useMembers } from '../hooks/useMembers';
+
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) => {
   const { t } = useTranslation('common');
-  const [selectedUser, setSelectedUser] = useState<string>(VALID_USERS[2]); // Default to first non-technician
+  const { members: dynamicMembers, loading: membersLoading } = useMembers('Ramon');
+  const activeMembersList = dynamicMembers.filter(m => m.active);
+
+  const [selectedUser, setSelectedUser] = useState<string>('Lucca');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const selectedMember = getMemberByUsername(selectedUser);
+  const selectedMember = dynamicMembers.find(m => m.username === selectedUser);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +124,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
               >
                 {/* Technicians group */}
                 <optgroup label="Técnicos">
-                  {ALL_MEMBERS.filter(m => m.role === 'technician').map(m => (
+                  {dynamicMembers.filter(m => m.role === 'technician').map(m => (
                     <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
                       🛡️ {m.displayName}
                     </option>
@@ -127,7 +132,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                 </optgroup>
                 {/* Members group */}
                 <optgroup label="Membros">
-                  {ALL_MEMBERS.filter(m => m.role === 'member').map(m => (
+                  {activeMembersList.map(m => (
                     <option key={m.username} value={m.username} className="bg-zinc-900 border-none">
                       {m.displayName} — {m.awardFocus ? AWARD_LABELS[m.awardFocus] || m.awardFocus : ''}
                     </option>
@@ -216,7 +221,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
         <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-5">
             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{t('authorizedTeam')}</h3>
             <div className="flex flex-wrap justify-center gap-2">
-                {ALL_MEMBERS.map((member, idx) => {
+                {dynamicMembers.map((member, idx) => {
                     const isTech = member.role === 'technician';
                     return (
                     <motion.div 
@@ -248,7 +253,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
                     );
                 })}
             </div>
-            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: ALL_MEMBERS.length })}</p>
+            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{t('teamMembersCount', { count: dynamicMembers.length })}</p>
         </div>
       </motion.div>
     </div>
