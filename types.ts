@@ -223,6 +223,7 @@ export interface User {
   activeTimedQuest?: ActiveTimedQuest | null;
   profileSetup?: boolean;
   initialLevelsSet?: boolean;
+  initialStats?: { [key in Realm]?: number }; // Snapshot do nivelamento inicial definido pelo técnico
 }
 
 export interface StoryLogEntry {

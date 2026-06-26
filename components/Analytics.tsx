@@ -50,7 +50,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ user, weeklyProgress, activityLog
                 </div>
                 <div className="lg:col-span-2 bg-primary p-3 sm:p-6 rounded-lg border border-border-color">
                     <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-4">{t('analytics_subtitle')}</h3>
-                    <StatsRadarChart stats={user.stats} />
+                    <StatsRadarChart stats={user.stats} initialStats={user.initialStats} />
                 </div>
             </div>
         </div>

@@ -216,11 +216,10 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
   radarData = Object.values(Realm).filter(r => r !== Realm.Meta).map(realm => {
       const subject = t(`common:realm.${realm}`);
       const val = user.stats[realm as Realm] || 0;
-      return { subject, A: val, fullMark: Math.max(30, val + 5) };
+      return { subject, A: val, fullMark: 100 };
   });
 
-  const maxScore = Math.max(...radarData.map(d => d.A), 10);
-  const chartDomain = [0, maxScore + (maxScore * 0.2)];
+  const chartDomain: [number, number] = [0, 100];
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };

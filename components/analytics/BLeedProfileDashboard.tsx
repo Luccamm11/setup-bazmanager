@@ -381,7 +381,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     </h3>
                                 </div>
                                 <div className="h-[250px] flex items-center justify-center p-4">
-                                    <StatsRadarChart stats={user.stats} />
+                                    <StatsRadarChart stats={user.stats} initialStats={user.initialStats} />
                                 </div>
                             </div>
                         )}

@@ -181,6 +181,11 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
       updatedUser.rank = currentRank.key;
       updatedUser.initialLevelsSet = true;
 
+      // Preserve the very first snapshot — never overwrite on re-edits
+      if (!updatedUser.initialStats) {
+        updatedUser.initialStats = { ...levelValues };
+      }
+
       // Update XP for next level based on new overall level
       updatedUser.xpToNextLevel = Math.floor(130 * Math.pow(1.2, averageLevel - 1));
 
