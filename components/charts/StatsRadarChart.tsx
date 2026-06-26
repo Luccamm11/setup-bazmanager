@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 interface StatsRadarChartProps {
     stats: { [key in Realm]: number };
     initialStats?: { [key in Realm]?: number };
+    showCurrentLevel?: boolean;
 }
 
 const realmOrder: Realm[] = [
@@ -18,7 +19,7 @@ const realmOrder: Realm[] = [
     Realm.FirstCulture
 ];
 
-const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats }) => {
+const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, showCurrentLevel = true }) => {
     const { t } = useTranslation(['common']);
     const size = 300;
     const center = size / 2;
@@ -36,17 +37,17 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats }
         };
     };
 
-    // Current stats polygon (red when initialStats present, blue otherwise)
+    // Determine if we show two overlapping polygons (requires both initialStats to be defined and filter active)
+    const hasTwo = !!initialStats && showCurrentLevel;
+
+    // Initial stats polygon (rendered first, in BLUE) - falls back to current stats if no initialStats available
+    const initialData = initialStats || stats;
+    const initialPoints = realmOrder.map((realm, i) => getPoint(initialData[realm] || 0, i));
+    const initialPointString = initialPoints.map(p => `${p.x},${p.y}`).join(' ');
+
+    // Current stats polygon (rendered second, in RED)
     const currentPoints = realmOrder.map((realm, i) => getPoint(stats[realm] || 0, i));
     const currentPointString = currentPoints.map(p => `${p.x},${p.y}`).join(' ');
-
-    // Initial stats polygon (blue)
-    const initialPoints = initialStats
-        ? realmOrder.map((realm, i) => getPoint(initialStats[realm] || 0, i))
-        : null;
-    const initialPointString = initialPoints?.map(p => `${p.x},${p.y}`).join(' ');
-
-    const hasTwo = !!initialStats;
 
     return (
         <div className="flex flex-col items-center gap-3">
@@ -88,44 +89,38 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats }
                         );
                     })}
 
-                    {/* Initial Stats Polygon — BLUE (rendered first, below) */}
-                    {initialPoints && initialPointString && (
+                    {/* Blue Polygon (Initial Stats, or Current Stats when not comparing) */}
+                    <polygon
+                        points={initialPointString}
+                        fill="rgba(88, 166, 255, 0.25)"
+                        stroke="#58A6FF"
+                        strokeWidth={hasTwo ? 2.5 : 3}
+                        className="drop-shadow-[0_0_6px_rgba(88,166,255,0.4)]"
+                    />
+                    {initialPoints.map((p, i) => (
+                        <circle key={`init-${i}`} cx={p.x} cy={p.y} r="3" fill="#58A6FF" className="drop-shadow-[0_0_4px_rgba(88,166,255,0.8)]" />
+                    ))}
+
+                    {/* Red Polygon (Current Stats — overlay, rendered only when comparing) */}
+                    {hasTwo && (
                         <>
                             <polygon
-                                points={initialPointString}
-                                fill="rgba(88, 166, 255, 0.25)"
-                                stroke="#58A6FF"
+                                points={currentPointString}
+                                fill="rgba(248, 81, 73, 0.25)"
+                                stroke="#f85149"
                                 strokeWidth="2.5"
-                                className="drop-shadow-[0_0_6px_rgba(88,166,255,0.4)]"
+                                className="drop-shadow-[0_0_6px_rgba(248,81,73,0.5)]"
                             />
-                            {initialPoints.map((p, i) => (
-                                <circle key={`init-${i}`} cx={p.x} cy={p.y} r="3" fill="#58A6FF" className="drop-shadow-[0_0_4px_rgba(88,166,255,0.8)]" />
+                            {currentPoints.map((p, i) => (
+                                <circle
+                                    key={`curr-${i}`}
+                                    cx={p.x} cy={p.y} r="3"
+                                    fill="#f85149"
+                                    className="drop-shadow-[0_0_4px_rgba(248,81,73,0.8)]"
+                                />
                             ))}
                         </>
                     )}
-
-                    {/* Current Stats Polygon — RED (with initialStats) or BLUE (alone) */}
-                    <polygon
-                        points={currentPointString}
-                        fill={hasTwo ? 'rgba(248, 81, 73, 0.25)' : 'rgba(88, 166, 255, 0.3)'}
-                        stroke={hasTwo ? '#f85149' : '#58A6FF'}
-                        strokeWidth={hasTwo ? 2.5 : 3}
-                        className={hasTwo
-                            ? 'drop-shadow-[0_0_6px_rgba(248,81,73,0.5)]'
-                            : 'drop-shadow-[0_0_8px_rgba(88,166,255,0.5)]'
-                        }
-                    />
-                    {currentPoints.map((p, i) => (
-                        <circle
-                            key={`curr-${i}`}
-                            cx={p.x} cy={p.y} r="3"
-                            fill={hasTwo ? '#f85149' : '#58A6FF'}
-                            className={hasTwo
-                                ? 'drop-shadow-[0_0_4px_rgba(248,81,73,0.8)]'
-                                : 'drop-shadow-[0_0_5px_rgba(88,166,255,0.8)]'
-                            }
-                        />
-                    ))}
                 </g>
             </svg>
 

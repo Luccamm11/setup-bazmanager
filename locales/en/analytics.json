@@ -48,6 +48,7 @@
     "radarChart": "Radar Chart",
     "barChart": "Bar Chart",
     "birthDate": "Birth Date",
+    "showCurrentLevel": "Show Current Level",
     "grade": "Grade / Season",
     "entryDate": "Member since",
     "not_informed": "Not informed",

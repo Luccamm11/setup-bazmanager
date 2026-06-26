@@ -62,7 +62,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         awardFocus: true,
         radarChart: true,
         barChart: true,
-        birthDate: true
+        birthDate: true,
+        showCurrentLevel: true
     });
 
     const [showSettings, setShowSettings] = useState(false);
@@ -381,7 +382,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     </h3>
                                 </div>
                                 <div className="h-[250px] flex items-center justify-center p-4">
-                                    <StatsRadarChart stats={user.stats} initialStats={user.initialStats} />
+                                    <StatsRadarChart stats={user.stats} initialStats={user.initialStats} showCurrentLevel={visibility.showCurrentLevel} />
                                 </div>
                             </div>
                         )}

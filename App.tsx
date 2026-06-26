@@ -83,6 +83,11 @@ const migrateLoadedState = (loadedState: any): any => {
     };
 
     const migratedUser = { ...defaults, ...user };
+
+    // Migrate existing leveled-up users who don't have initialStats yet
+    if (migratedUser.initialLevelsSet && !migratedUser.initialStats) {
+        migratedUser.initialStats = { ...migratedUser.stats };
+    }
     
     // Force migration to new Bazinga Championship arc if legacy arc detected
     const legacyArcIds = ['ftc_kickoff', 'ftc_competition_sprint', 'final_siege', 'signals_gate'];
