@@ -55,6 +55,7 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
   const [memberData, setMemberData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingLevels, setEditingLevels] = useState(false);
   const { members: dynamicMembers, loading: membersLoading } = useMembers(currentUser);
   
   // Nivelamento form state (1 to 100)
@@ -107,11 +108,13 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
   useEffect(() => {
     if (!selectedUsername) {
       setMemberData(null);
+      setEditingLevels(false);
       return;
     }
 
     async function loadMemberData() {
       setIsLoading(true);
+      setEditingLevels(false);
       try {
         const res = await fetch(`/api/persistence?username=${selectedUsername}`);
         const data = await res.json();
@@ -163,9 +166,10 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
   const handleConfirmNivelamento = async () => {
     if (!selectedUsername || !memberData) return;
     
-    const confirmMsg = `Deseja confirmar o nivelamento inicial de ${selectedUsername}?\n\n` +
+    const isReedit = memberData.user.initialLevelsSet;
+    const confirmMsg = `Deseja ${isReedit ? 'atualizar' : 'confirmar'} o nivelamento de ${selectedUsername}?\n\n` +
       SKILL_REALMS.map(r => `• ${r}: ${levelValues[r]}`).join('\n') +
-      `\n\nNível Geral Estimado: ${averageLevel} (${currentRank.title})\n\nEsta ação só poderá ser feita uma vez!`;
+      `\n\nNível Geral Estimado: ${averageLevel} (${currentRank.title})`;
       
     if (!window.confirm(confirmMsg)) return;
 
@@ -180,8 +184,6 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
       // Update XP for next level based on new overall level
       updatedUser.xpToNextLevel = Math.floor(130 * Math.pow(1.2, averageLevel - 1));
 
-      // Update their core skill tree levels to match stats if applicable or keep defaults
-      // We will update the memberData state and persist it
       const updatedData = {
         ...memberData,
         user: updatedUser
@@ -197,7 +199,8 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
       if (data.success) {
         setMemberData(updatedData);
         setMembersStatus(prev => ({ ...prev, [selectedUsername]: true }));
-        alert(`Nivelamento inicial de ${selectedUsername} salvo com sucesso!`);
+        setEditingLevels(false);
+        alert(`Nivelamento de ${selectedUsername} salvo com sucesso!`);
       } else {
         alert('Erro ao salvar o nivelamento: ' + data.error);
       }
@@ -345,15 +348,14 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                 <span className="text-text-muted text-sm">Buscando dados de {selectedUsername}...</span>
               </div>
             ) : memberData?.user ? (
-              // Check if initial levels have been set
-              memberData.user.initialLevelsSet ? (
-                // VIEW MODE (Read-only Skill Tree)
+              memberData.user.initialLevelsSet && !editingLevels ? (
+                // VIEW MODE (Read-only Skill Tree) — with Edit button
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="bg-primary/10 rounded-3xl border border-white/5 p-6 backdrop-blur-md"
                 >
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6 flex-wrap gap-3">
                     <div className="flex items-center space-x-3">
                       <span className="font-black text-xl bg-white/5 border border-white/10 px-3 py-1 rounded-xl text-white">
                         Lvl {memberData.user.level_overall}
@@ -362,16 +364,25 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                         Rank: {getRankForLevel(memberData.user.level_overall).title}
                       </span>
                     </div>
-                    <div className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/25 px-3 py-1 rounded-full flex items-center gap-1.5">
-                      <CheckCircle2 size={12} />
-                      Nivelado pelo Técnico
+                    <div className="flex items-center gap-3">
+                      <div className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/25 px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <CheckCircle2 size={12} />
+                        Nivelado pelo Técnico
+                      </div>
+                      <button
+                        onClick={() => setEditingLevels(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition-all"
+                      >
+                        <Sliders size={12} />
+                        Editar Nivelamento
+                      </button>
                     </div>
                   </div>
                   
                   <SkillTree user={memberData.user} readOnly={true} />
                 </motion.div>
               ) : (
-                // SETUP MODE (Assign Initial Levels Form 1-100)
+                // SETUP / EDIT MODE (Assign/Update Levels Form 1-100)
                 <motion.div
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -383,10 +394,13 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                     <div>
                       <h4 className="text-xl font-black text-white flex items-center gap-2">
                         <Sliders className="text-amber-400" />
-                        Definir Nível Inicial (1 a 100)
+                        {memberData.user.initialLevelsSet ? 'Editar Nivelamento' : 'Definir Nível Inicial'} (1 a 100)
                       </h4>
                       <p className="text-sm text-text-secondary mt-1">
-                        Estipule o nível pré-existente de {selectedUsername} em cada um dos 8 reinos da robótica.
+                        {memberData.user.initialLevelsSet
+                          ? `Ajuste o nível de ${selectedUsername} em cada reino quando necessário.`
+                          : `Estipule o nível pré-existente de ${selectedUsername} em cada um dos 8 reinos da robótica.`
+                        }
                       </p>
                     </div>
                     
@@ -446,10 +460,14 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center space-x-2 text-text-muted text-xs bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl">
-                      <ShieldAlert className="text-amber-400 shrink-0" size={16} />
-                      <span><strong>Atenção:</strong> O nivelamento inicial só pode ser feito uma vez e não poderá ser alterado posteriormente.</span>
-                    </div>
+                    {memberData.user.initialLevelsSet && (
+                      <button
+                        onClick={() => setEditingLevels(false)}
+                        className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white hover:bg-white/10 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    )}
 
                     <button 
                       onClick={handleConfirmNivelamento}
@@ -464,7 +482,7 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                       ) : (
                         <>
                           <Save size={18} />
-                          <span>Salvar Nivelamento</span>
+                          <span>{memberData.user.initialLevelsSet ? 'Atualizar Nivelamento' : 'Salvar Nivelamento'}</span>
                         </>
                       )}
                     </button>
