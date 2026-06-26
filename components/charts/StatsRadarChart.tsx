@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Realm } from '../../types';
 import { useTranslation } from 'react-i18next';
 
@@ -28,6 +28,9 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
     const angleSlice = (Math.PI * 2) / numSides;
     const maxStatValue = 100;
 
+    // Generate a unique mask ID to avoid collision when multiple charts are rendered
+    const maskId = useRef(`radar-mask-${Math.random().toString(36).substring(2, 9)}`).current;
+
     const getPoint = (value: number, index: number, customRadius?: number) => {
         const angle = angleSlice * index - Math.PI / 2;
         const r = customRadius !== undefined ? customRadius : (value / maxStatValue) * radius;
@@ -40,18 +43,28 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
     // Determine if we show two overlapping polygons (requires both initialStats to be defined and filter active)
     const hasTwo = !!initialStats && showCurrentLevel;
 
-    // Initial stats polygon (rendered first, in BLUE) - falls back to current stats if no initialStats available
+    // Initial stats polygon (rendered in BLUE) - falls back to current stats if no initialStats available
     const initialData = initialStats || stats;
     const initialPoints = realmOrder.map((realm, i) => getPoint(initialData[realm] || 0, i));
     const initialPointString = initialPoints.map(p => `${p.x},${p.y}`).join(' ');
 
-    // Current stats polygon (rendered second, in RED)
+    // Current stats polygon (rendered in RED outline, and filled only in the difference/gained area via SVG mask)
     const currentPoints = realmOrder.map((realm, i) => getPoint(stats[realm] || 0, i));
     const currentPointString = currentPoints.map(p => `${p.x},${p.y}`).join(' ');
 
     return (
         <div className="flex flex-col items-center gap-3">
             <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
+                <defs>
+                    {hasTwo && (
+                        <mask id={maskId}>
+                            {/* Make everything visible by default */}
+                            <rect x="0" y="0" width={size} height={size} fill="white" />
+                            {/* Cut out/exclude the initial stats area (render it as black) */}
+                            <polygon points={initialPointString} fill="black" />
+                        </mask>
+                    )}
+                </defs>
                 <g>
                     {/* Grid lines */}
                     {[0.25, 0.5, 0.75, 1].map(level => (
@@ -89,7 +102,36 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
                         );
                     })}
 
-                    {/* Blue Polygon (Initial Stats, or Current Stats when not comparing) */}
+                    {/* Red Polygon (Current Stats — filled ONLY in the gained/evolution area using the mask) */}
+                    {hasTwo && (
+                        <>
+                            {/* Gained XP area fill */}
+                            <polygon
+                                points={currentPointString}
+                                fill="rgba(248, 81, 73, 0.25)"
+                                mask={`url(#${maskId})`}
+                            />
+                            {/* Current level contour outline */}
+                            <polygon
+                                points={currentPointString}
+                                fill="none"
+                                stroke="#f85149"
+                                strokeWidth="2"
+                                className="drop-shadow-[0_0_4px_rgba(248,81,73,0.3)]"
+                            />
+                            {/* Current level vertices */}
+                            {currentPoints.map((p, i) => (
+                                <circle
+                                    key={`curr-${i}`}
+                                    cx={p.x} cy={p.y} r="3"
+                                    fill="#f85149"
+                                    className="drop-shadow-[0_0_3px_rgba(248,81,73,0.6)]"
+                                />
+                            ))}
+                        </>
+                    )}
+
+                    {/* Blue Polygon (Initial Stats, or Current Stats alone when not comparing) */}
                     <polygon
                         points={initialPointString}
                         fill="rgba(88, 166, 255, 0.25)"
@@ -100,27 +142,6 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
                     {initialPoints.map((p, i) => (
                         <circle key={`init-${i}`} cx={p.x} cy={p.y} r="3" fill="#58A6FF" className="drop-shadow-[0_0_4px_rgba(88,166,255,0.8)]" />
                     ))}
-
-                    {/* Red Polygon (Current Stats — overlay, rendered only when comparing) */}
-                    {hasTwo && (
-                        <>
-                            <polygon
-                                points={currentPointString}
-                                fill="rgba(248, 81, 73, 0.25)"
-                                stroke="#f85149"
-                                strokeWidth="2.5"
-                                className="drop-shadow-[0_0_6px_rgba(248,81,73,0.5)]"
-                            />
-                            {currentPoints.map((p, i) => (
-                                <circle
-                                    key={`curr-${i}`}
-                                    cx={p.x} cy={p.y} r="3"
-                                    fill="#f85149"
-                                    className="drop-shadow-[0_0_4px_rgba(248,81,73,0.8)]"
-                                />
-                            ))}
-                        </>
-                    )}
                 </g>
             </svg>
 
