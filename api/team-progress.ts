@@ -38,6 +38,8 @@ const emptyMember = (username: string) => ({
   questsCompleted: 0,
   bossQuestsCompleted: 0,
   stats: {},
+  initialStats: null,
+  initialLevelsSet: false,
   streak: 0,
 });
 
@@ -79,6 +81,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             questsCompleted: user.questsCompleted || 0,
             bossQuestsCompleted: user.bossQuestsCompleted || 0,
             stats: user.stats || {},
+            initialStats: user.initialStats || (user.initialLevelsSet ? user.stats : null),
+            initialLevelsSet: user.initialLevelsSet || false,
             streak: user.streaks?.daily_streak || 0,
           });
         } else {
