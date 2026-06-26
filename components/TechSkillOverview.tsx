@@ -358,10 +358,10 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                   <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6 flex-wrap gap-3">
                     <div className="flex items-center space-x-3">
                       <span className="font-black text-xl bg-white/5 border border-white/10 px-3 py-1 rounded-xl text-white">
-                        Lvl {memberData.user.level_overall}
+                        Nível {memberData.user.level_overall}
                       </span>
                       <span className="font-black text-sm tracking-wider uppercase text-accent-primary">
-                        Rank: {getRankForLevel(memberData.user.level_overall).title}
+                        Patente: {getRankForLevel(memberData.user.level_overall).title}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export const TechSkillOverview: React.FC<TechSkillOverviewProps> = ({ currentUse
                       </div>
                       <div className="h-8 w-px bg-white/10"></div>
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-text-muted tracking-wider">Rank Atribuído</span>
+                        <span className="block text-[10px] font-extrabold uppercase text-text-muted tracking-wider">Patente Atribuída</span>
                         <span className="font-black text-sm text-white">{currentRank.title}</span>
                       </div>
                     </div>
