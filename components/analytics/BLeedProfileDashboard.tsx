@@ -18,7 +18,9 @@ import {
     Save,
     CheckCircle2,
     X,
-    Info
+    Info,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +72,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
     });
 
     const [showSettings, setShowSettings] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const toggleVisibility = (key: keyof typeof visibility) => {
         setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
@@ -161,11 +164,84 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         );
     };
 
+    // Details info card (reused in chart grid when a chart is hidden)
+    const detailsCard = visibility.details ? (
+        <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass space-y-4 h-full">
+            <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2 mb-4">
+                <GraduationCap size={16} className="text-accent-tertiary" /> Registro
+            </h3>
+            <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
+                <GraduationCap className="text-accent-secondary" size={20} />
+                <div>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.grade')}</p>
+                    <p className="text-sm font-bold text-text-primary">{user.grade || t('analytics:profile.not_informed')}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
+                <Calendar className="text-accent-tertiary" size={20} />
+                <div>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.entryDate')}</p>
+                    <p className="text-sm font-bold text-text-primary">{user.entryDate || t('analytics:profile.not_informed')}</p>
+                </div>
+            </div>
+            {visibility.birthDate && (
+                <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
+                    <History className="text-accent-red" size={20} />
+                    <div>
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.birthDate')}</p>
+                        <p className="text-sm font-bold text-text-primary">{user.birthDate || t('analytics:profile.not_informed')}</p>
+                    </div>
+                </div>
+            )}
+            <div className="p-3 bg-white/5 rounded-2xl space-y-3">
+                <div>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-2">{t('analytics:profile.seasons')}</p>
+                    {user.seasons && user.seasons.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                            {(Array.isArray(user.seasons) ? user.seasons : String(user.seasons).split(',')).map((s, i) => (
+                                <span key={i} className="text-[9px] font-bold text-text-secondary bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{s}</span>
+                            ))}
+                        </div>
+                    ) : <p className="text-[10px] text-text-muted italic">{t('analytics:profile.not_informed')}</p>}
+                </div>
+                {user.mentorSeasons && user.mentorSeasons.length > 0 && (
+                    <div>
+                        <p className="text-[10px] font-black text-accent-tertiary uppercase tracking-wider mb-2">{t('analytics:profile.mentor_seasons')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {user.mentorSeasons.map((s, i) => (
+                                <span key={i} className="text-[9px] font-bold text-accent-tertiary bg-accent-tertiary/10 px-2 py-0.5 rounded-md border border-accent-tertiary/20">{s}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {user.volunteerSeasons && user.volunteerSeasons.length > 0 && (
+                    <div>
+                        <p className="text-[10px] font-black text-accent-red uppercase tracking-wider mb-2">{t('analytics:profile.volunteer_seasons')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {user.volunteerSeasons.map((s, i) => (
+                                <span key={i} className="text-[9px] font-bold text-accent-red bg-accent-red/10 px-2 py-0.5 rounded-md border border-accent-red/20">{s}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    ) : null;
+
+    // Determine what fills each slot in the 2-col chart grid
+    const showBothCharts = visibility.radarChart && visibility.barChart;
+    const showOnlyRadar   = visibility.radarChart && !visibility.barChart;
+    const showOnlyBar     = !visibility.radarChart && visibility.barChart;
+    const showNoCharts    = !visibility.radarChart && !visibility.barChart;
+
     return (
-        <div className="space-y-8 relative">
+        <div className={isFullscreen
+            ? 'fixed inset-0 z-[200] bg-background overflow-y-auto p-6 space-y-8'
+            : 'space-y-8 relative'
+        }>
             {/* Header with Back Button and Visibility Control */}
             <div className="flex justify-between items-center sticky top-0 z-20">
-                {onBack && (
+                {!isFullscreen && onBack && (
                     <button 
                         onClick={onBack}
                         className="p-3 bg-primary/80 backdrop-blur-xl border border-white/10 rounded-2xl text-text-secondary hover:text-white transition-all shadow-glass flex items-center gap-2 font-black uppercase tracking-widest text-[10px]"
@@ -174,12 +250,21 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                     </button>
                 )}
                 <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => setIsFullscreen(f => !f)}
+                    title={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                    className="p-3 bg-primary/80 backdrop-blur-xl border border-white/10 rounded-2xl text-text-secondary hover:text-white transition-all shadow-glass"
+                >
+                    {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                </button>
                 <button 
                     onClick={() => setShowSettings(!showSettings)}
                     className="p-3 bg-primary/80 backdrop-blur-xl border border-white/10 rounded-2xl text-text-secondary hover:text-white transition-all shadow-glass group"
                 >
                     <Settings2 size={20} className={showSettings ? 'rotate-90' : ''} />
                 </button>
+                </div>
                 
                 <AnimatePresence>
                     {showSettings && (
@@ -394,9 +479,11 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                         </div>
                     )}
 
-                    {/* Graphs and Attributes - Shown for everyone now as requested */}
+                    {/* Graphs and Attributes - adaptive 2-col grid */}
+                    {!showNoCharts && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {visibility.radarChart && (
+                        {/* Radar chart slot — if hidden, show details card instead */}
+                        {visibility.radarChart ? (
                             <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
@@ -407,9 +494,12 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     <StatsRadarChart stats={user.stats} initialStats={user.initialStats} showCurrentLevel={visibility.showCurrentLevel} />
                                 </div>
                             </div>
+                        ) : (
+                            detailsCard
                         )}
 
-                        {visibility.barChart && (
+                        {/* Bar chart slot — if hidden, show details card instead */}
+                        {visibility.barChart ? (
                             <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass relative group">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-2">
@@ -440,8 +530,11 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     </div>
                                 </div>
                             </div>
+                        ) : (
+                            detailsCard
                         )}
                     </div>
+                    )}
 
                     <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10">
                         <h4 className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em] mb-6">{t('analytics:profile.bleed_attributes')}</h4>
