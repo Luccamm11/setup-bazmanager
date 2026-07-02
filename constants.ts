@@ -10,7 +10,7 @@ export const ALL_MEMBERS = ALL_USERNAMES;
 /**
  * SKILL_REALMS — single source of truth.
  * Every feature that has a "Realm" selector (quests, missions, timer, skill modal, etc.)
- * MUST use this list. Addaing/removing a realm here automatically syncs everywhere.
+ * MUST use this list. Adding/removing a realm here automatically syncs everywhere.
  */
 export const SKILL_REALMS: Realm[] = [
     Realm.TechnicalWriting,

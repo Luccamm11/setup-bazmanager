@@ -30,7 +30,7 @@ export function useMembers(requester: string) {
       .then((data) => {
         if (isMounted) {
           if (data.success && Array.isArray(data.members)) {
-            // Map members and default details
+            // Map memberas and default details
             const mapped: Member[] = data.members.map((m: any) => ({
               username: m.username,
               displayName: m.displayName || m.username,
