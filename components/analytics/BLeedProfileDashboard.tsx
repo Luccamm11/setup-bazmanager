@@ -365,8 +365,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                         </div>
                     </div>
 
-                    {/* Basic Info Details */}
-                    {visibility.details && (
+                    {/* Basic Info Details — only render here if not already rendered inside the dynamic grid on the right (both charts visible or no charts visible) */}
+                    {visibility.details && (showBothCharts || showNoCharts) && (
                         <div className="bg-primary/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-glass space-y-4">
                             <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
                                 <GraduationCap className="text-accent-secondary" size={20} />
