@@ -48,8 +48,15 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
     const initialPoints = realmOrder.map((realm, i) => getPoint(initialData[realm] || 0, i));
     const initialPointString = initialPoints.map(p => `${p.x},${p.y}`).join(' ');
 
-    // Current stats polygon (rendered in RED outline, and filled only in the difference/gained area via SVG mask)
-    const currentPoints = realmOrder.map((realm, i) => getPoint(stats[realm] || 0, i));
+    // Current stats polygon (rendered in RED) — clamped so each axis is >= initialStats,
+    // ensuring the red polygon is always at or outside the blue one.
+    const currentPoints = realmOrder.map((realm, i) => {
+        const currentVal = stats[realm] || 0;
+        const initialVal = hasTwo ? (initialStats![realm] || 0) : 0;
+        // Always use the greater of the two so red is never inside blue
+        const displayVal = hasTwo ? Math.max(currentVal, initialVal) : currentVal;
+        return getPoint(displayVal, i);
+    });
     const currentPointString = currentPoints.map(p => `${p.x},${p.y}`).join(' ');
 
     return (
@@ -102,7 +109,7 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
                         );
                     })}
 
-                    {/* Red Polygon (Current Stats — filled ONLY in the gained/evolution area using the mask) */}
+                    {/* Red Polygon (Current Stats — always at or outside the blue initial polygon) */}
                     {hasTwo && (
                         <>
                             {/* Gained XP area fill */}
@@ -131,7 +138,7 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
                         </>
                     )}
 
-                    {/* Blue Polygon (Initial Stats, or Current Stats alone when not comparing) */}
+                    {/* Blue Polygon (Initial Stats) — rendered AFTER red so it paints on top where they overlap */}
                     <polygon
                         points={initialPointString}
                         fill="rgba(88, 166, 255, 0.25)"
