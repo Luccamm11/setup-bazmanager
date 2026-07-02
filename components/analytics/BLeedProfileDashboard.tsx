@@ -622,13 +622,21 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.entryDate')}</label>
-                                            <input 
-                                                type="text" 
+                                            <select 
                                                 value={setupData.entryDate}
                                                 onChange={(e) => setSetupData({...setupData, entryDate: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
-                                                placeholder="Ex: Fevereiro 2024"
-                                            />
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="" className="bg-primary text-text-muted">Selecione...</option>
+                                                <option value="2018/2019" className="bg-primary">2018/2019</option>
+                                                <option value="2019/2020" className="bg-primary">2019/2020</option>
+                                                <option value="2020/2021" className="bg-primary">2020/2021</option>
+                                                <option value="2021/2022" className="bg-primary">2021/2022</option>
+                                                <option value="2022/2023" className="bg-primary">2022/2023</option>
+                                                <option value="2023/2024" className="bg-primary">2023/2024</option>
+                                                <option value="2024/2025" className="bg-primary">2024/2025</option>
+                                                <option value="2025/2026" className="bg-primary">2025/2026</option>
+                                            </select>
                                         </div>
                                     </div>
 
