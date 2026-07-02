@@ -10,26 +10,26 @@ export const ALL_MEMBERS = ALL_USERNAMES;
 /**
  * SKILL_REALMS — single source of truth.
  * Every feature that has a "Realm" selector (quests, missions, timer, skill modal, etc.)
- * MUST use this list. Adding/removing a realm here automatically syncs everywhere.
+ * MUST use this list. Addaing/removing a realm here automatically syncs everywhere.
  */
 export const SKILL_REALMS: Realm[] = [
-  Realm.TechnicalWriting,
-  Realm.Networking,
-  Realm.Oratory,
-  Realm.Planning,
-  Realm.Creativity,
-  Realm.Programming,
-  Realm.Engineering,
-  Realm.FirstCulture
+    Realm.TechnicalWriting,
+    Realm.Networking,
+    Realm.Oratory,
+    Realm.Planning,
+    Realm.Creativity,
+    Realm.Programming,
+    Realm.Engineering,
+    Realm.FirstCulture
 ];
 
 export const FTC_SEASONS = [
-  "2021/2022 - Freight Frenzy",
-  "2022/2023 - Power Play",
-  "2023/2024 - Centerstage",
-  "2024/2025 - Into The Deep",
-  "2025/2026 - Decode",
-  "2026/2027 - Biobuzz"
+    "2021/2022 - Freight Frenzy",
+    "2022/2023 - Power Play",
+    "2023/2024 - Centerstage",
+    "2024/2025 - Into The Deep",
+    "2025/2026 - Decode",
+    "2026/2027 - Biobuzz"
 ];
 
 export const ICON_MAP: { [key: string]: React.ElementType } = {
@@ -52,7 +52,7 @@ export const getXpThresholdForSkillLevel = (level: number, xpScale: number = 1.0
     }
     if (level < 1) return Math.floor(100 * xpScale);
     if (level === 1) return Math.floor(100 * xpScale); // Base XP for level 1 -> 2
-    
+
     const threshold = Math.floor(getXpThresholdForSkillLevel(level - 1, xpScale) * 1.2);
     skillXpThresholdCache.set(cacheKey, threshold);
     return threshold;
@@ -71,19 +71,19 @@ export const SKILL_DEFINITIONS: Omit<Skill, 'level' | 'xp' | 'xpToNextLevel'>[] 
 
 const initialSkillTree: { [skill_id: string]: Skill } = {};
 SKILL_DEFINITIONS.forEach(skillDef => {
-  initialSkillTree[skillDef.id] = {
-    ...skillDef,
-    level: 1,
-    xp: 0,
-    xpToNextLevel: getXpThresholdForSkillLevel(1, skillDef.xpScale),
-  };
+    initialSkillTree[skillDef.id] = {
+        ...skillDef,
+        level: 1,
+        xp: 0,
+        xpToNextLevel: getXpThresholdForSkillLevel(1, skillDef.xpScale),
+    };
 });
 
 const INITIAL_KNOWLEDGE_BASE: { [topic_id: string]: KnowledgeTopic } = {};
 
 export const RANKS = [
-    { level: 1,  key: "e_rank", title: "Novato" },
-    { level: 6,  key: "d_rank", title: "Aprendiz" },
+    { level: 1, key: "e_rank", title: "Novato" },
+    { level: 6, key: "d_rank", title: "Aprendiz" },
     { level: 11, key: "c_rank", title: "Membro Dedicado" },
     { level: 21, key: "b_rank", title: "Construtor" },
     { level: 31, key: "a_rank", title: "Líder Técnico" },
@@ -118,55 +118,55 @@ export const ALL_ARCS: Arc[] = [KICKOFF_ARC, COMPETITION_ARC, CHAMPIONSHIP_ARC];
 
 
 export const INITIAL_USER: User = {
-  name: "Awakened",
-  rank: RANKS[0].key,
-  level_overall: 1,
-  xp_total: 0,
-  xpToNextLevel: 130,
-  stats: {
-    [Realm.TechnicalWriting]: 10,
-    [Realm.Networking]: 10,
-    [Realm.Oratory]: 10,
-    [Realm.Planning]: 10,
-    [Realm.Creativity]: 10,
-    [Realm.Programming]: 10,
-    [Realm.Engineering]: 10,
-    [Realm.FirstCulture]: 10,
-  },
-  wallet: {
-    credits: 100,
-    gems: 5,
-  },
-  skill_tree: initialSkillTree,
-  knowledgeBase: INITIAL_KNOWLEDGE_BASE,
-  streaks: {
-    daily_streak: 0,
-    lastQuestCompletionDate: null,
-  },
-  activeArc: CHAMPIONSHIP_ARC,
-  inventory: [],
-  activeBuffs: [],
-  questsCompleted: 0,
-  bossQuestsCompleted: 0,
-  unlockedBadges: [],
-  staked_credits: 0,
-  stakedBuffs: {},
-  lastWeeklyBossDate: null,
-  completedMajorGoals: [],
-  activeTimedQuest: null,
-  state: {
-    coreMission: '',
-    longTermGoals: '',
-    shortTermGoals: '',
-    emergencyGoals: '',
-    sideQuests: '',
-    awardFocus: ''
-  }
+    name: "Awakened",
+    rank: RANKS[0].key,
+    level_overall: 1,
+    xp_total: 0,
+    xpToNextLevel: 130,
+    stats: {
+        [Realm.TechnicalWriting]: 10,
+        [Realm.Networking]: 10,
+        [Realm.Oratory]: 10,
+        [Realm.Planning]: 10,
+        [Realm.Creativity]: 10,
+        [Realm.Programming]: 10,
+        [Realm.Engineering]: 10,
+        [Realm.FirstCulture]: 10,
+    },
+    wallet: {
+        credits: 100,
+        gems: 5,
+    },
+    skill_tree: initialSkillTree,
+    knowledgeBase: INITIAL_KNOWLEDGE_BASE,
+    streaks: {
+        daily_streak: 0,
+        lastQuestCompletionDate: null,
+    },
+    activeArc: CHAMPIONSHIP_ARC,
+    inventory: [],
+    activeBuffs: [],
+    questsCompleted: 0,
+    bossQuestsCompleted: 0,
+    unlockedBadges: [],
+    staked_credits: 0,
+    stakedBuffs: {},
+    lastWeeklyBossDate: null,
+    completedMajorGoals: [],
+    activeTimedQuest: null,
+    state: {
+        coreMission: '',
+        longTermGoals: '',
+        shortTermGoals: '',
+        emergencyGoals: '',
+        sideQuests: '',
+        awardFocus: ''
+    }
 };
 
 const getFutureDateString = (days: number, hours?: number) => {
     const date = new Date();
-    if(hours) {
+    if (hours) {
         date.setHours(date.getHours() + hours);
     } else {
         date.setDate(date.getDate() + days);
@@ -181,12 +181,12 @@ export const INITIAL_MAJOR_GOALS: MajorGoal[] = [];
 export const INITIAL_QUESTS: Quest[] = [];
 
 export const INITIAL_STORY_LOG: StoryLogEntry[] = [
-  {
-    id: 'log1',
-    date: "Semana 1",
-    title: "Início da Jornada",
-    narrative: "O sistema foi ativado. Um novo membro da Bazinga! 73 foi identificado. Objetivo principal: evoluir. A jornada de desenvolvimento na FIRST Tech Challenge começa agora."
-  }
+    {
+        id: 'log1',
+        date: "Semana 1",
+        title: "Início da Jornada",
+        narrative: "O sistema foi ativado. Um novo membro da Bazinga! 73 foi identificado. Objetivo principal: evoluir. A jornada de desenvolvimento na FIRST Tech Challenge começa agora."
+    }
 ];
 
 export const INITIAL_INTEGRATIONS: Integration[] = [];
@@ -274,7 +274,7 @@ export const STORE_ITEMS: StoreItem[] = [
         description: "Sua sequência diária pula para 3 dias, ativando bônus imediatamente.",
         cost: 400,
         category: 'Utility',
-        effect: { type: 'INSTANT_STREAK' } 
+        effect: { type: 'INSTANT_STREAK' }
     }
 ];
 
