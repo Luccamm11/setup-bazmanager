@@ -90,6 +90,11 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
     });
     const [isSaving, setIsSaving] = useState(false);
 
+    // Reset setup modal state when switching users
+    React.useEffect(() => {
+        setIsSetupOpen(!user.profileSetup);
+    }, [user.username, user.profileSetup]);
+
     // Sync setupData when opening the modal for editing
     React.useEffect(() => {
         if (isSetupOpen) {
