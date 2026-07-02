@@ -224,6 +224,7 @@ const App: React.FC = () => {
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
   const [isTeamMissionsLoading, setIsTeamMissionsLoading] = useState(false);
   const [isCreateMissionModalOpen, setIsCreateMissionModalOpen] = useState(false);
+  const [missionToEdit, setMissionToEdit] = useState<TeamMission | null>(null);
 
   // User picture is kept in local state for now, but could be migrated
   const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
@@ -488,6 +489,24 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to delete team mission:', err);
+    }
+  }, [currentUser]);
+
+  const handleEditTeamMission = useCallback(async (missionId: string, missionData: Omit<TeamMission, 'id' | 'createdBy' | 'completedBy' | 'createdAt'>) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/team-missions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, action: 'edit', missionId, updatedMission: missionData }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeamMissions(prev => prev.map(m => m.id === missionId ? data.mission : m));
+        setSystemMessages(prev => [{ id: `tm-edit-${Date.now()}`, text: `Missão "${data.mission.title}" atualizada com sucesso!`, timestamp: 'Just now', type: 'system' }, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to edit team mission:', err);
     }
   }, [currentUser]);
 
@@ -2011,7 +2030,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
-      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onEditMission={(mission) => { setMissionToEdit(mission); setIsCreateMissionModalOpen(true); }} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'attendance': return userRole === 'technician' ? <AttendanceDashboard currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
@@ -2166,7 +2185,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {isBadgeModalOpen && <AddEditBadgeModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} onSave={handleSaveBadge} badgeToEdit={editingBadge} onGenerateBadge={(prompt) => generateBadge(apiKey, prompt)} />}
       {isStoreItemModalOpen && <AddStoreItemModal isOpen={isStoreItemModalOpen} onClose={() => setIsStoreItemModalOpen(false)} onSave={handleSaveStoreItem} itemToEdit={editingStoreItem} user={user} apiKey={apiKey} />}
       {isRecommendationsModalOpen && <RecommendationsModal isOpen={isRecommendationsModalOpen} onClose={() => setIsRecommendationsModalOpen(false)} recommendations={aiRecommendations} onSave={handleSaveRecommendations} isLoading={isGeneratingRecommendations} userSkills={user.skill_tree} />}
-      {isCreateMissionModalOpen && <CreateTeamMissionModal isOpen={isCreateMissionModalOpen} onClose={() => setIsCreateMissionModalOpen(false)} onSave={handleCreateTeamMission} currentUser={currentUser || ''} />}
+      {isCreateMissionModalOpen && <CreateTeamMissionModal isOpen={isCreateMissionModalOpen} onClose={() => { setIsCreateMissionModalOpen(false); setMissionToEdit(null); }} onSave={async (missionData) => { if (missionToEdit) { await handleEditTeamMission(missionToEdit.id, missionData); } else { await handleCreateTeamMission(missionData); } setIsCreateMissionModalOpen(false); setMissionToEdit(null); }} missionToEdit={missionToEdit} currentUser={currentUser || ''} />}
 
       {levelUpData && <LevelUpAnimation level={levelUpData.level} rank={levelUpData.rank} onClose={() => setLevelUpData(null)} />}
       <RewardToast notifications={rewardNotifications} onRemove={(id) => setRewardNotifications(prev => prev.filter(n => n.id !== id))} />

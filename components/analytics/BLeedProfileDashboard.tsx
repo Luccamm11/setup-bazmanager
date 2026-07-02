@@ -17,7 +17,8 @@ import {
     Edit2,
     Save,
     CheckCircle2,
-    X
+    X,
+    Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -72,9 +73,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // First-time setup state (Only for active registered users)
+    // First-time setup state (Only for active registered users or unconfigured legacy)
     const isLegacy = user.type === 'mentor' || user.type === 'former';
-    const [isSetupOpen, setIsSetupOpen] = useState(!isLegacy && !user.profileSetup);
+    const [isSetupOpen, setIsSetupOpen] = useState(!user.profileSetup);
     const [setupData, setSetupData] = useState({
         fullName: user.fullName || '',
         grade: user.grade || '',
@@ -83,7 +84,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
         seasons: user.seasons || [],
         mentorSeasons: user.mentorSeasons || [],
         volunteerSeasons: user.volunteerSeasons || [],
-        bio: user.bio || ''
+        bio: user.bio || '',
+        howHelps: user.howHelps || user.howHeHelped || '',
+        reasonForLeaving: user.reasonForLeaving || ''
     });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -98,7 +101,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                 seasons: user.seasons || [],
                 mentorSeasons: user.mentorSeasons || [],
                 volunteerSeasons: user.volunteerSeasons || [],
-                bio: user.bio || ''
+                bio: user.bio || '',
+                howHelps: user.howHelps || user.howHeHelped || '',
+                reasonForLeaving: user.reasonForLeaving || ''
             });
         }
     }, [isSetupOpen, user]);
@@ -116,6 +121,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                 mentorSeasons: setupData.mentorSeasons,
                 volunteerSeasons: setupData.volunteerSeasons,
                 bio: setupData.bio,
+                howHelps: setupData.howHelps,
+                howHeHelped: setupData.howHelps,
+                reasonForLeaving: setupData.reasonForLeaving,
                 profileSetup: true
             };
             if (onUpdateUser) {
@@ -621,6 +629,35 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                             placeholder="Conte um pouco sobre você..."
                                         />
                                     </div>
+
+                                    {isLegacy && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">
+                                                    {user.type === 'mentor' ? 'Como ajuda a equipe?' : 'Como ajudava a equipe?'}
+                                                </label>
+                                                <textarea 
+                                                    value={setupData.howHelps}
+                                                    onChange={(e) => setSetupData({...setupData, howHelps: e.target.value})}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all h-20 resize-none"
+                                                    placeholder="Papel ou responsabilidades..."
+                                                />
+                                            </div>
+
+                                            {user.type === 'former' && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Por que saiu?</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={setupData.reasonForLeaving}
+                                                        onChange={(e) => setSetupData({...setupData, reasonForLeaving: e.target.value})}
+                                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all"
+                                                        placeholder="Motivo de saída..."
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             </div>
 

@@ -17,8 +17,57 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
     const [loading, setLoading] = useState(true);
     const [selectedMember, setSelectedMember] = useState<any | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [saveToast, setSaveToast] = useState<{ visible: boolean; name: string }>({ visible: false, name: '' });
 
     const isTechnician = ['Jonas', 'Ramon'].includes(currentUser);
+
+    const showSaveToast = (name: string) => {
+        setSaveToast({ visible: true, name });
+        setTimeout(() => setSaveToast({ visible: false, name: '' }), 3500);
+    };
+
+    const handleUpdateMember = async (updatedUser: any) => {
+        const isLegacy = updatedUser.type === 'mentor' || updatedUser.type === 'former';
+        try {
+            if (isLegacy) {
+                // Legacy members are stored in the legacy-members endpoint
+                const res = await fetch('/api/legacy-members', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, member: updatedUser })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    setLegacyMembers(prev => prev.map((m: any) => m.id === updatedUser.id ? { ...m, ...updatedUser } : m));
+                    setSelectedMember((prev: any) => prev ? { ...prev, ...updatedUser } : prev);
+                    showSaveToast(updatedUser.name || updatedUser.fullName || 'Membro');
+                }
+            } else {
+                // Active members are stored in persistence
+                const fetchRes = await fetch(`/api/persistence?username=${encodeURIComponent(updatedUser.username)}`);
+                const fetchResult = await fetchRes.json();
+
+                const dataToSave = fetchResult.success && fetchResult.data
+                    ? { ...fetchResult.data, user: { ...fetchResult.data.user, ...updatedUser, profileSetup: true } }
+                    : { user: { ...updatedUser, profileSetup: true } };
+
+                const saveRes = await fetch('/api/persistence', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: updatedUser.username, data: dataToSave })
+                });
+                const saveResult = await saveRes.json();
+
+                if (saveResult.success) {
+                    setMembers(prev => prev.map((m: any) => m.username === updatedUser.username ? { ...m, ...updatedUser } : m));
+                    setSelectedMember((prev: any) => prev ? { ...prev, ...updatedUser } : prev);
+                    showSaveToast(updatedUser.name || updatedUser.fullName || 'Membro');
+                }
+            }
+        } catch (err) {
+            console.error('Error saving updated member profile:', err);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -127,11 +176,34 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
 
     if (selectedMember) {
         return (
-            <BLeedProfileDashboard 
-                user={selectedMember} 
-                onBack={() => setSelectedMember(null)}
-                currentDate={new Date()}
-            />
+            <>
+                <BLeedProfileDashboard 
+                    user={selectedMember} 
+                    onBack={() => setSelectedMember(null)}
+                    currentDate={new Date()}
+                    onUpdateUser={handleUpdateMember}
+                />
+
+                {/* Success Toast */}
+                <AnimatePresence>
+                    {saveToast.visible && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                            className="fixed bottom-8 right-8 z-[200] flex items-center gap-3 bg-primary/90 border border-accent-secondary/40 text-white px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl"
+                        >
+                            <div className="p-2 bg-accent-secondary/20 rounded-xl text-accent-secondary">
+                                <CheckCircle2 size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-widest text-accent-secondary">Dossiê Salvo</p>
+                                <p className="text-sm font-medium text-text-secondary">{saveToast.name} atualizado com sucesso.</p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </>
         );
     }
 

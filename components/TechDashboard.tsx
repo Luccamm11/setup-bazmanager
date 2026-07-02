@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TeamMission, Realm } from '../types';
 import { ALL_MEMBERS } from '../constants';
 import { motion } from 'framer-motion';
-import { Plus, Users, Trophy, Zap, Trash2, CheckCircle, Clock, Shield, RefreshCw, Target, Crown, Star } from 'lucide-react';
+import { Plus, Users, Trophy, Zap, Trash2, CheckCircle, Clock, Shield, RefreshCw, Target, Crown, Star, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface MemberProgress {
@@ -21,6 +21,7 @@ interface TechDashboardProps {
   currentUser: string;
   missions: TeamMission[];
   onCreateMission: () => void;
+  onEditMission: (mission: TeamMission) => void;
   onDeleteMission: (missionId: string) => void;
   onRefreshMissions: () => void;
   isMissionsLoading: boolean;
@@ -48,6 +49,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
   currentUser,
   missions,
   onCreateMission,
+  onEditMission,
   onDeleteMission,
   onRefreshMissions,
   isMissionsLoading,
@@ -275,18 +277,27 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                         </div>
                       </div>
 
-                      {/* Delete / Meta */}
+                      {/* Edit / Delete / Meta */}
                       <div className="flex flex-col items-end gap-2 shrink-0">
-                        <button
-                          onClick={() => {
-                            if (window.confirm(t('dashboard:tech.delete_confirm', { title: mission.title }))) {
-                              onDeleteMission(mission.id);
-                            }
-                          }}
-                          className="p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => onEditMission(mission)}
+                            title="Editar missão"
+                            className="p-2 text-zinc-600 hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-500/10"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(t('dashboard:tech.delete_confirm', { title: mission.title }))) {
+                                onDeleteMission(mission.id);
+                              }
+                            }}
+                            className="p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                         <div className="text-right">
                           <p className="text-[9px] text-zinc-600 font-bold">{totalXp(mission)} XP</p>
                           <p className="text-[9px] text-zinc-600 flex items-center gap-0.5 justify-end">

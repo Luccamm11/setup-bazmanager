@@ -121,7 +121,7 @@ const CreateTeamMissionModal: React.FC<CreateTeamMissionModalProps> = ({ isOpen,
       evidenceMultiplier: multiplier,
       competencyWeights: weights,
     });
-    onClose();
+    // Note: the parent is responsible for closing/clearing the modal after save
   };
 
   return (
