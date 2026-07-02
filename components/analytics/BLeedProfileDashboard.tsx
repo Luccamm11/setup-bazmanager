@@ -31,6 +31,7 @@ interface BLeedProfileDashboardProps {
     currentDate: Date;
     onUpdateUser?: (user: any) => void;
     onBack?: () => void;
+    currentUser?: string;
 }
 
 const realmOrder: Realm[] = [
@@ -50,7 +51,8 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
     activityLog = [], 
     currentDate,
     onUpdateUser,
-    onBack
+    onBack,
+    currentUser
 }) => {
     const { t } = useTranslation(['analytics', 'common']);
     
@@ -75,7 +77,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
 
     // First-time setup state (Only for active registered users or unconfigured legacy)
     const isLegacy = user.type === 'mentor' || user.type === 'former';
-    const [isSetupOpen, setIsSetupOpen] = useState(!user.profileSetup);
+    // isOwnProfile: modal de dossiê só abre automaticamente para o próprio dono do perfil
+    const isOwnProfile = !currentUser || currentUser === user.name || currentUser === user.username;
+    const [isSetupOpen, setIsSetupOpen] = useState(!user.profileSetup && isOwnProfile);
     const [setupData, setSetupData] = useState({
         fullName: user.fullName || '',
         grade: user.grade || '',
@@ -92,8 +96,9 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
 
     // Reset setup modal state when switching users
     React.useEffect(() => {
-        setIsSetupOpen(!user.profileSetup);
-    }, [user.username, user.profileSetup]);
+        // Só abre automaticamente se for o próprio perfil do usuário logado
+        setIsSetupOpen(!user.profileSetup && isOwnProfile);
+    }, [user.username, user.profileSetup, isOwnProfile]);
 
     // Sync setupData when opening the modal for editing
     React.useEffect(() => {
@@ -203,20 +208,22 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                 ))}
                             </div>
                             
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                                <button 
-                                    onClick={() => {
-                                        setShowSettings(false);
-                                        setIsSetupOpen(true);
-                                    }}
-                                    className="flex items-center gap-3 w-full p-3 bg-accent-primary/10 hover:bg-accent-primary/20 border border-accent-primary/20 rounded-2xl text-accent-primary transition-all group"
-                                >
-                                    <Edit2 size={16} className="group-hover:rotate-12 transition-transform" />
-                                    <span className="text-xs font-black uppercase tracking-wider">
-                                        {t('analytics:profile.edit_dossier', 'Editar Dossiê')}
-                                    </span>
-                                </button>
-                            </div>
+                            {isOwnProfile && (
+                                <div className="mt-4 pt-4 border-t border-white/10">
+                                    <button 
+                                        onClick={() => {
+                                            setShowSettings(false);
+                                            setIsSetupOpen(true);
+                                        }}
+                                        className="flex items-center gap-3 w-full p-3 bg-accent-primary/10 hover:bg-accent-primary/20 border border-accent-primary/20 rounded-2xl text-accent-primary transition-all group"
+                                    >
+                                        <Edit2 size={16} className="group-hover:rotate-12 transition-transform" />
+                                        <span className="text-xs font-black uppercase tracking-wider">
+                                            {t('analytics:profile.edit_dossier', 'Editar Dossiê')}
+                                        </span>
+                                    </button>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -246,13 +253,15 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                 <>
                                     <h2 className="text-2xl font-black text-text-primary tracking-tight flex items-center justify-center gap-2">
                                         {user.fullName || user.name}
-                                        <button 
-                                            onClick={() => setIsSetupOpen(true)}
-                                            className="p-1.5 hover:bg-white/5 rounded-lg text-text-muted hover:text-accent-primary transition-all opacity-0 group-hover:opacity-100"
-                                            title={t('analytics:profile.edit_dossier', 'Editar Dossiê')}
-                                        >
-                                            <Edit2 size={14} />
-                                        </button>
+                                        {isOwnProfile && (
+                                            <button 
+                                                onClick={() => setIsSetupOpen(true)}
+                                                className="p-1.5 hover:bg-white/5 rounded-lg text-text-muted hover:text-accent-primary transition-all opacity-0 group-hover:opacity-100"
+                                                title={t('analytics:profile.edit_dossier', 'Editar Dossiê')}
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                        )}
                                     </h2>
                                     <p className={`font-black uppercase tracking-widest text-[10px] mt-1 ${user.type === 'mentor' ? 'text-accent-tertiary' : user.type === 'former' ? 'text-accent-red' : 'text-accent-primary'}`}>
                                         {user.rank} {user.type === 'active' && `• LVL ${user.level_overall || 0}`}

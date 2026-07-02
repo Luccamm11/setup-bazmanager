@@ -182,6 +182,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
                     onBack={() => setSelectedMember(null)}
                     currentDate={new Date()}
                     onUpdateUser={handleUpdateMember}
+                    currentUser={currentUser}
                 />
 
                 {/* Success Toast */}

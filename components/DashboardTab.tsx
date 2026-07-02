@@ -128,6 +128,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
                             activityLog={activityLog} 
                             currentDate={currentDate} 
                             onUpdateUser={onUpdateUser}
+                            currentUser={user.name}
                         />
                     )}
 
