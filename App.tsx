@@ -2010,7 +2010,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
 
   const renderView = () => {
     switch(view) {
-      case 'home': return <Home user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
+      case 'home': return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
       case 'dashboard': return <Dashboard user={user} onUpdateUser={setUser} userRole={userRole} weeklyProgress={weeklyProgress} activityLog={activityLog} currentDate={getCurrentDate()} />;
       case 'skill_tree':
         if (userRole === 'technician') {
@@ -2041,7 +2041,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'member_management': return userRole === 'technician' ? <MemberManagement currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'mentor_management': return <MentorManagement currentUser={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
-      default: return <Dashboard user={user} quests={quests} activeArc={user.activeArc} majorGoals={activeMajorGoals} onCompleteQuest={handleCompleteQuest} onGenerateQuests={handleGenerateQuests} isLoading={isLoadingQuests} error={error} onOpenLootbox={handleOpenLootbox} isLootboxClaimed={lastLootboxClaim === getCurrentDate().toISOString().split('T')[0]} onAddQuestClick={() => setIsAddQuestModalOpen(true)} onAddMajorGoal={() => setIsMajorGoalModalOpen(true)} onBulkAddMajorGoal={() => setIsBulkGoalModalOpen(true)} onEditMajorGoal={(goal: MajorGoal) => { setEditingMajorGoal(goal); setIsMajorGoalModalOpen(true); }} onCompleteMajorGoal={handleCompleteMajorGoal} onSyllabusBreakdown={handleBreakdownSyllabus} currentDate={getCurrentDate()} />;
+      default: return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
     }
   };
 
