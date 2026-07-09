@@ -340,6 +340,9 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   // ─── Mentor-eligible persons (role mentor or both) ─────────────────────────
   const mentorPersons = mentors.filter(m => m.role === 'mentor' || m.role === 'both');
 
+  // ─── Volunteer-eligible persons (role volunteer or both) ───────────────────
+  const volunteerPersons = mentors.filter(m => m.role === 'volunteer' || m.role === 'both');
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20">
       {/* Header */}
@@ -689,14 +692,14 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                         <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">Voluntários & Contribuições</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {w.contributions.map(c => {
-                            const mbr = members.find(m => m.username === c.username);
+                            const volunteer = mentors.find(m => m.id === c.username);
                             return (
                               <div key={c.username} className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
                                 <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0 mt-0.5">
-                                  {(mbr?.displayName || c.username).charAt(0).toUpperCase()}
+                                  {(volunteer?.name || c.username).charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs font-bold text-white">{mbr?.displayName || c.username}</p>
+                                  <p className="text-xs font-bold text-white">{volunteer?.name || c.username}</p>
                                   {c.contribution && (
                                     <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{c.contribution}</p>
                                   )}
@@ -1028,21 +1031,25 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                   <label className="text-xs text-text-secondary block font-bold">Voluntários Participantes *</label>
                   <p className="text-[10px] text-text-muted -mt-2">Selecione os membros e descreva o que cada um fez.</p>
 
-                  {/* Member checklist */}
+                  {/* Volunteer checklist */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-2 bg-[#1b1f35] rounded-xl border border-white/10 custom-scrollbar">
-                    {members.map(m => {
-                      const selected = !!workContributions.find(c => c.username === m.username);
-                      return (
-                        <button key={m.username} type="button" onClick={() => toggleWorkMember(m.username)}
-                          className={`flex items-center gap-2 p-2 rounded-lg text-left transition-all border ${selected ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/[0.02] border-transparent hover:bg-white/5 text-text-secondary'}`}
-                        >
-                          <div className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-all ${selected ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
-                            {selected && <Check className="w-2.5 h-2.5 text-white" />}
-                          </div>
-                          <span className="text-xs font-medium truncate">{m.displayName}</span>
-                        </button>
-                      );
-                    })}
+                    {volunteerPersons.length === 0 ? (
+                      <div className="p-3 text-xs text-text-muted text-center col-span-full">Nenhum voluntário cadastrado</div>
+                    ) : (
+                      volunteerPersons.map(m => {
+                        const selected = !!workContributions.find(c => c.username === m.id);
+                        return (
+                          <button key={m.id} type="button" onClick={() => toggleWorkMember(m.id)}
+                            className={`flex items-center gap-2 p-2 rounded-lg text-left transition-all border ${selected ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/[0.02] border-transparent hover:bg-white/5 text-text-secondary'}`}
+                          >
+                            <div className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-all ${selected ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
+                              {selected && <Check className="w-2.5 h-2.5 text-white" />}
+                            </div>
+                            <span className="text-xs font-medium truncate">{m.name}</span>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
 
                   {/* Individual contribution fields */}
@@ -1050,13 +1057,13 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                     <div className="space-y-2">
                       <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">O que cada voluntário fez:</p>
                       {workContributions.map(c => {
-                        const mbr = members.find(m => m.username === c.username);
+                        const volunteer = volunteerPersons.find(m => m.id === c.username);
                         return (
                           <div key={c.username} className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/5">
                             <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0">
-                              {(mbr?.displayName || c.username).charAt(0).toUpperCase()}
+                              {(volunteer?.name || c.username).charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-xs font-bold text-white w-24 shrink-0">{mbr?.displayName || c.username}</span>
+                            <span className="text-xs font-bold text-white w-24 shrink-0 truncate">{volunteer?.name || c.username}</span>
                             <input
                               value={c.contribution}
                               onChange={e => updateContribution(c.username, e.target.value)}
