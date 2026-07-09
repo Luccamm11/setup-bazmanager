@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
-import { Mentor, MentorshipRecord } from '../types';
+import { Mentor, MentorshipRecord, VolunteerWork } from '../types';
 
 const MENTORS_KEY = 'levelup_mentors';
 const RECORDS_KEY = 'levelup_mentorship_records';
+const VOLUNTEER_WORKS_KEY = 'levelup_volunteer_works';
 
 async function getMentors(): Promise<Mentor[]> {
   const raw = await redis.get(MENTORS_KEY);
@@ -23,13 +24,23 @@ async function saveRecords(records: MentorshipRecord[]) {
   await redis.set(RECORDS_KEY, JSON.stringify(records));
 }
 
+async function getVolunteerWorks(): Promise<VolunteerWork[]> {
+  const raw = await redis.get(VOLUNTEER_WORKS_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+async function saveVolunteerWorks(works: VolunteerWork[]) {
+  await redis.set(VOLUNTEER_WORKS_KEY, JSON.stringify(works));
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // GET — Fetch all mentors and mentorship records
+  // GET — Fetch all mentors, mentorship records, and volunteer works
   if (req.method === 'GET') {
     try {
       const mentors = await getMentors();
       const records = await getRecords();
-      return res.status(200).json({ success: true, mentors, records });
+      const volunteerWorks = await getVolunteerWorks();
+      return res.status(200).json({ success: true, mentors, records, volunteerWorks });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -45,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
       if (action === 'addMentor') {
-        const { name, area, organization } = req.body;
+        const { name, area, organization, role } = req.body;
         if (!name || !area) {
           return res.status(400).json({ error: 'Nome e Área são obrigatórios.' });
         }
@@ -56,6 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           area: area.trim(),
           organization: organization ? organization.trim() : undefined,
           active: true,
+          role: role || 'mentor',
         };
         mentors.push(newMentor);
         await saveMentors(mentors);
@@ -63,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'editMentor') {
-        const { id, name, area, organization, active } = req.body;
+        const { id, name, area, organization, active, role } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do mentor é obrigatório.' });
 
         const mentors = await getMentors();
@@ -74,6 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (area !== undefined) mentors[idx].area = area.trim();
         if (organization !== undefined) mentors[idx].organization = organization ? organization.trim() : undefined;
         if (active !== undefined) mentors[idx].active = active;
+        if (role !== undefined) mentors[idx].role = role;
 
         await saveMentors(mentors);
         return res.status(200).json({ success: true, mentor: mentors[idx] });
@@ -139,6 +152,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const records = await getRecords();
         const updated = records.filter(r => r.id !== id);
         await saveRecords(updated);
+        return res.status(200).json({ success: true });
+      }
+
+      // ─── Volunteer Works ────────────────────────────────────────────────────
+
+      if (action === 'addVolunteerWork') {
+        const { eventName, location, date, description, contributions } = req.body;
+        if (!eventName || !date || !contributions || contributions.length === 0) {
+          return res.status(400).json({ error: 'Evento, data e pelo menos um voluntário são obrigatórios.' });
+        }
+        const works = await getVolunteerWorks();
+        const newWork: VolunteerWork = {
+          id: `vwork-${Date.now()}`,
+          eventName: eventName.trim(),
+          location: location ? location.trim() : '',
+          date,
+          description: description ? description.trim() : '',
+          contributions,
+        };
+        works.push(newWork);
+        await saveVolunteerWorks(works);
+        return res.status(201).json({ success: true, work: newWork });
+      }
+
+      if (action === 'editVolunteerWork') {
+        const { id, eventName, location, date, description, contributions } = req.body;
+        if (!id) return res.status(400).json({ error: 'ID do trabalho é obrigatório.' });
+
+        const works = await getVolunteerWorks();
+        const idx = works.findIndex(w => w.id === id);
+        if (idx === -1) return res.status(404).json({ error: 'Trabalho voluntário não encontrado.' });
+
+        if (eventName !== undefined) works[idx].eventName = eventName.trim();
+        if (location !== undefined) works[idx].location = location.trim();
+        if (date !== undefined) works[idx].date = date;
+        if (description !== undefined) works[idx].description = description.trim();
+        if (contributions !== undefined) works[idx].contributions = contributions;
+
+        await saveVolunteerWorks(works);
+        return res.status(200).json({ success: true, work: works[idx] });
+      }
+
+      if (action === 'deleteVolunteerWork') {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ error: 'ID do trabalho é obrigatório.' });
+
+        const works = await getVolunteerWorks();
+        const updated = works.filter(w => w.id !== id);
+        await saveVolunteerWorks(updated);
         return res.status(200).json({ success: true });
       }
 

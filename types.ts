@@ -402,6 +402,7 @@ export interface Mentor {
   area: string;
   organization?: string;
   active: boolean;
+  role: 'mentor' | 'volunteer' | 'both'; // Papel desta pessoa
 }
 
 export interface MentorshipRecord {
@@ -414,4 +415,20 @@ export interface MentorshipRecord {
   area: string; // Área em que ajudou
   participants: string[]; // usernames dos membros participantes
   advantages: string; // texto livre
-}
+}
+
+// Contribuição individual de um voluntário em um trabalho
+export interface VolunteerContribution {
+  username: string;
+  contribution: string; // O que esta pessoa fez no evento
+}
+
+export interface VolunteerWork {
+  id: string;
+  eventName: string;       // Nome do evento
+  location: string;        // Onde foi
+  date: string;            // YYYY-MM-DD
+  description: string;     // Descrição geral do trabalho
+  contributions: VolunteerContribution[]; // Lista de voluntários + o que cada um fez
+}
+

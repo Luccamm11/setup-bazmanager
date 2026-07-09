@@ -17,7 +17,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
     { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
     { view: '5w2h',             label: t('nav.5w2h', 'Planejamento 5W2H'),        desc: t('nav.5w2h_desc', 'Crie planos de ação individuais ou em grupo'), icon: BookText },
     { view: 'learning_trails',  label: 'Trilhas de Aprendizagem', desc: 'Estruture seu desenvolvimento individual focado nos pilares B-LEED', icon: BookOpen },
-    { view: 'mentor_management', label: 'Gerenciar Mentores', desc: 'Cadastre mentores e registre sessões de mentoria presenciais ou virtuais', icon: GraduationCap },
+    { view: 'mentor_management', label: 'Mentores & Voluntários', desc: 'Cadastre mentores/voluntários e registre sessões de mentoria ou trabalhos voluntários', icon: GraduationCap },
     ...(userRole === 'technician' ? [
       { view: 'tech_dashboard' as View, label: t('nav.tech_dashboard', 'Painel do Técnico'), desc: t('nav.tech_dashboard_desc', 'Gerencie missões e membros'), icon: Shield, techOnly: true },
       { view: 'attendance' as View, label: t('nav.attendance', 'Presenças'), desc: t('nav.attendance_desc', 'Controle e histórico de presença da equipe'), icon: BarChart2, techOnly: true },
