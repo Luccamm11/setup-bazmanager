@@ -548,6 +548,7 @@ const App: React.FC = () => {
   // Autosave to Vercel KV on state change
   useEffect(() => {
     if (!currentUser) return;
+    if (isInitialLoading) return;
 
     const stateToSave = {
         user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
@@ -578,7 +579,7 @@ const App: React.FC = () => {
     }, 1000);
 
   }, [
-    currentUser, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
+    currentUser, isInitialLoading, user, quests, storyLog, weeklyProgress, activityLog, systemMessages,
     integrations, storeItems, allArcs, activeArcId, allBadges, majorGoals,
     lastLootboxClaim, chatHistory, journalEntries
   ]);
