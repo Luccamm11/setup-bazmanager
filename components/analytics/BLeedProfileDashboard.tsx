@@ -26,6 +26,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { FTC_SEASONS } from '../../constants';
 
+export const FLL_SEASONS = [
+    "2018/2019",
+    "2019/2020",
+    "2020/2021",
+    "2021/2022",
+    "2022/2023",
+    "2023/2024",
+    "2024/2025",
+    "2025/2026"
+];
+
 interface BLeedProfileDashboardProps {
     user: User;
     weeklyProgress?: WeeklyProgress[];
@@ -177,11 +188,19 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                     <p className="text-sm font-bold text-text-primary">{user.grade || t('analytics:profile.not_informed')}</p>
                 </div>
             </div>
-            <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
-                <Calendar className="text-accent-tertiary" size={20} />
+            <div className="flex items-start gap-4 p-3 bg-white/5 rounded-2xl">
+                <Calendar className="text-accent-tertiary mt-1" size={20} />
                 <div>
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.entryDate')}</p>
-                    <p className="text-sm font-bold text-text-primary">{user.entryDate || t('analytics:profile.not_informed')}</p>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-1">{t('analytics:profile.entryDate')}</p>
+                    {user.entryDate ? (
+                        <div className="flex flex-wrap gap-1.5">
+                            {user.entryDate.split(',').map(s => s.trim()).filter(Boolean).map((s, i) => (
+                                <span key={i} className="text-[9px] font-bold text-text-secondary bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{s}</span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm font-bold text-text-primary">{t('analytics:profile.not_informed')}</p>
+                    )}
                 </div>
             </div>
             {visibility.birthDate && (
@@ -375,11 +394,19 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                     <p className="text-sm font-bold text-text-primary">{user.grade || t('analytics:profile.not_informed')}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl">
-                                <Calendar className="text-accent-tertiary" size={20} />
+                            <div className="flex items-start gap-4 p-3 bg-white/5 rounded-2xl">
+                                <Calendar className="text-accent-tertiary mt-1" size={20} />
                                 <div>
-                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">{t('analytics:profile.entryDate')}</p>
-                                    <p className="text-sm font-bold text-text-primary">{user.entryDate || t('analytics:profile.not_informed')}</p>
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-wider mb-1">{t('analytics:profile.entryDate')}</p>
+                                    {user.entryDate ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {user.entryDate.split(',').map(s => s.trim()).filter(Boolean).map((s, i) => (
+                                                <span key={i} className="text-[9px] font-bold text-text-secondary bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{s}</span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm font-bold text-text-primary">{t('analytics:profile.not_informed')}</p>
+                                    )}
                                 </div>
                             </div>
                             {visibility.birthDate && (
@@ -621,27 +648,6 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.entryDate')}</label>
-                                            <select 
-                                                value={setupData.entryDate}
-                                                onChange={(e) => setSetupData({...setupData, entryDate: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-accent-primary/50 outline-none transition-all appearance-none cursor-pointer"
-                                            >
-                                                <option value="" className="bg-primary text-text-muted">Selecione...</option>
-                                                <option value="2018/2019" className="bg-primary">2018/2019</option>
-                                                <option value="2019/2020" className="bg-primary">2019/2020</option>
-                                                <option value="2020/2021" className="bg-primary">2020/2021</option>
-                                                <option value="2021/2022" className="bg-primary">2021/2022</option>
-                                                <option value="2022/2023" className="bg-primary">2022/2023</option>
-                                                <option value="2023/2024" className="bg-primary">2023/2024</option>
-                                                <option value="2024/2025" className="bg-primary">2024/2025</option>
-                                                <option value="2025/2026" className="bg-primary">2025/2026</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.birthDate')}</label>
                                             <input 
                                                 type="text" 
@@ -651,7 +657,40 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 placeholder="Ex: 24/05/2008"
                                             />
                                         </div>
-                                     <div className="space-y-6 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    </div>
+
+                                    <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.entryDate')}</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {FLL_SEASONS.map(season => {
+                                                const selectedFllSeasons = setupData.entryDate
+                                                    ? setupData.entryDate.split(',').map(s => s.trim()).filter(Boolean)
+                                                    : [];
+                                                const isSelected = selectedFllSeasons.includes(season);
+                                                return (
+                                                    <button
+                                                        key={season}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newSeasons = isSelected 
+                                                                ? selectedFllSeasons.filter(s => s !== season)
+                                                                : [...selectedFllSeasons, season];
+                                                            setSetupData({...setupData, entryDate: newSeasons.join(', ')});
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                                                            isSelected 
+                                                                ? 'bg-accent-secondary border-transparent text-white shadow-lg' 
+                                                                : 'bg-white/5 border-white/10 text-text-muted hover:border-white/20'
+                                                        }`}
+                                                    >
+                                                        {season}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6 p-4 bg-white/5 rounded-2xl border border-white/5">
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{t('analytics:profile.seasons')}</label>
                                             <div className="flex flex-wrap gap-2">
@@ -660,6 +699,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                     return (
                                                         <button
                                                             key={season}
+                                                            type="button"
                                                             onClick={() => {
                                                                 const newSeasons = isSelected 
                                                                     ? setupData.seasons.filter(s => s !== season)
@@ -687,6 +727,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                     return (
                                                         <button
                                                             key={season}
+                                                            type="button"
                                                             onClick={() => {
                                                                 const newSeasons = isSelected 
                                                                     ? setupData.mentorSeasons.filter(s => s !== season)
@@ -714,6 +755,7 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                     return (
                                                         <button
                                                             key={season}
+                                                            type="button"
                                                             onClick={() => {
                                                                 const newSeasons = isSelected 
                                                                     ? setupData.volunteerSeasons.filter(s => s !== season)
@@ -732,7 +774,6 @@ const BLeedProfileDashboard: React.FC<BLeedProfileDashboardProps> = ({
                                                 })}
                                             </div>
                                         </div>
-                                    </div>
                                     </div>
 
                                     <div className="space-y-2">
