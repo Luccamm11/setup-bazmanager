@@ -420,12 +420,14 @@ export interface MentorshipRecord {
   participants: string[]; // usernames dos membros participantes
   advantages: string; // texto livre
   imageLinks?: string[]; // Links externos de imagens/evidências
+  durationMinutes?: number; // Duração da sessão em minutos
 }
 
 // Contribuição individual de um voluntário em um trabalho
 export interface VolunteerContribution {
   username: string;
   contribution: string; // O que esta pessoa fez no evento
+  durationHours?: number; // Tempo de atuação em horas
 }
 
 export interface VolunteerWork {

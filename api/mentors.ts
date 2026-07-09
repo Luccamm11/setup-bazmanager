@@ -103,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'addRecord') {
-        const { mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks } = req.body;
+        const { mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks, durationMinutes } = req.body;
         if (!mentorId || !date || !type || !area || !participants) {
           return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
         }
@@ -119,6 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           participants,
           advantages: advantages ? advantages.trim() : '',
           imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
+          durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
         };
         records.push(newRecord);
         await saveRecords(records);
@@ -126,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'editRecord') {
-        const { id, mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks } = req.body;
+        const { id, mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks, durationMinutes } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do registro é obrigatório.' });
 
         const records = await getRecords();
@@ -142,6 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (participants !== undefined) records[idx].participants = participants;
         if (advantages !== undefined) records[idx].advantages = advantages ? advantages.trim() : '';
         if (imageLinks !== undefined) records[idx].imageLinks = Array.isArray(imageLinks) ? imageLinks : [];
+        if (durationMinutes !== undefined) records[idx].durationMinutes = durationMinutes ? Number(durationMinutes) : undefined;
 
         await saveRecords(records);
         return res.status(200).json({ success: true, record: records[idx] });

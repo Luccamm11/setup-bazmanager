@@ -74,6 +74,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [recParticipants, setRecParticipants] = useState<string[]>([]);
   const [recAdvantages, setRecAdvantages] = useState('');
   const [recImageLinks, setRecImageLinks] = useState<string[]>([]);
+  const [recDurationMinutes, setRecDurationMinutes] = useState<number | ''>('');
   const [mentorDropdownOpen, setMentorDropdownOpen] = useState(false);
 
   // ─── Volunteer Work modal ──────────────────────────────────────────────────
@@ -83,9 +84,12 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [workLocation, setWorkLocation] = useState('');
   const [workDate, setWorkDate] = useState('');
   const [workDescription, setWorkDescription] = useState('');
-  // contributions: list of { username, contribution }
+  // contributions: list of { username, contribution, durationHours }
   const [workContributions, setWorkContributions] = useState<VolunteerContribution[]>([]);
   const [workImageLinks, setWorkImageLinks] = useState<string[]>([]);
+
+  // Hover states for pie charts
+  const [hoveredPieIndex, setHoveredPieIndex] = useState<{ chart: 'mentor' | 'volunteer'; index: number } | null>(null);
 
   // ─── Fetch Data ────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -192,6 +196,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
         participants: recParticipants,
         advantages: recAdvantages,
         imageLinks: recImageLinks,
+        durationMinutes: recDurationMinutes ? Number(recDurationMinutes) : undefined,
       };
       const res = await fetch('/api/mentors', {
         method: 'POST',
@@ -206,7 +211,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
       setRecMentorId(''); setRecDate(''); setRecType('presential');
       setRecLocationType('our_lab'); setRecLocationName('');
       setRecArea(''); setRecParticipants([]); setRecAdvantages('');
-      setRecImageLinks([]);
+      setRecImageLinks([]); setRecDurationMinutes('');
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar registro de mentoria.');
@@ -238,6 +243,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     setRecParticipants(rec.participants);
     setRecAdvantages(rec.advantages || '');
     setRecImageLinks(rec.imageLinks || []);
+    setRecDurationMinutes(rec.durationMinutes || '');
     setRecordModalOpen(true);
   };
 
@@ -298,6 +304,27 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     }
   };
 
+  const toggleWorkMember = (id: string) => {
+    setWorkContributions(prev => {
+      if (prev.find(c => c.username === id)) {
+        return prev.filter(c => c.username !== id);
+      }
+      return [...prev, { username: id, contribution: '', durationHours: 1 }];
+    });
+  };
+
+  const updateContribution = (username: string, text: string) => {
+    setWorkContributions(prev =>
+      prev.map(c => c.username === username ? { ...c, contribution: text } : c)
+    );
+  };
+
+  const updateDurationHours = (username: string, value: number) => {
+    setWorkContributions(prev =>
+      prev.map(c => c.username === username ? { ...c, durationHours: value } : c)
+    );
+  };
+
   const openEditWork = (w: VolunteerWork) => {
     setEditingWork(w);
     setWorkEventName(w.eventName);
@@ -309,20 +336,6 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     setWorkModalOpen(true);
   };
 
-  const toggleWorkMember = (username: string) => {
-    setWorkContributions(prev => {
-      if (prev.find(c => c.username === username)) {
-        return prev.filter(c => c.username !== username);
-      }
-      return [...prev, { username, contribution: '' }];
-    });
-  };
-
-  const updateContribution = (username: string, text: string) => {
-    setWorkContributions(prev =>
-      prev.map(c => c.username === username ? { ...c, contribution: text } : c)
-    );
-  };
 
   // ─── Filters ───────────────────────────────────────────────────────────────
   const filteredMentors = mentors.filter(m =>
@@ -368,11 +381,12 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 flex-wrap">
           {[
             { key: 'records', label: 'Sessões', icon: Calendar },
             { key: 'people', label: 'Pessoas', icon: Users },
             { key: 'volunteer_works', label: 'Trabalhos', icon: Heart },
+            { key: 'statistics', label: 'Estatísticas', icon: Star },
           ].map(tab => {
             const Icon = tab.icon;
             return (
@@ -469,6 +483,11 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                             <p className="text-xs text-text-muted flex items-center gap-1.5">
                               <Calendar className="w-3.5 h-3.5 text-accent-primary" />
                               {new Date(rec.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                              {rec.durationMinutes && (
+                                <span className="flex items-center gap-1 text-[10px] bg-accent-primary/10 text-accent-primary border border-accent-primary/20 px-2 py-0.5 rounded-full font-bold ml-2">
+                                  <Clock className="w-3 h-3" /> {rec.durationMinutes} min
+                                </span>
+                              )}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -750,16 +769,23 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                           {w.contributions.map(c => {
                             const volunteer = mentors.find(m => m.id === c.username);
                             return (
-                              <div key={c.username} className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0 mt-0.5">
-                                  {(volunteer?.name || c.username).charAt(0).toUpperCase()}
+                              <div key={c.username} className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 justify-between">
+                                <div className="flex gap-2 min-w-0">
+                                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0 mt-0.5">
+                                    {(volunteer?.name || c.username).charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-white">{volunteer?.name || c.username}</p>
+                                    {c.contribution && (
+                                      <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{c.contribution}</p>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-white">{volunteer?.name || c.username}</p>
-                                  {c.contribution && (
-                                    <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{c.contribution}</p>
-                                  )}
-                                </div>
+                                {c.durationHours && (
+                                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 shrink-0 flex items-center gap-1">
+                                    <Clock className="w-2.5 h-2.5" /> {c.durationHours}h
+                                  </span>
+                                )}
                               </div>
                             );
                           })}
@@ -771,6 +797,189 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               )}
             </div>
           )}
+
+          {/* ═══════════════ TAB: STATISTICS ═══════════════ */}
+          {activeTab === 'statistics' && (() => {
+            // Colors for slices
+            const COLORS = [
+              '#58A6FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
+              '#EC4899', '#06B6D4', '#F43F5E', '#14B8A6', '#84CC16'
+            ];
+
+            // 1. Mentorship statistics (aggr by mentor id)
+            const mentorStats = mentors.filter(m => m.role === 'mentor' || m.role === 'both').map(m => {
+              const minutes = records
+                .filter(r => r.mentorId === m.id)
+                .reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+              return { name: m.name, minutes, id: m.id };
+            }).filter(item => item.minutes > 0).sort((a, b) => b.minutes - a.minutes);
+
+            const totalMentorMinutes = mentorStats.reduce((acc, curr) => acc + curr.minutes, 0);
+
+            // 2. Volunteer statistics (aggr by volunteer id)
+            const volunteerStats = volunteerPersons.map(v => {
+              let hours = 0;
+              volunteerWorks.forEach(w => {
+                const c = w.contributions.find(cObj => cObj.username === v.id);
+                if (c) hours += (c.durationHours || 0);
+              });
+              return { name: v.name, hours, id: v.id };
+            }).filter(item => item.hours > 0).sort((a, b) => b.hours - a.hours);
+
+            const totalVolunteerHours = volunteerStats.reduce((acc, curr) => acc + curr.hours, 0);
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Mentorship Chart */}
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-6">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <GraduationCap className="text-accent-primary w-5 h-5" /> Mentoria (Duração Total)
+                  </h3>
+                  {totalMentorMinutes === 0 ? (
+                    <div className="text-center py-16 text-text-secondary italic">Nenhum dado de mentoria com duração registrada.</div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
+                      <div className="relative w-40 h-40">
+                        <svg viewBox="0 0 42 42" className="w-full h-full transform -rotate-90">
+                          {(() => {
+                            let currentOffset = 0;
+                            return mentorStats.map((item, idx) => {
+                              const pct = (item.minutes / totalMentorMinutes) * 100;
+                              const color = COLORS[idx % COLORS.length];
+                              const strokeDash = `${pct} ${100 - pct}`;
+                              const strokeOffset = 100 - currentOffset + 25;
+                              currentOffset += pct;
+                              const isHovered = hoveredPieIndex?.chart === 'mentor' && hoveredPieIndex.index === idx;
+
+                              return (
+                                <circle
+                                  key={item.id}
+                                  cx="21" cy="21" r="15.91549430918954"
+                                  fill="transparent"
+                                  stroke={color}
+                                  strokeWidth={isHovered ? 4.5 : 3.5}
+                                  strokeDasharray={strokeDash}
+                                  strokeDashoffset={strokeOffset}
+                                  className="transition-all duration-200 cursor-pointer"
+                                  onMouseEnter={() => setHoveredPieIndex({ chart: 'mentor', index: idx })}
+                                  onMouseLeave={() => setHoveredPieIndex(null)}
+                                />
+                              );
+                            });
+                          })()}
+                        </svg>
+                        {hoveredPieIndex?.chart === 'mentor' && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#16192a]/95 rounded-full p-2 border border-white/5 text-center pointer-events-none">
+                            <span className="text-[10px] font-bold text-accent-primary uppercase truncate max-w-full">
+                              {mentorStats[hoveredPieIndex.index].name}
+                            </span>
+                            <span className="text-xs font-black text-white">
+                              {mentorStats[hoveredPieIndex.index].minutes} min
+                            </span>
+                            <span className="text-[9px] text-text-muted">
+                              {((mentorStats[hoveredPieIndex.index].minutes / totalMentorMinutes) * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2 flex-1 w-full">
+                        {mentorStats.map((item, idx) => {
+                          const color = COLORS[idx % COLORS.length];
+                          const isHovered = hoveredPieIndex?.chart === 'mentor' && hoveredPieIndex.index === idx;
+                          return (
+                            <div 
+                              key={item.id} 
+                              className={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${isHovered ? 'bg-white/5 scale-[1.02]' : ''}`}
+                              onMouseEnter={() => setHoveredPieIndex({ chart: 'mentor', index: idx })}
+                              onMouseLeave={() => setHoveredPieIndex(null)}
+                            >
+                              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                              <span className="text-xs text-text-secondary truncate max-w-[120px] font-medium" title={item.name}>{item.name}</span>
+                              <span className="text-xs font-bold text-white ml-auto">{item.minutes}m ({((item.minutes / totalMentorMinutes) * 100).toFixed(0)}%)</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Volunteer Chart */}
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-6">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <Heart className="text-emerald-400 w-5 h-5" /> Trabalho Voluntário (Horas Totais)
+                  </h3>
+                  {totalVolunteerHours === 0 ? (
+                    <div className="text-center py-16 text-text-secondary italic">Nenhum trabalho voluntário com duração registrada.</div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
+                      <div className="relative w-40 h-40">
+                        <svg viewBox="0 0 42 42" className="w-full h-full transform -rotate-90">
+                          {(() => {
+                            let currentOffset = 0;
+                            return volunteerStats.map((item, idx) => {
+                              const pct = (item.hours / totalVolunteerHours) * 100;
+                              const color = COLORS[idx % COLORS.length];
+                              const strokeDash = `${pct} ${100 - pct}`;
+                              const strokeOffset = 100 - currentOffset + 25;
+                              currentOffset += pct;
+                              const isHovered = hoveredPieIndex?.chart === 'volunteer' && hoveredPieIndex.index === idx;
+
+                              return (
+                                <circle
+                                  key={item.id}
+                                  cx="21" cy="21" r="15.91549430918954"
+                                  fill="transparent"
+                                  stroke={color}
+                                  strokeWidth={isHovered ? 4.5 : 3.5}
+                                  strokeDasharray={strokeDash}
+                                  strokeDashoffset={strokeOffset}
+                                  className="transition-all duration-200 cursor-pointer"
+                                  onMouseEnter={() => setHoveredPieIndex({ chart: 'volunteer', index: idx })}
+                                  onMouseLeave={() => setHoveredPieIndex(null)}
+                                />
+                              );
+                            });
+                          })()}
+                        </svg>
+                        {hoveredPieIndex?.chart === 'volunteer' && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#16192a]/95 rounded-full p-2 border border-white/5 text-center pointer-events-none">
+                            <span className="text-[10px] font-bold text-emerald-400 truncate max-w-full uppercase">
+                              {volunteerStats[hoveredPieIndex.index].name}
+                            </span>
+                            <span className="text-xs font-black text-white">
+                              {volunteerStats[hoveredPieIndex.index].hours}h
+                            </span>
+                            <span className="text-[9px] text-text-muted">
+                              {((volunteerStats[hoveredPieIndex.index].hours / totalVolunteerHours) * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2 flex-1 w-full">
+                        {volunteerStats.map((item, idx) => {
+                          const color = COLORS[idx % COLORS.length];
+                          const isHovered = hoveredPieIndex?.chart === 'volunteer' && hoveredPieIndex.index === idx;
+                          return (
+                            <div 
+                              key={item.id} 
+                              className={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${isHovered ? 'bg-white/5 scale-[1.02]' : ''}`}
+                              onMouseEnter={() => setHoveredPieIndex({ chart: 'volunteer', index: idx })}
+                              onMouseLeave={() => setHoveredPieIndex(null)}
+                            >
+                              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                              <span className="text-xs text-text-secondary truncate max-w-[120px] font-medium" title={item.name}>{item.name}</span>
+                              <span className="text-xs font-bold text-white ml-auto">{item.hours}h ({((item.hours / totalVolunteerHours) * 100).toFixed(0)}%)</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -948,6 +1157,17 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                     <input value={recArea} onChange={e => setRecArea(e.target.value)}
                       placeholder="Ex: Programação de Odometria" required
                       className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Duration */}
+                  <div>
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Duração (Minutos) *</label>
+                    <input type="number" min="1" value={recDurationMinutes} required onChange={e => setRecDurationMinutes(e.target.value ? Number(e.target.value) : '')}
+                      placeholder="Ex: 60"
+                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all placeholder:text-white/20"
                     />
                   </div>
                 </div>
@@ -1178,6 +1398,19 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                               placeholder="O que esta pessoa fez..."
                               className="flex-1 bg-[#1b1f35] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-all"
                             />
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <input
+                                type="number"
+                                min="0.5"
+                                step="0.5"
+                                value={c.durationHours || ''}
+                                required
+                                onChange={e => updateDurationHours(c.username, e.target.value ? Number(e.target.value) : 0)}
+                                placeholder="Horas"
+                                className="w-16 bg-[#1b1f35] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-all text-center font-bold"
+                              />
+                              <span className="text-[10px] text-text-muted">h</span>
+                            </div>
                           </div>
                         );
                       })}
