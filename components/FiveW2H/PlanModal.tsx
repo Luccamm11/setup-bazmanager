@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Save, Users, User, ChevronDown, AlertCircle, Zap, Coins } from 'lucide-react';
+import { X, Plus, Trash2, Save, Users, User, Link2, Image, AlertCircle } from 'lucide-react';
 import type { FiveW2HPlan, RealmXpReward } from '../../types';
 import { Realm } from '../../types';
 import { SKILL_REALMS } from '../../constants';
@@ -27,6 +27,7 @@ const emptyDraft = (): PlanDraft => ({
   what: '', why: '', who: '', where: '', when: '', how: '', howMuch: '',
   isGroup: false,
   assignedTo: [],
+  imageLinks: [],
 });
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -184,6 +185,63 @@ const PlanModal: React.FC<Props> = ({ isOpen, onClose, onSave, planToEdit, curre
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Image Links */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-black text-text-muted uppercase tracking-widest flex items-center gap-1.5">
+                  <Image className="w-3.5 h-3.5" /> Links de Imagens
+                </label>
+                <button
+                  type="button"
+                  onClick={() => set('imageLinks', [...(draft.imageLinks || []), ''])}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-accent-primary/10 border border-accent-primary/25 text-accent-primary font-bold hover:bg-accent-primary/20 transition-all"
+                >
+                  <Plus className="w-3 h-3" /> Adicionar link
+                </button>
+              </div>
+
+              {(draft.imageLinks || []).length === 0 && (
+                <p className="text-[11px] text-text-muted italic">Nenhum link adicionado ainda.</p>
+              )}
+
+              <div className="space-y-2">
+                {(draft.imageLinks || []).map((link, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-black/30 border border-white/10 overflow-hidden">
+                      {link && link.startsWith('http') ? (
+                        <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Link2 className="w-3 h-3 text-text-muted" />
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="url"
+                      value={link}
+                      onChange={e => {
+                        const updated = [...(draft.imageLinks || [])];
+                        updated[idx] = e.target.value;
+                        set('imageLinks', updated);
+                      }}
+                      placeholder="https://drive.google.com/..."
+                      className="flex-1 bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-white text-xs focus:outline-none focus:border-accent-primary transition-colors placeholder:text-white/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (draft.imageLinks || []).filter((_, i) => i !== idx);
+                        set('imageLinks', updated);
+                      }}
+                      className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

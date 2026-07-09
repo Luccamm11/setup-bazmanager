@@ -24,7 +24,10 @@ import {
     ChevronRight,
     Search,
     ChevronUp,
-    ChevronDown
+    ChevronDown,
+    Link2,
+    Image,
+    X
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -59,8 +62,13 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
       materialQuantity: '',
       color: '',
       brand: '',
-      estimatedTime: ''
+      estimatedTime: '',
+      imageLinks: [] as string[]
   });
+
+  // Editing Links State
+  const [editingLinksItem, setEditingLinksItem] = useState<PrinterQueueItem | null>(null);
+  const [tempImageLinks, setTempImageLinks] = useState<string[]>([]);
 
   // Feedback State
   const [showFeedbackModal, setShowFeedbackModal] = useState<string | null>(null);
@@ -115,7 +123,8 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
             materialQuantity: '',
             color: '',
             brand: '',
-            estimatedTime: ''
+            estimatedTime: '',
+            imageLinks: []
         });
         fetchQueue();
       }
@@ -431,6 +440,58 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                 </div>
                             </div>
 
+                            {/* Image Links - Printer Queue */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-black text-text-muted uppercase tracking-widest px-1 flex items-center gap-1.5">
+                                  <Image className="w-3.5 h-3.5" /> Links de Imagem da Peça
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, imageLinks: [...prev.imageLinks, ''] }))}
+                                  className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg bg-accent-primary/10 border border-accent-primary/25 text-accent-primary font-bold hover:bg-accent-primary/20 transition-all uppercase tracking-wider"
+                                >
+                                  <Plus className="w-3 h-3" /> Adicionar
+                                </button>
+                              </div>
+                              {formData.imageLinks.length === 0 && (
+                                <p className="text-[10px] text-text-muted italic px-1">Nenhum link adicionado ainda.</p>
+                              )}
+                              <div className="space-y-2">
+                                {formData.imageLinks.map((link, idx) => (
+                                  <div key={idx} className="flex items-center gap-2">
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/5 border border-white/10 overflow-hidden">
+                                      {link && link.startsWith('http') ? (
+                                        <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <Link2 className="w-3 h-3 text-text-muted" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <input
+                                      type="url"
+                                      value={link}
+                                      onChange={e => {
+                                        const updated = [...formData.imageLinks];
+                                        updated[idx] = e.target.value;
+                                        setFormData(prev => ({ ...prev, imageLinks: updated }));
+                                      }}
+                                      placeholder="https://drive.google.com/..."
+                                      className="flex-1 bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white text-xs focus:outline-none focus:border-accent-primary transition-all placeholder:text-white/20"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setFormData(prev => ({ ...prev, imageLinks: prev.imageLinks.filter((_, i) => i !== idx) }))}
+                                      className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all shrink-0"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
                             <button
                                 type="submit"
                                 className="w-full py-5 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-[1.5rem] font-black uppercase text-sm tracking-[0.3em] transition-all shadow-xl hover:shadow-accent-primary/20 active:scale-[0.98] flex items-center justify-center gap-3"
@@ -473,16 +534,38 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                                 <p className="mt-4 text-[10px] font-black text-green-400 uppercase tracking-widest flex items-center gap-2">
                                                     RESPONSÁVEL: <span className="text-white bg-green-500/20 px-3 py-1 rounded-full border border-green-500/20">{currentPrint.userName}</span>
                                                 </p>
+                                                {currentPrint.imageLinks && currentPrint.imageLinks.length > 0 && (
+                                                    <div className="mt-4 flex flex-wrap gap-1.5">
+                                                        {currentPrint.imageLinks.map((link, idx) => (
+                                                            <a key={idx} href={link} target="_blank" rel="noopener noreferrer" className="relative group w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-green-400 transition-all block shrink-0">
+                                                                <img src={link} alt="evidencia" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        <button 
-                                            onClick={() => handleCompleteRequest(currentPrint.id)}
-                                            className="px-8 py-5 bg-green-500 hover:bg-green-400 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:shadow-green-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shrink-0"
-                                        >
-                                            <CheckCircle2 size={20} />
-                                            Finalizar Peça
-                                        </button>
+                                        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 shrink-0">
+                                            {currentPrint.userName === currentUser && (
+                                                <button 
+                                                    onClick={() => {
+                                                        setEditingLinksItem(currentPrint);
+                                                        setTempImageLinks(currentPrint.imageLinks || []);
+                                                    }}
+                                                    className="px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                                                >
+                                                    <Link2 size={14} /> Editar Links
+                                                </button>
+                                            )}
+                                            <button 
+                                                onClick={() => handleCompleteRequest(currentPrint.id)}
+                                                className="px-8 py-5 bg-green-500 hover:bg-green-400 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:shadow-green-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shrink-0"
+                                            >
+                                                <CheckCircle2 size={20} />
+                                                Finalizar Peça
+                                            </button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             ) : (
@@ -545,6 +628,18 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                                 )}
                                                 {item.userName === currentUser && (
                                                     <button 
+                                                        onClick={() => {
+                                                            setEditingLinksItem(item);
+                                                            setTempImageLinks(item.imageLinks || []);
+                                                        }}
+                                                        title="Editar Links de Imagem"
+                                                        className="p-1 text-text-muted hover:text-accent-primary transition-colors ml-1"
+                                                    >
+                                                        <Link2 size={13} />
+                                                    </button>
+                                                )}
+                                                {item.userName === currentUser && (
+                                                    <button 
                                                         onClick={() => handleDelete(item.id)}
                                                         title="Remover"
                                                         className="p-1 text-text-muted hover:text-red-400 transition-colors ml-1"
@@ -555,6 +650,15 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                             </div>
                                         </div>
                                         <h5 className="text-white font-black text-sm mb-1 truncate">{item.filename}</h5>
+                                        {item.imageLinks && item.imageLinks.length > 0 && (
+                                            <div className="flex gap-1.5 mt-1.5 mb-2.5">
+                                                {item.imageLinks.map((link, idx) => (
+                                                    <a key={idx} href={link} target="_blank" rel="noopener noreferrer" className="relative group w-7 h-7 rounded-lg overflow-hidden border border-white/10 hover:border-accent-primary/50 transition-all block shrink-0">
+                                                        <img src={link} alt="evidencia" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between mt-2">
                                             <div className="flex gap-2">
                                                 <span className="text-[8px] font-black text-text-muted border border-white/10 px-2 py-0.5 rounded-md uppercase tracking-wider">{item.materialType}</span>
@@ -599,7 +703,7 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                         <div className="p-4 bg-accent-primary/10 rounded-2xl text-accent-primary"><Layers size={24} /></div>
                         <div>
                             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Gasto (Membro)</p>
-                            <h4 className="text-2xl font-black text-white">{Object.values(stats.materialUsage).reduce((a: number, b: number) => a + b, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}g</h4>
+                            <h4 className="text-2xl font-black text-white">{(Object.values(stats.materialUsage).reduce((a: number, b: number) => a + b, 0) as any).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}g</h4>
                         </div>
                     </div>
                     <div className="bg-primary/40 p-6 rounded-3xl border border-white/10 shadow-glass flex items-center gap-5">
@@ -779,6 +883,34 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                                      <p className="text-[10px] text-accent-red font-medium line-clamp-2 italic">{item.problemDescription}</p>
                                  </div>
                              )}
+
+                             {item.imageLinks && item.imageLinks.length > 0 && (
+                                 <div className="mt-4 pt-4 border-t border-white/5 space-y-1.5">
+                                     <p className="text-[8px] font-black text-text-muted uppercase tracking-wider flex items-center gap-1"><Image size={10} /> Peça Finalizada (Fotos)</p>
+                                     <div className="flex flex-wrap gap-1.5">
+                                         {item.imageLinks.map((link, idx) => (
+                                             <a key={idx} href={link} target="_blank" rel="noopener noreferrer" className="relative group w-10 h-10 rounded-lg overflow-hidden border border-white/10 hover:border-accent-primary/50 transition-all block shrink-0">
+                                                 <img src={link} alt="peca" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                     <Link2 className="w-3.5 h-3.5 text-white" />
+                                                 </div>
+                                             </a>
+                                         ))}
+                                     </div>
+                                 </div>
+                             )}
+
+                             {item.userName === currentUser && (
+                                 <button 
+                                     onClick={() => {
+                                         setEditingLinksItem(item);
+                                         setTempImageLinks(item.imageLinks || []);
+                                     }}
+                                     className="mt-4 w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-white/10 hover:bg-white/5 text-text-secondary hover:text-white text-[10px] font-black uppercase tracking-wider transition-all"
+                                 >
+                                     <Link2 size={12} /> Editar Links de Imagem
+                                 </button>
+                             )}
                         </div>
                     ))}
                     {historyItems.length === 0 && <div className="col-span-full py-20 text-center text-text-muted italic opacity-50">Nenhum registro no histórico de impressão.</div>}
@@ -877,6 +1009,115 @@ const PrinterQueue: React.FC<PrinterQueueProps> = ({ currentUser }) => {
                   </motion.div>
               </div>
           )}
+      </AnimatePresence>
+
+      {/* MODAL: EDIT IMAGE LINKS */}
+      <AnimatePresence>
+        {editingLinksItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setEditingLinksItem(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative w-full max-w-md bg-[#16192a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-6 z-10 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Image className="w-5 h-5 text-accent-primary" />
+                  Editar Links de Imagem
+                </h3>
+                <button onClick={() => setEditingLinksItem(null)} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary transition-all">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-text-secondary font-bold flex items-center gap-1.5">
+                    <Link2 className="w-3.5 h-3.5" /> Links das Imagens
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setTempImageLinks(prev => [...prev, ''])}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-accent-primary/10 border border-accent-primary/25 text-accent-primary font-bold hover:bg-accent-primary/20 transition-all"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar
+                  </button>
+                </div>
+
+                {tempImageLinks.length === 0 && (
+                  <p className="text-[11px] text-text-muted italic">Nenhum link adicionado ainda.</p>
+                )}
+
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {tempImageLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#1b1f35] border border-white/10 overflow-hidden">
+                        {link && link.startsWith('http') ? (
+                          <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Link2 className="w-3 h-3 text-text-muted" />
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        value={link}
+                        onChange={e => {
+                          const updated = [...tempImageLinks];
+                          updated[idx] = e.target.value;
+                          setTempImageLinks(updated);
+                        }}
+                        placeholder="https://drive.google.com/..."
+                        className="flex-1 bg-[#1b1f35] border border-white/10 rounded-xl py-2 px-3 text-white text-xs focus:outline-none focus:border-accent-primary/60 transition-all placeholder:text-white/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTempImageLinks(prev => prev.filter((_, i) => i !== idx))}
+                        className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all shrink-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/printer-queue', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'update_links',
+                            itemId: editingLinksItem.id,
+                            imageLinks: tempImageLinks
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          setEditingLinksItem(null);
+                          fetchQueue();
+                        }
+                      } catch (err) {
+                        console.error('Failed to update links:', err);
+                      }
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white text-sm font-bold shadow-glow-primary hover:opacity-95 transition-all"
+                  >
+                    Confirmar
+                  </button>
+                  <button type="button" onClick={() => setEditingLinksItem(null)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white transition-all">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );

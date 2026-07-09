@@ -356,6 +356,7 @@ export interface PrinterQueueItem {
     hasProblem?: boolean;
     problemDescription?: string;
     completedAt?: string;
+    imageLinks?: string[]; // Links externos de imagens/fotos da peça
 }
 
 // ─── 5W2H Types ───────────────────────────────────────────────────────────────
@@ -392,6 +393,9 @@ export interface FiveW2HPlan {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNote?: string;
+
+  // Links externos de imagens/evidências
+  imageLinks?: string[];
 }
 
 // ─── Mentor & Mentorship Record Types ───────────────────────────────────────
@@ -415,6 +419,7 @@ export interface MentorshipRecord {
   area: string; // Área em que ajudou
   participants: string[]; // usernames dos membros participantes
   advantages: string; // texto livre
+  imageLinks?: string[]; // Links externos de imagens/evidências
 }
 
 // Contribuição individual de um voluntário em um trabalho
@@ -430,5 +435,6 @@ export interface VolunteerWork {
   date: string;            // YYYY-MM-DD
   description: string;     // Descrição geral do trabalho
   contributions: VolunteerContribution[]; // Lista de voluntários + o que cada um fez
+  imageLinks?: string[]; // Links externos de imagens/evidências
 }
 

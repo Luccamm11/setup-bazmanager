@@ -25,7 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       materialQuantity, 
       color, 
       brand, 
-      estimatedTime 
+      estimatedTime,
+      imageLinks
     } = req.body;
 
     if (!filename || !userName) {
@@ -50,6 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         color,
         brand,
         estimatedTime,
+        imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
       };
 
       queue.push(newItem);
@@ -63,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (method === 'PUT') {
-    const { action, itemId, quality, hasProblem, problemDescription } = req.body;
+    const { action, itemId, quality, hasProblem, problemDescription, imageLinks } = req.body;
 
     try {
       const rawData = await redis.get(REDIS_KEY);
@@ -90,6 +92,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (nextPendingIndex !== -1) {
               queue[nextPendingIndex].status = 'printing';
           }
+      } else if (action === 'update_links') {
+          // Update imageLinks on any item
+          queue = queue.map((item: any) => {
+              if (item.id === itemId) {
+                  return { ...item, imageLinks: Array.isArray(imageLinks) ? imageLinks : [] };
+              }
+              return item;
+          });
       } else if (action === 'delete') {
           queue = queue.filter((item: any) => item.id !== itemId);
           

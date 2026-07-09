@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, RefreshCw, ChevronDown, User, Users,
   Zap, Coins, Star, Edit2, Trash2, CheckCircle,
-  Clock, PlayCircle, Bell, FileText
+  Clock, PlayCircle, Bell, FileText, Link2, Image
 } from 'lucide-react';
 import type { FiveW2HPlan, RealmXpReward } from '../../types';
 import { MEMBER_USERNAMES, TECHNICIAN_USERNAMES, getMemberByUsername } from '../../data/members';
@@ -167,6 +167,46 @@ const PlanCard: React.FC<CardProps> = ({ plan, currentUser, isTechnician, onEdit
                 <div className="mt-3 bg-orange-500/5 border border-orange-500/15 rounded-xl px-3 py-2">
                   <p className="text-[10px] font-black text-orange-400/70 uppercase tracking-widest mb-1">Feedback do técnico</p>
                   <p className="text-xs text-text-secondary">{plan.reviewNote}</p>
+                </div>
+              )}
+
+              {/* Image Links */}
+              {plan.imageLinks && plan.imageLinks.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Image className="w-3 h-3" /> Imagens / Evidências
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {plan.imageLinks.map((link, idx) => (
+                      <a
+                        key={idx}
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative group w-16 h-16 rounded-xl overflow-hidden border border-white/10 hover:border-accent-primary/50 transition-all block shrink-0"
+                      >
+                        <img
+                          src={link}
+                          alt={`imagem-${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={e => {
+                            const el = e.currentTarget;
+                            el.style.display = 'none';
+                            const parent = el.parentElement;
+                            if (parent) {
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-full h-full flex items-center justify-center bg-white/5';
+                              fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted opacity-50"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+                              parent.appendChild(fallback);
+                            }
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Link2 className="w-4 h-4 text-white" />
+                        </div>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
 

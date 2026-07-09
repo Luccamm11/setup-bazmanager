@@ -4,7 +4,7 @@ import {
   Users, UserPlus, GraduationCap, Calendar, MapPin, Video, Award, 
   Trash2, Edit, Check, X, ChevronDown, Plus, Search, Building, 
   AlertTriangle, RefreshCw, Clock, ArrowRight, UserCheck, Heart,
-  Star, FileText, ChevronRight
+  Star, FileText, ChevronRight, Link2, Image
 } from 'lucide-react';
 import { Mentor, MentorshipRecord, VolunteerWork, VolunteerContribution, UserRole } from '../types';
 
@@ -73,6 +73,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [recArea, setRecArea] = useState('');
   const [recParticipants, setRecParticipants] = useState<string[]>([]);
   const [recAdvantages, setRecAdvantages] = useState('');
+  const [recImageLinks, setRecImageLinks] = useState<string[]>([]);
   const [mentorDropdownOpen, setMentorDropdownOpen] = useState(false);
 
   // ─── Volunteer Work modal ──────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [workDescription, setWorkDescription] = useState('');
   // contributions: list of { username, contribution }
   const [workContributions, setWorkContributions] = useState<VolunteerContribution[]>([]);
+  const [workImageLinks, setWorkImageLinks] = useState<string[]>([]);
 
   // ─── Fetch Data ────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -189,6 +191,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
         area: recArea,
         participants: recParticipants,
         advantages: recAdvantages,
+        imageLinks: recImageLinks,
       };
       const res = await fetch('/api/mentors', {
         method: 'POST',
@@ -203,6 +206,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
       setRecMentorId(''); setRecDate(''); setRecType('presential');
       setRecLocationType('our_lab'); setRecLocationName('');
       setRecArea(''); setRecParticipants([]); setRecAdvantages('');
+      setRecImageLinks([]);
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar registro de mentoria.');
@@ -233,6 +237,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     setRecArea(rec.area);
     setRecParticipants(rec.participants);
     setRecAdvantages(rec.advantages || '');
+    setRecImageLinks(rec.imageLinks || []);
     setRecordModalOpen(true);
   };
 
@@ -258,6 +263,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
         date: workDate,
         description: workDescription,
         contributions: workContributions,
+        imageLinks: workImageLinks,
       };
       const res = await fetch('/api/mentors', {
         method: 'POST',
@@ -271,6 +277,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
       setEditingWork(null);
       setWorkEventName(''); setWorkLocation(''); setWorkDate('');
       setWorkDescription(''); setWorkContributions([]);
+      setWorkImageLinks([]);
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar trabalho voluntário.');
@@ -298,6 +305,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     setWorkDate(w.date);
     setWorkDescription(w.description);
     setWorkContributions(w.contributions);
+    setWorkImageLinks(w.imageLinks || []);
     setWorkModalOpen(true);
   };
 
@@ -516,6 +524,30 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                             <p className="text-text-primary leading-relaxed whitespace-pre-wrap">{rec.advantages}</p>
                           </div>
                         )}
+
+                        {rec.imageLinks && rec.imageLinks.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted flex items-center gap-1">
+                              <Image className="w-3 h-3" /> Imagens / Evidências
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {rec.imageLinks.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="relative group w-14 h-14 rounded-xl overflow-hidden border border-white/10 hover:border-accent-primary/50 transition-all block shrink-0"
+                                >
+                                  <img src={link} alt={`img-${idx + 1}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Link2 className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     );
                   })}
@@ -685,6 +717,30 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
                       {w.description && (
                         <p className="text-sm text-text-secondary leading-relaxed border-t border-white/5 pt-3">{w.description}</p>
+                      )}
+
+                      {w.imageLinks && w.imageLinks.length > 0 && (
+                        <div className="space-y-1.5 border-t border-white/5 pt-3">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted flex items-center gap-1">
+                            <Image className="w-3 h-3" /> Imagens / Evidências
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {w.imageLinks.map((link, idx) => (
+                              <a
+                                key={idx}
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative group w-14 h-14 rounded-xl overflow-hidden border border-emerald-500/20 hover:border-emerald-500/50 transition-all block shrink-0"
+                              >
+                                <img src={link} alt={`img-${idx + 1}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Link2 className="w-3.5 h-3.5 text-white" />
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
                       )}
 
                       {/* Contributions */}
@@ -957,6 +1013,58 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                   />
                 </div>
 
+                {/* Image Links - Mentoria */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-text-secondary font-bold flex items-center gap-1.5">
+                      <Image className="w-3.5 h-3.5" /> Links de Imagens / Evidências
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setRecImageLinks(prev => [...prev, ''])}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-accent-primary/10 border border-accent-primary/25 text-accent-primary font-bold hover:bg-accent-primary/20 transition-all"
+                    >
+                      <Plus className="w-3 h-3" /> Adicionar
+                    </button>
+                  </div>
+                  {recImageLinks.length === 0 && (
+                    <p className="text-[11px] text-text-muted italic">Nenhum link adicionado ainda.</p>
+                  )}
+                  <div className="space-y-2">
+                    {recImageLinks.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#1b1f35] border border-white/10 overflow-hidden">
+                          {link && link.startsWith('http') ? (
+                            <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Link2 className="w-3 h-3 text-text-muted" />
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          value={link}
+                          onChange={e => {
+                            const updated = [...recImageLinks];
+                            updated[idx] = e.target.value;
+                            setRecImageLinks(updated);
+                          }}
+                          placeholder="https://drive.google.com/..."
+                          className="flex-1 bg-[#1b1f35] border border-white/10 rounded-xl py-2 px-3 text-white text-xs focus:outline-none focus:border-accent-primary/60 transition-all placeholder:text-white/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setRecImageLinks(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all shrink-0"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-2">
                   <button type="submit" className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white text-sm font-bold shadow-glow-primary hover:opacity-95 transition-all">
                     Confirmar Registro
@@ -1075,6 +1183,58 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* Image Links - Trabalho Voluntário */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-text-secondary font-bold flex items-center gap-1.5">
+                      <Image className="w-3.5 h-3.5" /> Links de Imagens / Evidências
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setWorkImageLinks(prev => [...prev, ''])}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold hover:bg-emerald-500/20 transition-all"
+                    >
+                      <Plus className="w-3 h-3" /> Adicionar
+                    </button>
+                  </div>
+                  {workImageLinks.length === 0 && (
+                    <p className="text-[11px] text-text-muted italic">Nenhum link adicionado ainda.</p>
+                  )}
+                  <div className="space-y-2">
+                    {workImageLinks.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#1b1f35] border border-white/10 overflow-hidden">
+                          {link && link.startsWith('http') ? (
+                            <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Link2 className="w-3 h-3 text-text-muted" />
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          value={link}
+                          onChange={e => {
+                            const updated = [...workImageLinks];
+                            updated[idx] = e.target.value;
+                            setWorkImageLinks(updated);
+                          }}
+                          placeholder="https://drive.google.com/..."
+                          className="flex-1 bg-[#1b1f35] border border-white/10 rounded-xl py-2 px-3 text-white text-xs focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-white/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setWorkImageLinks(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all shrink-0"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">

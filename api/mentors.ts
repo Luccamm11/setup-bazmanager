@@ -103,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'addRecord') {
-        const { mentorId, date, type, locationType, locationName, area, participants, advantages } = req.body;
+        const { mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks } = req.body;
         if (!mentorId || !date || !type || !area || !participants) {
           return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
         }
@@ -118,6 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           area: area.trim(),
           participants,
           advantages: advantages ? advantages.trim() : '',
+          imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
         };
         records.push(newRecord);
         await saveRecords(records);
@@ -125,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'editRecord') {
-        const { id, mentorId, date, type, locationType, locationName, area, participants, advantages } = req.body;
+        const { id, mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do registro é obrigatório.' });
 
         const records = await getRecords();
@@ -140,6 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (area !== undefined) records[idx].area = area.trim();
         if (participants !== undefined) records[idx].participants = participants;
         if (advantages !== undefined) records[idx].advantages = advantages ? advantages.trim() : '';
+        if (imageLinks !== undefined) records[idx].imageLinks = Array.isArray(imageLinks) ? imageLinks : [];
 
         await saveRecords(records);
         return res.status(200).json({ success: true, record: records[idx] });
@@ -158,7 +160,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // ─── Volunteer Works ────────────────────────────────────────────────────
 
       if (action === 'addVolunteerWork') {
-        const { eventName, location, date, description, contributions } = req.body;
+        const { eventName, location, date, description, contributions, imageLinks } = req.body;
         if (!eventName || !date || !contributions || contributions.length === 0) {
           return res.status(400).json({ error: 'Evento, data e pelo menos um voluntário são obrigatórios.' });
         }
@@ -170,6 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           date,
           description: description ? description.trim() : '',
           contributions,
+          imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
         };
         works.push(newWork);
         await saveVolunteerWorks(works);
@@ -177,7 +180,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'editVolunteerWork') {
-        const { id, eventName, location, date, description, contributions } = req.body;
+        const { id, eventName, location, date, description, contributions, imageLinks } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do trabalho é obrigatório.' });
 
         const works = await getVolunteerWorks();
@@ -189,6 +192,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (date !== undefined) works[idx].date = date;
         if (description !== undefined) works[idx].description = description.trim();
         if (contributions !== undefined) works[idx].contributions = contributions;
+        if (imageLinks !== undefined) works[idx].imageLinks = Array.isArray(imageLinks) ? imageLinks : [];
 
         await saveVolunteerWorks(works);
         return res.status(200).json({ success: true, work: works[idx] });
