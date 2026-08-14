@@ -16,13 +16,22 @@ if (redisUrl) {
   });
 }
 
-async function supabaseGet(key: string): Promise<string | null> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+function getNormalizedSupabaseConfig() {
+  let supabaseUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  if (supabaseUrl && !supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
+    supabaseUrl = `https://${supabaseUrl}`;
+  }
+  const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY env vars.');
   }
+
+  return { supabaseUrl, supabaseKey };
+}
+
+async function supabaseGet(key: string): Promise<string | null> {
+  const { supabaseUrl, supabaseKey } = getNormalizedSupabaseConfig();
 
   const res = await fetch(
     `${supabaseUrl}/rest/v1/key_value_store?key=eq.${encodeURIComponent(key)}&select=value`,
@@ -48,12 +57,7 @@ async function supabaseGet(key: string): Promise<string | null> {
 }
 
 async function supabaseSet(key: string, value: string): Promise<'OK'> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY env vars.');
-  }
+  const { supabaseUrl, supabaseKey } = getNormalizedSupabaseConfig();
 
   let parsedValue: any;
   try {

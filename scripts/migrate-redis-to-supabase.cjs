@@ -3,21 +3,27 @@ const fs = require('fs');
 const path = require('path');
 const Redis = require('ioredis');
 
-// Load environment variables from .env if present
-const envPath = path.join(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
+// Helper to load env vars from .env file (ignoring [SENSITIVE] placeholders from Vercel CLI .env.local)
+function loadEnvFile(fileName) {
+  const envPath = path.join(__dirname, '..', fileName);
+  if (!fs.existsSync(envPath)) return;
   const envContent = fs.readFileSync(envPath, 'utf8');
   envContent.split('\n').forEach(line => {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
       const [key, ...valueParts] = trimmed.split('=');
+      const varName = key.trim();
       const val = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
-      if (!process.env[key.trim()]) {
-        process.env[key.trim()] = val;
+      // Ignore Vercel CLI placeholder string "[SENSITIVE]"
+      if (val && val !== '[SENSITIVE]' && (!process.env[varName] || process.env[varName] === '[SENSITIVE]')) {
+        process.env[varName] = val;
       }
     }
   });
 }
+
+loadEnvFile('.env');
+loadEnvFile('.env.local');
 
 const FIXED_KEYS = [
   'levelup_members_registry',
@@ -58,20 +64,43 @@ async function runMigration() {
     process.exit(1);
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  let rawUrl = (process.env.SUPABASE_URL || '').trim();
+  let rawKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+
+  // Guard against placeholder strings from Vercel CLI generated .env.local
+  if (rawUrl === '[SENSITIVE]') rawUrl = '';
+  if (rawKey === '[SENSITIVE]') rawKey = '';
+
+  if (rawUrl && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+    rawUrl = `https://${rawUrl}`;
+  }
+
+  const supabaseUrl = rawUrl; // Intact real URL for fetch
+  const supabaseKey = rawKey; // Intact real Key for fetch
 
   if (!isDryRun && (!supabaseUrl || !supabaseKey)) {
-    console.error('❌ ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) are required for live migration.');
+    console.error('❌ ERROR: Real SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for live migration.');
+    console.error('👉 Pass them via environment variables or set them in .env (e.g., SUPABASE_URL=https://xyz.supabase.co SUPABASE_SERVICE_ROLE_KEY=ey...).');
     process.exit(1);
   }
+
+  if (!isDryRun) {
+    try {
+      new URL(supabaseUrl);
+    } catch (e) {
+      console.error(`❌ ERROR: Invalid SUPABASE_URL string: "${supabaseUrl}". Must be a valid URL (e.g. https://xyz.supabase.co).`);
+      process.exit(1);
+    }
+  }
+
+  // Create a SEPARATE variable purely for display logging
+  const urlForDisplay = supabaseUrl ? supabaseUrl.replace(/https?:\/\/[^/]+/, 'https://***') : '(not set)';
 
   const redis = new Redis(redisUrl);
 
   try {
     console.log('📡 Connecting to Redis and scanning target keys...');
 
-    // Discover all active members from registry
     let memberUsernames = [...FALLBACK_MEMBERS];
     try {
       const rawMembers = await redis.get('levelup_members_registry');
@@ -159,14 +188,14 @@ async function runMigration() {
     if (isDryRun) {
       console.log('\n✅ DRY-RUN COMPLETED SUCCESSFULLY!');
       console.log('🔒 Security Guarantee: Zero writes were executed to Redis or Supabase.');
-      console.log('👉 Review the verification hashes above. When ready, run the migration with actual Supabase credentials.');
       await redis.quit();
       return;
     }
 
     // LIVE MIGRATION MODE
-    console.log('\n🚀 Starting Live Write to Supabase...');
-    // Upsert into Supabase key_value_store via REST API
+    const targetEndpoint = `${supabaseUrl}/rest/v1/key_value_store`;
+    console.log(`\n🚀 Starting Live Write to Supabase (${urlForDisplay}/rest/v1/key_value_store)...`);
+
     let migratedCount = 0;
     for (const item of summaryTable) {
       if (item.Status !== 'EXISTS') continue;
@@ -177,7 +206,7 @@ async function runMigration() {
         updated_at: new Date().toISOString(),
       };
 
-      const res = await fetch(`${supabaseUrl}/rest/v1/key_value_store`, {
+      const res = await fetch(targetEndpoint, {
         method: 'POST',
         headers: {
           'apikey': supabaseKey,
@@ -190,7 +219,7 @@ async function runMigration() {
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error(`❌ Failed to migrate key ${item.Key}:`, errText);
+        console.error(`❌ Failed to migrate key ${item.Key}: ${res.status} ${res.statusText}`, errText);
       } else {
         migratedCount++;
         console.log(`  ✓ Migrated key: ${item.Key}`);
