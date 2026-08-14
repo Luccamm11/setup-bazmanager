@@ -25,10 +25,10 @@ Este projeto foi adaptado do **LevelUp: AI Awakening** (criado por [Oniondas](ht
 
 ```
 setup-bazmanager/
-├── api/                   # Vercel Serverless Functions
+├── api/                   # Vercel Serverless Functions (Supabase / CRUD / Auth)
 │   ├── login.ts           # Autenticação de membros (senha compartilhada)
-│   ├── load.ts            # Carrega estado do membro (Redis/Vercel KV)
-│   ├── save.ts            # Salva estado do membro
+│   ├── persistence.ts     # Carregamento e salvamento de estado do membro (Supabase key_value_store)
+│   ├── crud.ts            # CRUD centralizado (5W2H, Kanban, Finanças, Frequência, Backup Cron)
 │   └── team-missions.ts   # CRUD de missões da equipe
 ├── data/                  # Dados centralizados da equipe
 │   ├── members.ts         # Lista de membros com perfis e prêmios foco
@@ -115,8 +115,70 @@ Criatividade Técnica · CAD / Projeto · Prototipagem · Resolução de Problem
 | **i18next** | Internacionalização (PT-BR / EN) |
 | **Recharts** | Gráficos e radar charts |
 | **Vercel** | Hosting e serverless functions |
-| **Vercel KV (Redis)** | Persistência de dados por membro |
+| **Supabase (PostgreSQL)** | Banco de dados principal e persistência de dados (tabela `key_value_store`) |
+| **GitHub REST API + Cron** | Backup diário automático versionado no repositório |
 | **Google Gemini AI** | Geração de quests, recomendações, mentor IA |
+| **Redis Cloud (Legado)** | Cópia congelada de segurança do momento da migração (não ativo) |
+
+---
+
+## 🗄️ Modelo de Dados & Persistência
+
+O sistema utiliza o **Supabase (PostgreSQL)** como fonte de verdade ativa.
+
+### Tabela `key_value_store`
+Para compatibilidade e flexibilidade com a estrutura de documentos do sistema, os dados são armazenados na tabela `key_value_store`:
+- **`key`** (`TEXT PRIMARY KEY`): Identificador único da entidade/registro.
+- **`value`** (`JSONB`): Carga útil do registro em formato JSON estruturado.
+- **`updated_at`** (`TIMESTAMPTZ`): Data e hora da última atualização.
+
+### Taxonomia de Chaves
+Mesma taxonomia herdada e padronizada:
+- `levelup_user_{username}`: Estado completo do membro (perfil, atributos, skills, missões, inventário).
+- `levelup_notifications_{username}`: Notificações direcionadas ao membro.
+- `levelup_members_registry`: Lista cadastral de membros e cargos.
+- `levelup_team_missions`: Missões coletivas e individuais da equipe.
+- `levelup_5w2h_plans`: Planos de ação 5W2H da equipe.
+- `levelup_printer_queue`: Fila de impressão 3D.
+- `levelup_team_legacy`: Registros de histórico e legado da equipe.
+- `levelup_mentors` e `levelup_mentorship_records`: Cadastro e registros de mentorias.
+- `levelup_attendance_records`: Frequência e presença dos membros.
+- `levelup_finance_records`: Registros e transações financeiras.
+- `levelup_kanban_tasks`: Tarefas do quadro Kanban.
+- `levelup_learning_trails_data`: Trilhas de aprendizagem B-LEED.
+- `levelup_chat_data`: Mensagens e interações do chat da equipe.
+
+---
+
+## 🛡️ Mecanismo de Backup Automatizado
+
+- **Frequência:** Executado diariamente às 06:00 UTC via Vercel Cron Job (`vercel.json` -> `/api/crud?action=backup`).
+- **Origem dos Dados:** Supabase (`key_value_store`).
+- **Destino:** Repositório do GitHub, gravado em `backups/backup-YYYY-MM-DD.json`.
+- **Autenticação:** Protegido via token Bearer validado com a variável `CRON_SECRET`.
+- **Garantia de Integridade:** Exportação determinística e ordenada por chave, com hash de integridade e commit automático via GitHub REST API.
+
+---
+
+## 🔑 Variáveis de Ambiente
+
+### Variáveis Ativas (Necessárias)
+| Variável | Descrição | Exemplo / Uso |
+|----------|-----------|---------------|
+| `SUPABASE_URL` | URL base da instância Supabase | `https://xxxx.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço (backend) com permissões na `key_value_store` | `eyJhbGciOi...` |
+| `USE_SUPABASE` | Flag indicando uso do Supabase como backend ativo | `true` |
+| `CRON_SECRET` | Secret de autenticação Bearer para o cron job de backup e rotas admin | String aleatória segura |
+| `GITHUB_BACKUP_TOKEN` | Personal Access Token do GitHub com permissão de escrita em repositório | `github_pat_...` / `ghp_...` |
+| `GITHUB_BACKUP_REPO` | Repositório alvo do GitHub onde os arquivos de backup são comitados | `usuario/repo` (ex: `LuccaHP/Bazinga-LevelUp`) |
+| `VITE_GEMINI_API_KEY` / `GEMINI_API_KEY` | Chave de API do Google Gemini para as funções de IA e Mentor | `AIzaSy...` |
+
+### Variáveis Legadas / Desativadas
+| Variável | Status | Motivo |
+|----------|--------|--------|
+| `REDIS_URL` | ⚠️ **Legado / Inativo** | Mantida apenas como referência histórica da cópia congelada do Redis Cloud no momento da migração. Não é mais utilizada para leitura/escrita em produção. |
+| `KV_REST_API_URL` | ❌ **Descontinuado** | Variável do Vercel KV legado. |
+| `KV_REST_API_TOKEN` | ❌ **Descontinuado** | Variável do Vercel KV legado. |
 
 ---
 
@@ -125,7 +187,7 @@ Criatividade Técnica · CAD / Projeto · Prototipagem · Resolução de Problem
 ### Pré-requisitos
 - Node.js 18+
 - npm ou yarn
-- Conta Vercel (para KV/Redis)
+- Projeto Supabase configurado com a tabela `key_value_store`
 
 ### Instalação
 
@@ -137,10 +199,11 @@ cd Bazinga-LevelUp/setup-bazmanager
 # Instale dependências
 npm install
 
-# Configure variáveis de ambiente
-# Crie um arquivo .env.local com:
-# KV_REST_API_URL=sua_url_redis
-# KV_REST_API_TOKEN=seu_token_redis
+# Configure variáveis de ambiente (.env.local)
+# SUPABASE_URL=https://seu-projeto.supabase.co
+# SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
+# USE_SUPABASE=true
+# VITE_GEMINI_API_KEY=sua_chave_gemini
 
 # Rode o dev server
 npm run dev
@@ -148,10 +211,17 @@ npm run dev
 
 ### Deploy no Vercel
 
-1. Faça fork do repositório
-2. Conecte ao Vercel
-3. Configure as variáveis de ambiente (`KV_REST_API_URL`, `KV_REST_API_TOKEN`)
-4. Deploy automático a cada push
+1. Faça fork / push para o repositório
+2. Conecte o projeto na Vercel
+3. Configure as variáveis de ambiente de Produção:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `USE_SUPABASE=true`
+   - `CRON_SECRET`
+   - `GITHUB_BACKUP_TOKEN`
+   - `GITHUB_BACKUP_REPO`
+   - `VITE_GEMINI_API_KEY`
+4. Deploy automático a cada push no branch principal
 
 ---
 
@@ -162,7 +232,7 @@ O sistema utiliza autenticação simples:
 - **Senha compartilhada:** todos usam a mesma senha
 - **Roles:** `member` (membros) e `technician` (Jonas, Ramon)
 
-> **Nota:** Este sistema de autenticação é adequado para uso interno da equipe. Não é recomendado para produção com dados sensíveis.
+> **Nota:** Este sistema de autenticação é adequado para uso interno da equipe. Não é recomendado para produção com dados sensíveis de acesso público.
 
 ---
 
@@ -199,7 +269,7 @@ Quando um membro faz login pela primeira vez:
    - 3 major goals com deadlines
    - 4 quests iniciais
    - Missão principal, objetivo da temporada e meta de curto prazo
-4. Salva tudo no Redis para persistência
+4. Salva tudo no Supabase (`key_value_store`) para persistência ativa
 
 ---
 
@@ -208,10 +278,10 @@ Quando um membro faz login pela primeira vez:
 Para adaptar o sistema para uma nova temporada FTC:
 
 1. **Atualizar membros:** Edite `data/members.ts` com novos membros e prêmios foco
-2. **Perfis B-LEED Granulares:** Edite `data/awardProfiles.ts` com a nova base técnica.
+2. **Perfis B-LEED Granulares:** Edite `data/awardProfiles.ts` com a nova base técnica
 3. **Atualizar arcos:** Edite os arcos em `constants.ts` (Kickoff, Competition Sprint, etc.)
 4. **Atualizar login API:** Sincronize `api/login.ts` com a nova lista de membros
-5. **Limpar dados:** Opcionalmente, limpe as chaves Redis para resetar o progresso
+5. **Limpar / Resetar dados:** Se necessário, limpe registros específicos no Supabase (`key_value_store`) para resetar o progresso dos membros mantendo backups históricos seguros
 
 ---
 
