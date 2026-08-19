@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -14,6 +14,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean }[] = [
+    { view: 'projects',         label: 'Projetos & Protótipos',   desc: 'Registro técnico de protótipos, objetivos, resultados e fotos', icon: FolderKanban },
     { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
     { view: '5w2h',             label: t('nav.5w2h', 'Planejamento 5W2H'),        desc: t('nav.5w2h_desc', 'Crie planos de ação individuais ou em grupo'), icon: BookText },
     { view: 'learning_trails',  label: 'Trilhas de Aprendizagem', desc: 'Estruture seu desenvolvimento individual focado nos pilares B-LEED', icon: BookOpen },

@@ -439,4 +439,54 @@ export interface VolunteerWork {
   contributions: VolunteerContribution[]; // Lista de voluntários + o que cada um fez
   imageLinks?: string[]; // Links externos de imagens/evidências
 }
+
+// ─── Team Projects Types ───────────────────────────────────────────────────
+
+export type ProjectType = 
+  | 'mechanics'      // Mecânica / Estrutura
+  | 'electronics'    // Eletrônica / Elétrica / Sensores
+  | 'programming'    // Programação / Autônomo / Controle
+  | 'software'       // Telemetria / Software / Web
+  | 'innovation'     // Projeto de Inovação / Design
+  | '3d_printing'    // Prototipagem / Peça 3D
+  | 'outreach'       // Divulgação / Social / B-LEED
+  | 'other';         // Outro
+
+export type ProjectOutcome = 
+  | 'worked'        // Funcionou com sucesso
+  | 'partially'     // Parcialmente (com ressalvas)
+  | 'failed'        // Não funcionou / Aprendizado
+  | 'testing';      // Em testes / Em andamento
+
+export type ProjectStatus = 
+  | 'in_progress'   // Em andamento
+  | 'completed'     // Concluído
+  | 'paused'        // Pausado
+  | 'archived';     // Arquivado
+
+export interface ProjectPhoto {
+  id: string;
+  dataUrl: string;       // Base64 comprimida <= 100 KB
+  sizeKb: number;        // Tamanho exato em KB para transparência
+  caption?: string;      // Legenda opcional da foto
+  uploadedAt: string;    // ISO string
+}
+
+export interface ProjectItem {
+  id: string;
+  title: string;                 // Nome do projeto
+  projectType: ProjectType;      // Tipo/Área técnica do projeto
+  customTypeLabel?: string;      // Rótulo se for 'other' ou custom
+  objective: string;             // Qual o objetivo / o que busca resolver
+  outcome: ProjectOutcome;       // Se funcionou / resultado
+  status: ProjectStatus;         // Status de andamento
+  considerations: string;        // Considerações, lições aprendidas, melhorias
+  photos: ProjectPhoto[];        // Fotos comprimidas (< 100kb cada)
+  members: string[];             // Membros envolvidos (usernames)
+  createdBy: string;             // Autor do registro
+  tags?: string[];               // Tags ou pilares relacionados
+  createdAt: string;             // ISO string
+  updatedAt: string;             // ISO string
+}
+
 

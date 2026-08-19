@@ -24,6 +24,7 @@ const FIXED_KEYS = [
   'levelup_kanban_tasks',
   'levelup_learning_trails_data',
   'levelup_chat_data',
+  'levelup_projects',
 ];
 
 const FALLBACK_MEMBERS = [
