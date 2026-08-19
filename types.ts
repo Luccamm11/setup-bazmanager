@@ -489,4 +489,43 @@ export interface ProjectItem {
   updatedAt: string;             // ISO string
 }
 
+// ─── Forms / Registros de Formulários Types ─────────────────────────────────
+
+export type FormType = 'autonomous_dev' | 'collective_evolution';
+
+export interface AutonomousDevForm {
+  id: string;
+  type: 'autonomous_dev';
+  date: string;                  // YYYY-MM-DD
+  workloadHours: number;         // Carga horária em horas
+  courseName: string;            // Nome do curso
+  courseUrl?: string;            // Link do curso / plataforma
+  certificateUrl?: string;       // Link do certificado / comprovação
+  participants: string[];        // Membros participantes (usernames)
+  courseObjectives: string;      // Objetivos do curso
+  courseSyllabus: string;        // Ementa do curso
+  keyLearnings: string;          // Principais pontos aprendidos
+  createdBy: string;             // Username do criador
+  createdAt: string;             // ISO string
+  updatedAt: string;             // ISO string
+}
+
+export interface CollectiveEvolutionForm {
+  id: string;
+  type: 'collective_evolution';
+  date: string;                  // YYYY-MM-DD
+  workloadHours: number;         // Carga horária da reunião em horas
+  invitedTeam: string;           // Equipe convidada / parceira
+  participants: string[];        // Membros participantes da nossa equipe (usernames)
+  meetingObjectives: string;     // Objetivos da reunião
+  solutionsFound: string;        // Soluções encontradas
+  nextSteps: string;             // Próximos passos
+  createdBy: string;             // Username do criador
+  createdAt: string;             // ISO string
+  updatedAt: string;             // ISO string
+}
+
+export type FormRecord = AutonomousDevForm | CollectiveEvolutionForm;
+
+
 

@@ -50,6 +50,7 @@ import AttendanceDashboard from './components/tech/AttendanceDashboard';
 import MemberManagement from './components/tech/MemberManagement';
 import MentorManagement from './components/MentorManagement';
 import ProjectsTab from './components/Projects/ProjectsTab';
+import FormsTab from './components/Forms/FormsTab';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
 import LearningTrails from './components/LearningTrails';
@@ -60,7 +61,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare } from 'lucide-react';
 
-type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'forms';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -2043,6 +2044,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'member_management': return userRole === 'technician' ? <MemberManagement currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
       case 'mentor_management': return <MentorManagement currentUser={currentUser || ''} userRole={userRole} />;
       case 'projects': return <ProjectsTab currentUser={currentUser || ''} userRole={userRole} />;
+      case 'forms': return <FormsTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
     }
