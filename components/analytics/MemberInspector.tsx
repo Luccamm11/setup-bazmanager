@@ -31,7 +31,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
         try {
             if (isLegacy) {
                 // Legacy members are stored in the legacy-members endpoint
-                const res = await fetch('/api/legacy-members', {
+                const res = await fetch('/api/members?action=legacy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: currentUser, member: updatedUser })
@@ -74,8 +74,8 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
             setLoading(true);
             try {
                 const [membersRes, legacyRes] = await Promise.all([
-                    fetch('/api/team-progress?username=' + currentUser),
-                    fetch('/api/legacy-members')
+                    fetch('/api/members?action=progress&username=' + currentUser),
+                    fetch('/api/members?action=legacy')
                 ]);
                 
                 const membersData = await membersRes.json();
@@ -129,7 +129,7 @@ const MemberInspector: React.FC<MemberInspectorProps> = ({ currentUser }) => {
 
     const handleAddLegacy = async () => {
         try {
-            const res = await fetch('/api/legacy-members', {
+            const res = await fetch('/api/members?action=legacy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

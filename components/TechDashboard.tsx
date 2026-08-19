@@ -63,7 +63,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
   const fetchProgress = useCallback(async () => {
     setIsProgressLoading(true);
     try {
-      const res = await fetch(`/api/team-progress?username=${currentUser}`);
+      const res = await fetch(`/api/members?action=progress&username=${currentUser}`);
       const data = await res.json();
       if (data.success) {
         setMembersProgress(data.members);

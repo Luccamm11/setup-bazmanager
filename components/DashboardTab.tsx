@@ -35,7 +35,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user, userRole, weeklyProgr
     const fetchTeamData = async () => {
         setIsLoadingTeam(true);
         try {
-            const res = await fetch(`/api/team-progress?username=${encodeURIComponent(user.name)}`);
+            const res = await fetch(`/api/members?action=progress&username=${encodeURIComponent(user.name)}`);
             const data = await res.json();
             if (data.success) {
                 setTeamData(data.members || []);

@@ -4,5 +4,15 @@
       "path": "/api/crud?action=backup",
       "schedule": "0 6 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/legacy-members",
+      "destination": "/api/members?action=legacy"
+    },
+    {
+      "source": "/api/team-progress",
+      "destination": "/api/members?action=progress"
+    }
   ]
 }
