@@ -40,20 +40,21 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats, initialStats, 
         };
     };
 
-    // Determine if we show two overlapping polygons (requires both initialStats to be defined and filter active)
-    const hasTwo = !!initialStats && showCurrentLevel;
+    // Determine if we show two overlapping polygons (requires initialStats with actual non-zero values and filter active)
+    const hasInitialValues = !!initialStats && Object.values(initialStats).some(val => typeof val === 'number' && val > 0);
+    const hasTwo = hasInitialValues && showCurrentLevel;
 
     // Initial stats polygon (rendered in BLUE) - falls back to current stats if no initialStats available
-    const initialData = initialStats || stats;
+    const initialData = hasInitialValues ? initialStats! : stats;
     const initialPoints = realmOrder.map((realm, i) => getPoint(initialData[realm] || 0, i));
     const initialPointString = initialPoints.map(p => `${p.x},${p.y}`).join(' ');
 
     // Current stats polygon (rendered in RED) — clamped so each axis is >= initialStats,
-    // ensuring the red polygon is always at or outside the blue one.
+    // ensuring the red polygon is always at or outside the blue one when both exist.
     const currentPoints = realmOrder.map((realm, i) => {
         const currentVal = stats[realm] || 0;
         const initialVal = hasTwo ? (initialStats![realm] || 0) : 0;
-        // Always use the greater of the two so red is never inside blue
+        // Always use the greater of the two so red is never inside blue when initial exists
         const displayVal = hasTwo ? Math.max(currentVal, initialVal) : currentVal;
         return getPoint(displayVal, i);
     });

@@ -220,10 +220,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // Reset only XP-related fields — wallet, badges, quests etc. remain intact
+      const ALL_REALMS = [
+        'TechnicalWriting',
+        'Networking',
+        'Oratory',
+        'Planning',
+        'Creativity',
+        'Programming',
+        'Engineering',
+        'FirstCulture',
+      ];
+
       const resetStats: Record<string, number> = {};
-      if (user.stats) {
-        for (const realm of Object.keys(user.stats)) {
-          resetStats[realm] = 0;
+      for (const realm of ALL_REALMS) {
+        resetStats[realm] = 0;
+      }
+
+      // Reset XP in skill tree while preserving custom skills
+      const updatedSkillTree = { ...(user.skill_tree || {}) };
+      for (const skillId of Object.keys(updatedSkillTree)) {
+        if (updatedSkillTree[skillId]) {
+          updatedSkillTree[skillId] = {
+            ...updatedSkillTree[skillId],
+            level: 1,
+            xp: 0,
+            xpToNextLevel: 100,
+          };
         }
       }
 
@@ -234,6 +256,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         xpToNextLevel: 100,
         rank: 'e_rank',
         stats: resetStats,
+        initialStats: null,
+        initialLevelsSet: false,
+        skill_tree: updatedSkillTree,
       };
 
       await redis.set(userKey, JSON.stringify(saveData));
