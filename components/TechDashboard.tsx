@@ -535,7 +535,7 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                             <button
                               onClick={() => setResetXpTarget(member)}
                               title="Resetar XP deste membro"
-                              className="shrink-0 p-1.5 rounded-lg text-zinc-700 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
+                              className="shrink-0 p-1.5 rounded-lg text-red-500/60 hover:text-red-400 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40 transition-all"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                             </button>
