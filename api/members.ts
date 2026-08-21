@@ -59,6 +59,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, type } = req.query as { action?: string; type?: string };
   const targetAction = action || type;
 
+  // ─── Sub-Rota: LOGIN ────────────────────────────────────────────────────────
+  if (targetAction === 'login') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const { username, password } = req.body;
+    const isTechnician = TECHNICIANS.includes(username);
+
+    try {
+      const members = await getRegistry();
+      const activeMembers = members.filter((m: any) => m.active).map((m: any) => m.username);
+      const allValid = [...TECHNICIANS, ...activeMembers];
+
+      if (!allValid.includes(username)) {
+        return res.status(401).json({ success: false, message: 'Usuário inválido ou inativo.' });
+      }
+
+      if (password === '021083') {
+        const role = isTechnician ? 'technician' : 'member';
+        const memberObj = members.find((m: any) => m.username === username);
+        const awardFocus = isTechnician ? null : (memberObj?.awardFocus || null);
+        return res.status(200).json({ success: true, username, role, awardFocus });
+      }
+
+      return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
   // ─── Sub-Rota: LEGACY MEMBERS ──────────────────────────────────────────────
   if (targetAction === 'legacy') {
     if (req.method === 'GET') {

@@ -440,9 +440,9 @@ export interface VolunteerWork {
   imageLinks?: string[]; // Links externos de imagens/evidências
 }
 
-// ─── Team Projects Types ───────────────────────────────────────────────────
+// ─── Prototypes / Protótipos Types ─────────────────────────────────────────
 
-export type ProjectType = 
+export type PrototypeType = 
   | 'mechanics'      // Mecânica / Estrutura
   | 'electronics'    // Eletrônica / Elétrica / Sensores
   | 'programming'    // Programação / Autônomo / Controle
@@ -452,19 +452,25 @@ export type ProjectType =
   | 'outreach'       // Divulgação / Social / B-LEED
   | 'other';         // Outro
 
-export type ProjectOutcome = 
+export type ProjectType = PrototypeType; // alias retrocompatível
+
+export type PrototypeOutcome = 
   | 'worked'        // Funcionou com sucesso
   | 'partially'     // Parcialmente (com ressalvas)
   | 'failed'        // Não funcionou / Aprendizado
   | 'testing';      // Em testes / Em andamento
 
-export type ProjectStatus = 
+export type ProjectOutcome = PrototypeOutcome; // alias retrocompatível
+
+export type PrototypeStatus = 
   | 'in_progress'   // Em andamento
   | 'completed'     // Concluído
   | 'paused'        // Pausado
   | 'archived';     // Arquivado
 
-export interface ProjectPhoto {
+export type ProjectStatus = PrototypeStatus; // alias retrocompatível
+
+export interface PrototypePhoto {
   id: string;
   dataUrl: string;       // Base64 comprimida <= 100 KB
   sizeKb: number;        // Tamanho exato em KB para transparência
@@ -472,21 +478,130 @@ export interface ProjectPhoto {
   uploadedAt: string;    // ISO string
 }
 
-export interface ProjectItem {
+export type ProjectPhoto = PrototypePhoto; // alias retrocompatível
+
+export interface PrototypeItem {
   id: string;
-  title: string;                 // Nome do projeto
-  projectType: ProjectType;      // Tipo/Área técnica do projeto
+  title: string;                 // Nome do protótipo
+  projectType: PrototypeType;    // Tipo/Área técnica do protótipo
   customTypeLabel?: string;      // Rótulo se for 'other' ou custom
   objective: string;             // Qual o objetivo / o que busca resolver
-  outcome: ProjectOutcome;       // Se funcionou / resultado
-  status: ProjectStatus;         // Status de andamento
+  outcome: PrototypeOutcome;     // Se funcionou / resultado
+  status: PrototypeStatus;       // Status de andamento
   considerations: string;        // Considerações, lições aprendidas, melhorias
-  photos: ProjectPhoto[];        // Fotos comprimidas (< 100kb cada)
+  photos: PrototypePhoto[];      // Fotos comprimidas (< 100kb cada)
   members: string[];             // Membros envolvidos (usernames)
   createdBy: string;             // Autor do registro
   tags?: string[];               // Tags ou pilares relacionados
   createdAt: string;             // ISO string
   updatedAt: string;             // ISO string
+}
+
+export type ProjectItem = PrototypeItem; // alias retrocompatível
+
+// ─── B-Project (Robôs, Temporada & Engenharia FTC) Types ───────────────────
+
+export interface BProjectMilestone {
+  id: string;
+  name: string;
+  deadline: string;
+  expectedResult: string;
+  completed?: boolean;
+}
+
+export interface BProjectGameRule {
+  id: string;
+  rule: string;
+  projectImpact: string;
+}
+
+export interface BProjectStrategyDecision {
+  id: string;
+  guidingDecision: string;
+  whyItMatters: string;
+}
+
+export type BProjectTechnicalCategory = 
+  | 'drivetrain'
+  | 'chassis'
+  | 'intake'
+  | 'subsystems'
+  | 'outtake'
+  | 'sensors'
+  | 'custom';
+
+export interface BProjectTechnicalChoice {
+  id: string;
+  category: BProjectTechnicalCategory;
+  categoryLabel?: string;
+  selected: boolean;
+  systemName: string;
+  analysis: string; // Prós e contras para a estratégia
+  isCustom?: boolean;
+}
+
+export interface BProjectTeamRole {
+  id: string;
+  area: string;
+  responsible: string[];
+  expectedDelivery: string;
+}
+
+export interface BProjectScheduleStage {
+  id: string;
+  stageName: string;
+  startDate: string;
+  endDate: string;
+  responsible: string[];
+  deliverables: string;
+  completed: boolean;
+  onTimeStatus?: 'on_time' | 'delayed' | 'pending';
+}
+
+export interface BProjectTestAttempt {
+  id: string;
+  attemptNumber: number;
+  timeOrCycle: string; // Ex: "12.4s" ou "4 peças/min"
+  result: string;
+  problemFound: string;
+  improvementSuggestion: string;
+  date: string;
+}
+
+export type BProjectTestType = 'teleop' | 'autonomous' | 'endgame' | 'mechanical';
+
+export interface BProjectTest {
+  id: string;
+  testName: string;
+  evaluatedSystem: string;
+  testType: BProjectTestType;
+  objective: string;
+  metric: string;
+  attempts: BProjectTestAttempt[];
+  improvementWorked?: 'yes' | 'partially' | 'no';
+  nextAction?: 'keep' | 'adjust' | 'redo' | 'discard';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BProjectStatus = 'planning' | 'building' | 'programming' | 'testing' | 'completed' | 'archived';
+
+export interface BProjectItem {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  milestones: BProjectMilestone[];
+  gameRules: BProjectGameRule[];
+  strategyDecisions: BProjectStrategyDecision[];
+  technicalChoices: BProjectTechnicalChoice[];
+  teamOrganization: BProjectTeamRole[];
+  schedule: BProjectScheduleStage[];
+  tests: BProjectTest[];
+  status: BProjectStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Forms / Registros de Formulários Types ─────────────────────────────────

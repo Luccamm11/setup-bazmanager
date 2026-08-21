@@ -41,7 +41,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
     setError(null);
 
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/members?action=login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: selectedUser, password }),

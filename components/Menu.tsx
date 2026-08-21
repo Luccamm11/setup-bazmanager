@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'forms';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -14,8 +14,9 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean }[] = [
+    { view: 'b_projects',       label: 'B-Project',               desc: 'Central de planejamento de robôs, decisões técnicas, cronograma Gantt e testes', icon: FolderKanban },
+    { view: 'prototypes',       label: 'Protótipos',              desc: 'Registro ágil de protótipos de bancada, fotos compactadas e lições aprendidas', icon: Wrench },
     { view: 'forms',            label: 'Formulários',             desc: 'Registre atividades de Desenvolvimento Autônomo e Evolução Coletiva com outras equipes', icon: ClipboardList },
-    { view: 'projects',         label: 'Projetos & Protótipos',   desc: 'Registro técnico de protótipos, objetivos, resultados e fotos', icon: FolderKanban },
     { view: 'team_missions',    label: t('nav.team_missions', 'Missões da Equipe'),  desc: t('nav.team_missions_desc', 'Missões atribuídas pelos técnicos'), icon: Users },
     { view: '5w2h',             label: t('nav.5w2h', 'Planejamento 5W2H'),        desc: t('nav.5w2h_desc', 'Crie planos de ação individuais ou em grupo'), icon: BookText },
     { view: 'learning_trails',  label: 'Trilhas de Aprendizagem', desc: 'Estruture seu desenvolvimento individual focado nos pilares B-LEED', icon: BookOpen },
