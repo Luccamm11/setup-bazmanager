@@ -160,6 +160,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // ─── Sub-Rota: RESET XP ────────────────────────────────────────────────────
+  if (targetAction === 'reset-xp') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const { requester, targetMember } = req.body;
+
+    if (!requester || !TECHNICIANS.includes(requester)) {
+      return res.status(403).json({ error: 'Apenas técnicos podem resetar o XP de membros.' });
+    }
+    if (!targetMember || typeof targetMember !== 'string') {
+      return res.status(400).json({ error: 'targetMember é obrigatório.' });
+    }
+
+    try {
+      const userKey = `levelup_user_${targetMember}`;
+      const rawData = await redis.get(userKey);
+      if (!rawData) {
+        return res.status(404).json({ error: `Dados do membro "${targetMember}" não encontrados.` });
+      }
+
+      const saveData = JSON.parse(rawData);
+      const user = saveData.user;
+      if (!user) {
+        return res.status(404).json({ error: 'Estrutura de dados inválida para este membro.' });
+      }
+
+      // Reset only XP-related fields — wallet, badges, quests etc. remain intact
+      const resetStats: Record<string, number> = {};
+      if (user.stats) {
+        for (const realm of Object.keys(user.stats)) {
+          resetStats[realm] = 0;
+        }
+      }
+
+      saveData.user = {
+        ...user,
+        xp_total: 0,
+        level_overall: 1,
+        xpToNextLevel: 100,
+        rank: 'e_rank',
+        stats: resetStats,
+      };
+
+      await redis.set(userKey, JSON.stringify(saveData));
+
+      return res.status(200).json({
+        success: true,
+        message: `XP de "${targetMember}" resetado com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error('Erro ao resetar XP:', error.message);
+      return res.status(500).json({ error: 'Erro interno ao resetar XP.' });
+    }
+  }
+
   // ─── Rota Principal: MEMBERS REGISTRY ──────────────────────────────────────
   // GET — list all members (active + inactive based on query)
   if (req.method === 'GET') {
