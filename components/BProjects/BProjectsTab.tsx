@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderKanban, Plus, Calendar, Clock, CheckCircle2, AlertTriangle,
   Layers, Users, Hammer, Cpu, Terminal, Sparkles, RefreshCw, X,
-  Edit3, Trash2, FileDown, Check, ChevronRight, ArrowRight, BookOpen,
-  Target, ShieldCheck, Compass, Lightbulb, Activity, CheckSquare,
-  Square, AlertCircle, FileText, BarChart3, TrendingUp, HelpCircle
+  Edit3, Trash2, FileDown, Check, ChevronRight, ArrowRight, ArrowLeft,
+  BookOpen, Target, ShieldCheck, Compass, Lightbulb, Activity,
+  CheckSquare, Square, AlertCircle, FileText, BarChart3, TrendingUp, HelpCircle
 } from 'lucide-react';
 import {
   BProjectItem, BProjectMilestone, BProjectGameRule, BProjectStrategyDecision,
@@ -658,6 +658,16 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
     return categories;
   }, [formData.technicalChoices]);
 
+  const STAGES_LIST = [
+    { id: 1, label: '1. Dados & Marcos', icon: Target },
+    { id: 2, label: '2. Regras do Jogo', icon: BookOpen },
+    { id: 3, label: '3. Estratégia', icon: Lightbulb },
+    { id: 4, label: '4. Checklist Técnico', icon: CheckSquare },
+    { id: 5, label: '5. Organização Equipe', icon: Users },
+    { id: 6, label: '6. Cronograma & Gantt', icon: Calendar },
+    { id: 7, label: '7. Testes do Projeto', icon: Activity },
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* ── Header do B-Project ── */}
@@ -839,15 +849,15 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
       {/* ── Modal / Painel de Edição Completo das 7 Etapas do B-Project ── */}
       <AnimatePresence>
         {isEditingModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              className="bg-primary border border-white/10 rounded-2xl w-full max-w-5xl max-h-[94vh] overflow-y-auto shadow-2xl flex flex-col"
+              className="bg-primary border border-white/10 rounded-2xl w-full max-w-5xl h-[92vh] max-h-[92vh] shadow-2xl flex flex-col overflow-hidden"
             >
-              {/* Header Principal do Modal */}
-              <div className="p-5 border-b border-white/10 flex items-start justify-between gap-4 sticky top-0 bg-primary/95 backdrop-blur-xl z-30">
+              {/* 1. Header Fixo Superior (Não sai da tela no scroll) */}
+              <div className="p-4 sm:p-5 border-b border-white/10 flex items-start justify-between gap-4 shrink-0 bg-primary z-20">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-wider">
@@ -859,12 +869,12 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                       </span>
                     )}
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-white">
+                  <h2 className="text-xl sm:text-2xl font-black text-white truncate max-w-[500px]">
                     {formData.name || 'Novo Projeto B-Project'}
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {activeProject && (
                     <button
                       onClick={() => exportEngineeringNotebook(activeProject)}
@@ -884,27 +894,19 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                 </div>
               </div>
 
-              {/* Barra de Navegação entre as 7 Etapas */}
-              <div className="px-5 pt-3 pb-2 border-b border-white/10 bg-black/20 flex overflow-x-auto gap-2 text-xs no-scrollbar">
-                {[
-                  { id: 1, label: '1. Dados & Marcos', icon: Target },
-                  { id: 2, label: '2. Regras do Jogo', icon: BookOpen },
-                  { id: 3, label: '3. Estratégia', icon: Lightbulb },
-                  { id: 4, label: '4. Checklist Técnico', icon: CheckSquare },
-                  { id: 5, label: '5. Organização Equipe', icon: Users },
-                  { id: 6, label: '6. Cronograma & Gantt', icon: Calendar },
-                  { id: 7, label: '7. Testes do Projeto', icon: Activity },
-                ].map(tab => {
+              {/* 2. Barra de Navegação entre as 7 Etapas (FIXA, SEMPRE VISÍVEL) */}
+              <div className="px-4 py-2 border-b border-white/10 bg-black/40 flex items-center gap-1.5 overflow-x-auto shrink-0 z-20 no-scrollbar">
+                {STAGES_LIST.map(tab => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
                         isActive
-                          ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/20'
-                          : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-white'
+                          ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/25 border border-cyan-400/40'
+                          : 'bg-white/5 hover:bg-white/10 text-text-muted hover:text-white border border-transparent'
                       }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -914,8 +916,8 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                 })}
               </div>
 
-              {/* Corpo da Etapa Ativa */}
-              <div className="p-6 space-y-6 flex-1">
+              {/* 3. Corpo da Etapa Ativa (ÚNICA ÁREA QUE ROLA VERTICALMENTE) */}
+              <div className="p-5 sm:p-6 space-y-6 flex-1 overflow-y-auto min-h-0">
                 {/* ── ETAPA 1: DADOS DO PROJETO & MARCOS ── */}
                 {activeTab === 1 && (
                   <div className="space-y-6">
@@ -1033,7 +1035,7 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                                     value={m.name}
                                     onChange={e => updateMilestone(m.id, 'name', e.target.value)}
                                     placeholder="Ex: Entrega do CAD"
-                                    className="w-full bg-transparent border-b border-transparent focus:border-cyan-500 focus:outline-none text-white text-xs"
+                                    className="w-full bg-transparent border-b border-transparent focus:border-cyan-500 focus:outline-none text-white text-xs font-semibold"
                                   />
                                 </td>
                                 <td className="p-3">
@@ -1067,6 +1069,18 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                           </tbody>
                         </table>
                       </div>
+                    </div>
+
+                    {/* Botão de Avanço Rápido */}
+                    <div className="flex justify-end pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(2)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Regras do Jogo (Etapa 2)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1136,6 +1150,25 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                         </tbody>
                       </table>
                     </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(1)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Dados & Marcos</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(3)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Estratégia (Etapa 3)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1203,6 +1236,25 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(2)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Regras do Jogo</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(4)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Checklist Técnico (Etapa 4)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1293,6 +1345,25 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                         </div>
                       ))}
                     </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(3)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Estratégia</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(5)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Organização da Equipe (Etapa 5)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1371,6 +1442,25 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(4)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Checklist Técnico</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(6)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Cronograma & Gantt (Etapa 6)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1502,6 +1592,25 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                         </tbody>
                       </table>
                     </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(5)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Organização</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(7)}
+                        className="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <span>Avançar para Testes do Projeto (Etapa 7)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1629,21 +1738,56 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                         ))}
                       </div>
                     )}
+
+                    <div className="flex justify-start items-center pt-4 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(6)}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Voltar para Cronograma & Gantt</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Rodapé Fixo do Modal */}
-              <div className="p-4 border-t border-white/10 bg-black/40 flex items-center justify-between gap-3 sticky bottom-0 z-20">
-                <div className="text-xs text-text-muted hidden sm:block">
-                  Etapa {activeTab} de 7: Todas as alterações são salvas diretamente no Supabase.
+              {/* 4. Rodapé Fixo Inferior com Navegação Passo a Passo (FIXO, SEMPRE ACESSÍVEL) */}
+              <div className="p-3 sm:p-4 border-t border-white/10 bg-black/70 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 shrink-0 z-20">
+                {/* Botões Passo a Passo */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={activeTab === 1}
+                    onClick={() => setActiveTab(prev => Math.max(1, prev - 1))}
+                    className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Etapa Anterior</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={activeTab === 7}
+                    onClick={() => setActiveTab(prev => Math.min(7, prev + 1))}
+                    className="px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1.5"
+                  >
+                    <span className="hidden sm:inline">Próxima Etapa</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <span className="text-xs text-text-muted font-medium ml-2">
+                    Etapa {activeTab} de 7
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-3 ml-auto">
+                {/* Botões de Ação Final */}
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setIsEditingModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all"
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white text-xs font-bold transition-all"
                   >
                     Cancelar
                   </button>
@@ -1652,12 +1796,12 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                     type="button"
                     onClick={handleSaveProject}
                     disabled={isSaving}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     {isSaving ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Salvando no Supabase...</span>
+                        <span>Salvando...</span>
                       </>
                     ) : (
                       <>
@@ -1737,9 +1881,9 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-primary border border-white/10 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl flex flex-col"
+              className="bg-primary border border-white/10 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden p-6 space-y-5 shadow-2xl flex flex-col"
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-cyan-400" />
                   <h3 className="text-lg font-bold text-white">Registro de Teste do Projeto</h3>
@@ -1749,181 +1893,183 @@ ${t.attempts.map(a => `- Tentativa #${a.attemptNumber} (${a.date}): Tempo/Ciclo:
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Nome do Teste *</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Teste de Ciclo, Teste de Autônomo, Teste de Coleta"
-                    value={currentTest.testName || ''}
-                    onChange={e => setCurrentTest({ ...currentTest, testName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
-                  />
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Nome do Teste *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Teste de Ciclo, Teste de Autônomo, Teste de Coleta"
+                      value={currentTest.testName || ''}
+                      onChange={e => setCurrentTest({ ...currentTest, testName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Sistema Avaliado</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Locomoção, coleta, depósito, sensor..."
+                      value={currentTest.evaluatedSystem || ''}
+                      onChange={e => setCurrentTest({ ...currentTest, evaluatedSystem: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Tipo de Teste</label>
+                    <select
+                      value={currentTest.testType || 'teleop'}
+                      onChange={e => setCurrentTest({ ...currentTest, testType: e.target.value as any })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
+                    >
+                      <option value="teleop">TeleOp</option>
+                      <option value="autonomous">Autônomo</option>
+                      <option value="endgame">End Game</option>
+                      <option value="mechanical">Mecânico / Resistência</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Objetivo (O que validar?)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Validar se a garra não solta a amostra em aceleração máxima"
+                      value={currentTest.objective || ''}
+                      onChange={e => setCurrentTest({ ...currentTest, objective: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Métrica Avaliada</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Tempo de ciclo (s), taxa de acerto (%)"
+                      value={currentTest.metric || ''}
+                      onChange={e => setCurrentTest({ ...currentTest, metric: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Sistema Avaliado</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Locomoção, coleta, depósito, sensor..."
-                    value={currentTest.evaluatedSystem || ''}
-                    onChange={e => setCurrentTest({ ...currentTest, evaluatedSystem: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
-                  />
-                </div>
+                {/* Tentativas */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                      Registro de Tentativas
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={addAttemptToCurrentTest}
+                      className="px-2.5 py-1 rounded bg-cyan-600/20 text-cyan-300 text-[11px] font-bold border border-cyan-500/30 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>+ Adicionar Tentativa</span>
+                    </button>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Tipo de Teste</label>
-                  <select
-                    value={currentTest.testType || 'teleop'}
-                    onChange={e => setCurrentTest({ ...currentTest, testType: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
-                  >
-                    <option value="teleop">TeleOp</option>
-                    <option value="autonomous">Autônomo</option>
-                    <option value="endgame">End Game</option>
-                    <option value="mechanical">Mecânico / Resistência</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Objetivo (O que validar?)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Validar se a garra não solta a amostra em aceleração máxima"
-                    value={currentTest.objective || ''}
-                    onChange={e => setCurrentTest({ ...currentTest, objective: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Métrica Avaliada</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Tempo de ciclo (s), taxa de acerto (%)"
-                    value={currentTest.metric || ''}
-                    onChange={e => setCurrentTest({ ...currentTest, metric: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Tentativas */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                    Registro de Tentativas
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={addAttemptToCurrentTest}
-                    className="px-2.5 py-1 rounded bg-cyan-600/20 text-cyan-300 text-[11px] font-bold border border-cyan-500/30 flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>+ Adicionar Tentativa</span>
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/30">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-white/5 text-text-secondary text-[9px] uppercase font-bold">
-                      <tr>
-                        <th className="p-2 w-12 text-center">#</th>
-                        <th className="p-2 w-28">Tempo / Ciclo</th>
-                        <th className="p-2">Resultado</th>
-                        <th className="p-2">Problema Encontrado</th>
-                        <th className="p-2">Sugestão de Melhoria</th>
-                        <th className="p-2 w-10 text-center"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {(currentTest.attempts || []).map(att => (
-                        <tr key={att.id}>
-                          <td className="p-2 text-center font-bold text-cyan-400">#{att.attemptNumber}</td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              placeholder="Ex: 11.2s"
-                              value={att.timeOrCycle}
-                              onChange={e => updateAttemptInCurrentTest(att.id, 'timeOrCycle', e.target.value)}
-                              className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              placeholder="Ex: 3/4 peças"
-                              value={att.result}
-                              onChange={e => updateAttemptInCurrentTest(att.id, 'result', e.target.value)}
-                              className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              placeholder="Ex: Garra patinou"
-                              value={att.problemFound}
-                              onChange={e => updateAttemptInCurrentTest(att.id, 'problemFound', e.target.value)}
-                              className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              placeholder="Ex: Aumentar fricção silicone"
-                              value={att.improvementSuggestion}
-                              onChange={e => updateAttemptInCurrentTest(att.id, 'improvementSuggestion', e.target.value)}
-                              className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
-                            />
-                          </td>
-                          <td className="p-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => removeAttemptFromCurrentTest(att.id)}
-                              className="text-text-muted hover:text-rose-400"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
+                  <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/30">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-white/5 text-text-secondary text-[9px] uppercase font-bold">
+                        <tr>
+                          <th className="p-2 w-12 text-center">#</th>
+                          <th className="p-2 w-28">Tempo / Ciclo</th>
+                          <th className="p-2">Resultado</th>
+                          <th className="p-2">Problema Encontrado</th>
+                          <th className="p-2">Sugestão de Melhoria</th>
+                          <th className="p-2 w-10 text-center"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {(currentTest.attempts || []).map(att => (
+                          <tr key={att.id}>
+                            <td className="p-2 text-center font-bold text-cyan-400">#{att.attemptNumber}</td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                placeholder="Ex: 11.2s"
+                                value={att.timeOrCycle}
+                                onChange={e => updateAttemptInCurrentTest(att.id, 'timeOrCycle', e.target.value)}
+                                className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                placeholder="Ex: 3/4 peças"
+                                value={att.result}
+                                onChange={e => updateAttemptInCurrentTest(att.id, 'result', e.target.value)}
+                                className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                placeholder="Ex: Garra patinou"
+                                value={att.problemFound}
+                                onChange={e => updateAttemptInCurrentTest(att.id, 'problemFound', e.target.value)}
+                                className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                placeholder="Ex: Aumentar fricção silicone"
+                                value={att.improvementSuggestion}
+                                onChange={e => updateAttemptInCurrentTest(att.id, 'improvementSuggestion', e.target.value)}
+                                className="w-full bg-black/40 px-2 py-1 rounded border border-white/10 text-white text-xs"
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeAttemptFromCurrentTest(att.id)}
+                                className="text-text-muted hover:text-rose-400"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Avaliação de Melhoria */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">A melhoria funcionou?</label>
+                    <select
+                      value={currentTest.improvementWorked || 'partially'}
+                      onChange={e => setCurrentTest({ ...currentTest, improvementWorked: e.target.value as any })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-bold"
+                    >
+                      <option value="yes">Sim</option>
+                      <option value="partially">Parcialmente</option>
+                      <option value="no">Não</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-text-secondary uppercase">Próxima ação:</label>
+                    <select
+                      value={currentTest.nextAction || 'adjust'}
+                      onChange={e => setCurrentTest({ ...currentTest, nextAction: e.target.value as any })}
+                      className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-bold"
+                    >
+                      <option value="keep">Manter</option>
+                      <option value="adjust">Ajustar</option>
+                      <option value="redo">Refazer</option>
+                      <option value="discard">Descartar</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Avaliação de Melhoria */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">A melhoria funcionou?</label>
-                  <select
-                    value={currentTest.improvementWorked || 'partially'}
-                    onChange={e => setCurrentTest({ ...currentTest, improvementWorked: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-bold"
-                  >
-                    <option value="yes">Sim</option>
-                    <option value="partially">Parcialmente</option>
-                    <option value="no">Não</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Próxima ação:</label>
-                  <select
-                    value={currentTest.nextAction || 'adjust'}
-                    onChange={e => setCurrentTest({ ...currentTest, nextAction: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-bold"
-                  >
-                    <option value="keep">Manter</option>
-                    <option value="adjust">Ajustar</option>
-                    <option value="redo">Refazer</option>
-                    <option value="discard">Descartar</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10 shrink-0">
                 <button
                   type="button"
                   onClick={() => setTestModalOpen(false)}
