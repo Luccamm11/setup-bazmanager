@@ -1,298 +1,307 @@
 # BazManager — Bazinga! 73 FTC
 
-> Plataforma de desenvolvimento de membros para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
+> Plataforma completa de desenvolvimento de membros, gestão técnica, inventário e governança para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/LuccaHP/Bazinga-LevelUp)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.2-61dafb.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646cff.svg)](https://vitejs.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e.svg)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8.svg)](https://tailwindcss.com/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI%20Mentor-8e75ff.svg)](https://ai.google.dev/)
 
 ---
 
 ## 📋 Sobre o Projeto
 
-O **BazManager** é uma plataforma gamificada de desenvolvimento individual e coletivo para membros da equipe de robótica Bazinga! 73 FTC. Cada membro possui um perfil com habilidades, metas e missões pré-configuradas de acordo com seu **prêmio foco FIRST** (Sustentabilidade, Pensamento Criativo, Conexão, Alcance, Controle ou Design e Inovação).
+O **BazManager** é o sistema operacional e plataforma gamificada de gestão e desenvolvimento individual e coletivo da equipe de robótica **Bazinga! 73 FTC**. Cada membro possui uma jornada personalizada com competências, metas e missões configuradas de acordo com seu **prêmio foco FIRST** (Sustentabilidade, Pensamento Criativo, Conexão, Alcance, Controle, Design e Inovação).
 
-### Origem
+Além do desenvolvimento humano e gamificado (metodologia **B-LEED**), a plataforma centraliza toda a infraestrutura operacional da equipe:
+- **Gestão de Peças e Inventário de Robótica FTC** (REV Robotics, goBILDA, eletrônica, etc.)
+- **Fila de Impressão 3D** para prototipagem e peças finais
+- **Gestão de Mentores e Sessões de Mentoria Técnica**
+- **Planejamento Tático com Matriz 5W2H e Quadro Kanban**
+- **Controle Financeiro e Orçamentário da Temporada**
+- **Trilhas de Aprendizagem e Capacitação Técnica**
+- **Mentor IA Integrado via Google Gemini**
 
-Este projeto foi adaptado do **LevelUp: AI Awakening** (criado por [Oniondas](https://github.com/Oniondas)), um sistema gamificado de produtividade pessoal. A base foi refatorada para atender às necessidades específicas de uma equipe FTC, com foco em:
+### Origem & Evolução
 
-- Desenvolvimento de competências por prêmio FIRST
-- Missões individuais e coletivas da equipe
-- Painel do técnico para atribuição de tarefas
-- Perfis pré-configurados para cada membro (B-LEED)
+O projeto nasceu de uma adaptação do **LevelUp: AI Awakening** (criado por [Oniondas](https://github.com/Oniondas)) e foi amplamente expandido por [LuccaHP](https://github.com/LuccaHP) para se tornar um ecossistema completo para equipes da FIRST Tech Challenge.
 
 ---
 
-## 🏗️ Arquitetura
+## 🚀 Módulos e Funcionalidades
+
+### 👤 Desenvolvimento Individual (Gamificação & B-LEED)
+- **Dashboard do Membro:** Visão consolidada de nível, XP, créditos, metas de curto prazo e objetivos da temporada.
+- **Árvore de Habilidades (Radar Chart):** Mapeamento dinâmico dos 6 atributos específicos de cada prêmio foco FIRST.
+- **Quests & Missões:** Criação de quests personalizadas, missões manuais e geração inteligente com IA.
+- **Major Goals:** Metas estratégicas de médio e longo prazo com prazos e acompanhamento de progresso.
+- **Diário de Bordo & Reflexão:** Registro de aprendizados pós-missão para consolidação de conhecimento.
+- **Mentor IA (Gemini):** Chat interativo com IA calibrada com a identidade e desafios da Bazinga! 73.
+- **Timer de Foco (Pomodoro):** Cronômetro integrado para execução concentrada de quests e sessões de estudo.
+- **Loja & Conquistas:** Resgate de recompensas, itens de suporte, buffs temporários e badges desbloqueáveis.
+
+### 👥 Gestão de Equipe & Painel do Técnico
+- **Tech Dashboard:** Visão unificada de todos os membros, missões pendentes e evolução geral.
+- **Visão Geral de Competências (TechSkillOverview):** Comparativo de radares e competências de toda a equipe.
+- **Atribuição de Missões da Equipe:** Criação e direcionamento de missões coletivas ou individuais com prazos e recompensas.
+
+### 📦 Inventário de Robótica FTC
+- **Catálogo Completo:** Controle detalhado de motores, servos, sensores, canais estruturais, fixadores, baterias, eletrônica REV/goBILDA e consumíveis.
+- **Gestão de Estoque:** Localização física (gavetas/caixas), quantidades mínimas, status e categorização.
+- **Histórico & Movimentações:** Rastreamento de uso de peças em subsistemas do robô.
+
+### 🖨️ Fila de Impressão 3D
+- **Requisições de Peças:** Cadastro de arquivos (STL/STEP/G-code), material (PLA, PETG, TPU, ABS/ASA), cor e camada.
+- **Estimativas e Priorização:** Estimativa de tempo de impressão, peso em gramas, prioridade por subsistema e status (Na Fila, Imprimindo, Concluído, Falha).
+
+### 🤝 Gestão de Mentores & Sessões
+- **Cadastro de Especialistas:** Registro de mentores internos, ex-alunos, profissionais da indústria e parceiros acadêmicos.
+- **Atas e Registros de Mentoria:** Documentação de feedbacks, pontos de ação, dúvidas resolvidas e conexões geradas.
+
+### 📋 Planejamento Ágil (Kanban & 5W2H)
+- **Quadro Kanban:** Gestão visual de tarefas por status (*Backlog, A Fazer, Em Andamento, Concluído*) com tags por área técnica.
+- **Planos de Ação 5W2H:** Estruturação formal (*What, Why, Where, When, Who, How, How Much*) para projetos estratégicos.
+
+### 💰 Gestão Financeira & Orçamento
+- **Fluxo de Caixa:** Lançamento de receitas (patrocínios, eventos, rifas) e despesas (inscrições, peças, logística).
+- **Relatórios & Gráficos:** Acompanhamento de orçamento por categoria em conformidade com o Prêmio de Sustentabilidade.
+
+### 📚 Trilhas de Aprendizagem B-LEED
+- **Cursos e Módulos:** Trilhas formativas estruturadas para calouros e veteranos (Programação Java/FTC, CAD Onshape, Gestão, Oratória).
+- **Progresso Modular:** Acompanhamento de módulos concluídos e avaliações práticas.
+
+---
+
+## 🏗️ Arquitetura do Projeto
 
 ```
 setup-bazmanager/
-├── api/                   # Vercel Serverless Functions (Supabase / CRUD / Auth)
-│   ├── login.ts           # Autenticação de membros (senha compartilhada)
-│   ├── persistence.ts     # Carregamento e salvamento de estado do membro (Supabase key_value_store)
-│   ├── crud.ts            # CRUD centralizado (5W2H, Kanban, Finanças, Frequência, Backup Cron)
-│   └── team-missions.ts   # CRUD de missões da equipe
-├── data/                  # Dados centralizados da equipe
-│   ├── members.ts         # Lista de membros com perfis e prêmios foco
-│   ├── awardProfiles.ts   # Perfis por prêmio FIRST (skills, topics, goals, quests)
-│   └── initialData.ts     # Factory de dados iniciais para primeiro login
-├── components/            # Componentes React
-│   ├── LoginModal.tsx      # Tela de login com seletor de membros
-│   ├── Dashboard.tsx       # Dashboard principal do membro
-│   ├── SkillTree.tsx       # Árvore de habilidades com radar chart
-│   ├── MyState.tsx         # Missão, metas e objetivos do membro
-│   ├── TeamMissions.tsx    # Missões atribuídas pela equipe
-│   ├── TechDashboard.tsx   # Painel exclusivo do técnico
-│   ├── CreateTeamMissionModal.tsx  # Criar missões para a equipe
-│   ├── Menu.tsx            # Menu de navegação expandido
-│   └── ...                 # Outros componentes (Store, Badges, Timer, etc.)
-├── locales/               # Traduções (PT-BR e EN)
-│   ├── en/
-│   └── pt-BR/
-├── services/              # Serviços externos
-│   └── geminiService.ts   # Integração com Google Gemini AI
-├── constants.ts           # Constantes globais e dados iniciais
-├── types.ts               # TypeScript interfaces e enums
-├── App.tsx                # Componente raiz
-└── index.html             # Entry point
+├── api/                       # Vercel Serverless Functions
+│   ├── _lib/                  # Utilitários compartilhados de backend (Supabase / Auth)
+│   ├── login.ts               # Autenticação de membros e técnicos
+│   ├── persistence.ts         # Leitura e gravação de estado do membro (key_value_store)
+│   ├── crud.ts                # Operações CRUD centralizadas e Backup Cron
+│   ├── team-missions.ts       # Gestão de missões da equipe
+│   ├── 5w2h.ts                # Endpoints da matriz 5W2H
+│   ├── forms.ts               # Formulários e registros de presença
+│   ├── generate-journey.ts    # Geração de jornadas via IA
+│   ├── members.ts             # Gestão de membros
+│   ├── mentors.ts             # Cadastro e histórico de mentorias
+│   ├── notifications.ts       # Sistema de notificações
+│   ├── printer-queue.ts       # Fila de impressão 3D
+│   └── projects.ts            # Gestão de projetos da equipe
+├── data/                      # Dados e perfis base
+│   ├── members.ts             # Cadastro central de membros e técnicos
+│   ├── awardProfiles.ts       # Definições de competências por prêmio FIRST
+│   └── initialData.ts         # Factory de inicialização de novo membro
+├── components/                # Componentes React
+│   ├── RoboticsInventory.tsx  # Gestão de inventário e peças FTC
+│   ├── PrinterQueue.tsx       # Fila de impressão 3D
+│   ├── MentorManagement.tsx   # Gestão de mentores e atas
+│   ├── FinanceDashboard.tsx   # Painel financeiro e fluxo de caixa
+│   ├── KanbanBoard.tsx        # Quadro Kanban ágil
+│   ├── FiveW2H/               # Módulo de planos 5W2H
+│   ├── LearningTrails/        # Módulo de Trilhas de Aprendizagem
+│   ├── BProjects/             # Módulo de Projetos da Equipe
+│   ├── Chat/                  # Chat interno da equipe
+│   ├── DashboardTab.tsx       # Dashboard principal
+│   ├── SkillTree.tsx          # Árvore de habilidades com radar
+│   ├── TechDashboard.tsx      # Painel do técnico
+│   ├── TechSkillOverview.tsx  # Comparativo de competências
+│   ├── TestingPanel.tsx       # Painel de testes e simulação
+│   └── ...                    # Modais, timers, inventário e utilitários de UI
+├── locales/                   # Suporte a Internacionalização (i18n)
+│   ├── en/                    # Traduções em Inglês
+│   └── pt-BR/                 # Traduções em Português (Padrão)
+├── services/                  # Integrações externas (Gemini AI)
+├── types.ts                   # Definições de tipos TypeScript
+├── constants.ts               # Constantes e configurações globais
+├── App.tsx                    # Componente raiz da aplicação
+└── index.html                 # Entry point HTML
 ```
 
 ---
 
-## 👥 Membros da Equipe
+## 👥 Membros da Equipe & Atuação
 
-| Membro | Prêmio Foco | Área |
-|--------|-------------|------|
-| **Lucca** | 🌱 Sustentabilidade | Planejamento, organização, gestão financeira |
-| **Clarice** | 💡 Pensamento Criativo (AE) | Documentação, Engineering Portfolio |
-| **Ana Clara** | 💡 Pensamento Criativo (MCI) | Documentação técnica, análise crítica |
-| **Bernardo** | 🤝 Conexão | Networking, parcerias, comunicação institucional |
+| Membro | Prêmio Foco | Área Principal |
+|--------|-------------|----------------|
+| **Lucca** | 🌱 Sustentabilidade | Planejamento, organização, gestão financeira e liderança |
+| **Clarice** | 💡 Pensamento Criativo (AE) | Documentação de engenharia, Engineering Portfolio |
+| **Ana Clara** | 💡 Pensamento Criativo (MCI) | Documentação técnica detalhada, análise crítica |
+| **Bernardo** | 🤝 Conexão | Parcerias institucionais, networking, captação |
+| **Sara Galdino** | 🤝 Conexão | Relações com mentores, eventos e parcerias estratégicas |
+| **Enzo Soares** | 🤖 Controle | Programação FTC (Java/OnBot), sensores e autônomo |
+| **Pedro** | 🤖 Controle | Arquitetura de software, automação e teleoperado |
+| **Yan** | 💡 Inovação | CAD, projeto mecânico, prototipagem e mecanismos |
+| **Guilherme** | 🔧 Design | Arquitetura mecânica, modularidade e sistemas de elevação |
+| **Enzo Resende** | 🔧 Design | Modelagem 3D, prototipagem e fabricação mecânica |
 
-| **Enzo Soares** | 🤖 Controle | Programação FTC, sensores, autônomo |
-| **Pedro** | 🤖 Controle | Software, arquitetura de código |
-| **Yan** | 🔧 Design e Inovação | CAD, projeto mecânico, prototipagem |
-| **Guilherme** | 🔧 Design e Inovação | Arquitetura mecânica, modularidade |
-| **Enzo Resende** | 🔧 Design e Inovação | Design mecânico, prototipagem |
-
-### Técnicos
+### Técnicos & Mentores
 | Nome | Função |
 |------|--------|
-| **Jonas** | Orientador técnico e pedagógico |
+| **Jonas Lemos** | Orientador técnico, pedagógico e liderança B-LEED |
 | **Ramon Montorri** | Orientador técnico e estratégico |
 
 ---
 
-## 🏆 Prêmios FIRST e Atributos
+## 🏆 Prêmios FIRST e Atributos B-LEED
 
-Cada prêmio foco possui **6 atributos** que formam o radar chart do membro:
+Cada membro desenvolve **6 atributos centrais** específicos de sua trilha:
 
-### 🌱 Sustentabilidade
-Planejamento · Gestão · Responsabilidade · Visão Estratégica · Organização · Tomada de Decisão
-
-### 💡 Pensamento Criativo
-Organização · Escrita Técnica · Análise · Processo de Engenharia · Clareza de Comunicação · Aprendizado Contínuo
-
-### 🤝 Conexão
-Comunicação · Networking · Postura Profissional · Planejamento · Persuasão · Proatividade
-
-### 📢 Alcance
-Oratória · Liderança · Criatividade · Engajamento · Organização de Eventos · Impacto Social
-
-### 🤖 Controle
-Programação · Lógica · Sensores · Autonomia · Debug · Confiabilidade
-
-### 🔧 Design e Inovação
-Criatividade Técnica · CAD / Projeto · Prototipagem · Resolução de Problemas · Robustez de Solução · Iteração
+```mermaid
+mindmap
+  root((Prêmios FIRST))
+    Sustentabilidade
+      Planejamento
+      Gestão
+      Responsabilidade
+      Visão Estratégica
+      Organização
+      Tomada de Decisão
+    Pensamento Criativo
+      Organização
+      Escrita Técnica
+      Análise Crítica
+      Processo de Engenharia
+      Clareza de Comunicação
+      Aprendizado Contínuo
+    Conexão
+      Comunicação
+      Networking
+      Postura Profissional
+      Planejamento
+      Persuasão
+      Proatividade
+    Alcance
+      Oratória
+      Liderança
+      Criatividade
+      Engajamento
+      Organização de Eventos
+      Impacto Social
+    Controle
+      Programação
+      Lógica
+      Sensores
+      Autonomia
+      Debug
+      Confiabilidade
+    Design e Inovação
+      Criatividade Técnica
+      CAD / Projeto
+      Prototipagem
+      Resolução de Problemas
+      Robustez
+      Iteração
+```
 
 ---
 
 ## ⚙️ Stack Tecnológica
 
-| Tecnologia | Uso |
-|------------|-----|
-| **React 18** + **TypeScript** | Frontend SPA |
-| **Vite** | Build tool e dev server |
-| **Tailwind CSS** | Estilização |
-| **Framer Motion** | Animações e transições |
-| **i18next** | Internacionalização (PT-BR / EN) |
-| **Recharts** | Gráficos e radar charts |
-| **Vercel** | Hosting e serverless functions |
-| **Supabase (PostgreSQL)** | Banco de dados principal e persistência de dados (tabela `key_value_store`) |
-| **GitHub REST API + Cron** | Backup diário automático versionado no repositório |
-| **Google Gemini AI** | Geração de quests, recomendações, mentor IA |
-| **Redis Cloud (Legado)** | Cópia congelada de segurança do momento da migração (não ativo) |
+| Camada | Tecnologia |
+|--------|------------|
+| **Frontend** | React 19, TypeScript 5.8, Vite 6, Tailwind CSS |
+| **UI & Visualização** | Framer Motion, Lucide React, Recharts |
+| **Internacionalização** | i18next (PT-BR / EN) |
+| **Backend & Serverless** | Vercel Serverless Functions (Node.js/TypeScript) |
+| **Banco de Dados** | Supabase (PostgreSQL) com tabela `key_value_store` JSONB |
+| **Inteligência Artificial** | Google Gemini AI (`@google/genai`) |
+| **Automação de Backup** | Vercel Cron + GitHub REST API (JSON versionado) |
 
 ---
 
 ## 🗄️ Modelo de Dados & Persistência
 
-O sistema utiliza o **Supabase (PostgreSQL)** como fonte de verdade ativa.
+O sistema utiliza o **Supabase (PostgreSQL)** como fonte primária de verdade.
 
 ### Tabela `key_value_store`
-Para compatibilidade e flexibilidade com a estrutura de documentos do sistema, os dados são armazenados na tabela `key_value_store`:
-- **`key`** (`TEXT PRIMARY KEY`): Identificador único da entidade/registro.
-- **`value`** (`JSONB`): Carga útil do registro em formato JSON estruturado.
-- **`updated_at`** (`TIMESTAMPTZ`): Data e hora da última atualização.
+```sql
+CREATE TABLE IF NOT EXISTS key_value_store (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
 ### Taxonomia de Chaves
-Mesma taxonomia herdada e padronizada:
-- `levelup_user_{username}`: Estado completo do membro (perfil, atributos, skills, missões, inventário).
-- `levelup_notifications_{username}`: Notificações direcionadas ao membro.
-- `levelup_members_registry`: Lista cadastral de membros e cargos.
-- `levelup_team_missions`: Missões coletivas e individuais da equipe.
-- `levelup_5w2h_plans`: Planos de ação 5W2H da equipe.
-- `levelup_printer_queue`: Fila de impressão 3D.
-- `levelup_team_legacy`: Registros de histórico e legado da equipe.
-- `levelup_mentors` e `levelup_mentorship_records`: Cadastro e registros de mentorias.
+- `levelup_user_{username}`: Perfil completo, atributos, XP, inventário e progresso do membro.
+- `levelup_notifications_{username}`: Notificações específicas do membro.
+- `levelup_members_registry`: Cadastro centralizado de membros.
+- `levelup_team_missions`: Missões de equipe.
+- `levelup_5w2h_plans`: Planos de ação 5W2H.
+- `levelup_printer_queue`: Solicitações e status da fila 3D.
+- `levelup_robotics_inventory`: Catálogo e estoque de peças de robótica FTC.
+- `levelup_mentors`: Cadastro de mentores e contatos.
+- `levelup_mentorship_records`: Histórico e atas de mentorias.
 - `levelup_attendance_records`: Frequência e presença dos membros.
-- `levelup_finance_records`: Registros e transações financeiras.
-- `levelup_kanban_tasks`: Tarefas do quadro Kanban.
-- `levelup_learning_trails_data`: Trilhas de aprendizagem B-LEED.
-- `levelup_chat_data`: Mensagens e interações do chat da equipe.
+- `levelup_finance_records`: Registros e fluxo de caixa financeiro.
+- `levelup_kanban_tasks`: Tarefas do quadro ágil Kanban.
+- `levelup_learning_trails_data`: Módulos e progresso das trilhas B-LEED.
+- `levelup_chat_data`: Mensagens e histórico do chat da equipe.
 
 ---
 
-## 🛡️ Mecanismo de Backup Automatizado
+## 🛡️ Backup Diário Automatizado
 
-- **Frequência:** Executado diariamente às 06:00 UTC via Vercel Cron Job (`vercel.json` -> `/api/crud?action=backup`).
-- **Origem dos Dados:** Supabase (`key_value_store`).
-- **Destino:** Repositório do GitHub, gravado em `backups/backup-YYYY-MM-DD.json`.
-- **Autenticação:** Protegido via token Bearer validado com a variável `CRON_SECRET`.
-- **Garantia de Integridade:** Exportação determinística e ordenada por chave, com hash de integridade e commit automático via GitHub REST API.
+- **Execução:** Diariamente às 06:00 UTC via Vercel Cron (`/api/crud?action=backup`).
+- **Origem:** Tabela `key_value_store` do Supabase.
+- **Destino:** Repositório GitHub em `backups/backup-YYYY-MM-DD.json`.
+- **Segurança:** Autenticação Bearer obrigatória (`CRON_SECRET`) e integridade via hash SHA-256.
 
 ---
 
 ## 🔑 Variáveis de Ambiente
 
-### Variáveis Ativas (Necessárias)
-| Variável | Descrição | Exemplo / Uso |
-|----------|-----------|---------------|
-| `SUPABASE_URL` | URL base da instância Supabase | `https://xxxx.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço (backend) com permissões na `key_value_store` | `eyJhbGciOi...` |
-| `USE_SUPABASE` | Flag indicando uso do Supabase como backend ativo | `true` |
-| `CRON_SECRET` | Secret de autenticação Bearer para o cron job de backup e rotas admin | String aleatória segura |
-| `GITHUB_BACKUP_TOKEN` | Personal Access Token do GitHub com permissão de escrita em repositório | `github_pat_...` / `ghp_...` |
-| `GITHUB_BACKUP_REPO` | Repositório alvo do GitHub onde os arquivos de backup são comitados | `usuario/repo` (ex: `LuccaHP/Bazinga-LevelUp`) |
-| `VITE_GEMINI_API_KEY` / `GEMINI_API_KEY` | Chave de API do Google Gemini para as funções de IA e Mentor | `AIzaSy...` |
+Configure as seguintes variáveis no arquivo `.env.local` (desenvolvimento) e nas configurações da Vercel (produção):
 
-### Variáveis Legadas / Desativadas
-| Variável | Status | Motivo |
-|----------|--------|--------|
-| `REDIS_URL` | ⚠️ **Legado / Inativo** | Mantida apenas como referência histórica da cópia congelada do Redis Cloud no momento da migração. Não é mais utilizada para leitura/escrita em produção. |
-| `KV_REST_API_URL` | ❌ **Descontinuado** | Variável do Vercel KV legado. |
-| `KV_REST_API_TOKEN` | ❌ **Descontinuado** | Variável do Vercel KV legado. |
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `SUPABASE_URL` | Sim | URL base do projeto Supabase (`https://xxxx.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Sim | Service Role Secret para leitura/escrita na `key_value_store` |
+| `USE_SUPABASE` | Sim | Flag indicativa de persistência ativa no Supabase (`true`) |
+| `CRON_SECRET` | Sim | Token secreto de autenticação Bearer para o Cron Job de backup |
+| `GITHUB_BACKUP_TOKEN` | Sim | GitHub Personal Access Token (Fine-grained com permissão de escrita) |
+| `GITHUB_BACKUP_REPO` | Sim | Repositório alvo dos backups (ex: `LuccaHP/Bazinga-LevelUp`) |
+| `VITE_GEMINI_API_KEY` | Sim | Chave de API Google Gemini para o Mentor IA e geração de quests |
 
 ---
 
 ## 🚀 Como Rodar Localmente
 
 ### Pré-requisitos
-- Node.js 18+
-- npm ou yarn
-- Projeto Supabase configurado com a tabela `key_value_store`
+- **Node.js** (v18+)
+- **npm** ou **yarn**
+- Instância ativa do Supabase
 
-### Instalação
+### Passo a Passo
 
 ```bash
-# Clone o repositório
+# 1. Clonar o repositório
 git clone https://github.com/LuccaHP/Bazinga-LevelUp.git
 cd Bazinga-LevelUp/setup-bazmanager
 
-# Instale dependências
+# 2. Instalar dependências
 npm install
 
-# Configure variáveis de ambiente (.env.local)
-# SUPABASE_URL=https://seu-projeto.supabase.co
-# SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
-# USE_SUPABASE=true
-# VITE_GEMINI_API_KEY=sua_chave_gemini
+# 3. Criar arquivo de variáveis de ambiente
+cp .env.example .env.local
+# (Preencha as chaves SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, USE_SUPABASE, VITE_GEMINI_API_KEY)
 
-# Rode o dev server
+# 4. Iniciar servidor de desenvolvimento
 npm run dev
 ```
 
-### Deploy no Vercel
-
-1. Faça fork / push para o repositório
-2. Conecte o projeto na Vercel
-3. Configure as variáveis de ambiente de Produção:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `USE_SUPABASE=true`
-   - `CRON_SECRET`
-   - `GITHUB_BACKUP_TOKEN`
-   - `GITHUB_BACKUP_REPO`
-   - `VITE_GEMINI_API_KEY`
-4. Deploy automático a cada push no branch principal
+Acesse em: `http://localhost:5173`
 
 ---
 
-## 🔐 Autenticação
+## 📄 Licença & Créditos
 
-O sistema utiliza autenticação simples:
-- **Seletor de membro:** dropdown com todos os membros cadastrados
-- **Senha compartilhada:** todos usam a mesma senha
-- **Roles:** `member` (membros) e `technician` (Jonas, Ramon)
-
-> **Nota:** Este sistema de autenticação é adequado para uso interno da equipe. Não é recomendado para produção com dados sensíveis de acesso público.
-
----
-
-## 📱 Funcionalidades
-
-### Para Membros
-- **Dashboard** — Visão geral do progresso, quests ativas e metas
-- **Árvore de Habilidades** — Skills com radar chart dos 6 atributos do prêmio foco
-- **Quests** — Missões individuais (manuais ou geradas por IA)
-- **Major Goals** — Metas de médio/longo prazo com deadline
-- **Missões da Equipe** — Tarefas atribuídas pelos técnicos
-- **Diário** — Reflexão e aprendizado após quests
-- **Mentor IA** — Chat com Gemini para orientação
-- **Timer** — Foco cronometrado para quests
-- **Loja** — Itens e buffs adquiríveis com créditos
-- **Conquistas** — Badges desbloqueáveis
-- **Analytics** — Gráficos de progresso
-
-### Para Técnicos
-- **Painel do Técnico** — Criar e gerenciar missões para a equipe
-- **Atribuição** — Missões para toda a equipe ou membros específicos
-- **Acompanhamento** — Ver progresso e conclusão das missões
-
----
-
-## 🔄 Primeiro Login
-
-Quando um membro faz login pela primeira vez:
-1. O sistema identifica o membro pelo username
-2. Busca o perfil no `data/members.ts`
-3. Gera automaticamente via `data/initialData.ts`:
-   - 6 skills pré-configuradas (baseadas no prêmio foco)
-   - 5 tópicos de estudo iniciais
-   - 3 major goals com deadlines
-   - 4 quests iniciais
-   - Missão principal, objetivo da temporada e meta de curto prazo
-4. Salva tudo no Supabase (`key_value_store`) para persistência ativa
-
----
-
-## 🗓️ Adaptação para Novas Temporadas
-
-Para adaptar o sistema para uma nova temporada FTC:
-
-1. **Atualizar membros:** Edite `data/members.ts` com novos membros e prêmios foco
-2. **Perfis B-LEED Granulares:** Edite `data/awardProfiles.ts` com a nova base técnica
-3. **Atualizar arcos:** Edite os arcos em `constants.ts` (Kickoff, Competition Sprint, etc.)
-4. **Atualizar login API:** Sincronize `api/login.ts` com a nova lista de membros
-5. **Limpar / Resetar dados:** Se necessário, limpe registros específicos no Supabase (`key_value_store`) para resetar o progresso dos membros mantendo backups históricos seguros
-
----
-
-## 📄 Licença
-
-Este projeto é uma adaptação do [LevelUp: AI Awakening](https://github.com/Oniondas) para uso exclusivo da equipe **Bazinga! 73 FTC**.
-
----
-
-## 🙏 Créditos
-
-- **Base original:** [Oniondas](https://github.com/Oniondas) — LevelUp: AI Awakening
-- **Adaptação Bazinga!:** [LuccaHP](https://github.com/LuccaHP)
-- **Equipe:** Bazinga! 73 — FIRST Tech Challenge
+- **Base Original:** [LevelUp: AI Awakening](https://github.com/Oniondas) por **Oniondas**
+- **Desenvolvimento & Arquitetura BazManager:** [LuccaHP](https://github.com/LuccaHP)
+- **Equipe:** **Bazinga! 73** — FIRST Tech Challenge (SESI Robótica)
