@@ -1,6 +1,6 @@
 # BazManager — Bazinga! 73 FTC
 
-> Plataforma completa de desenvolvimento de membros, gestão técnica, inventário e governança para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
+> Plataforma completa de desenvolvimento de membros, gestão técnica, inventário e governança para a equIpe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Luccamm11/setup-bazmanager)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
