@@ -801,43 +801,53 @@ Responda estritamente em formato JSON estruturado conforme o schema.
   };
 
   const ai = new GoogleGenAI({ apiKey });
-  // Lista de modelos em ordem de fallback caso o Google esteja sobrecarregado (503)
-  const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+  // Modelos válidos da API v2.5 com retries inteligentes
+  const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-pro"];
   let lastError: any = null;
 
   for (const modelName of modelsToTry) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: [
-          {
-            inlineData: {
-              mimeType,
-              data: base64Data,
+    // Tentar até 2 vezes por modelo caso haja 503/429
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              inlineData: {
+                mimeType,
+                data: base64Data,
+              }
+            },
+            {
+              text: prompt
             }
-          },
-          {
-            text: prompt
-          }
-        ],
-        config: schemaConfig
-      });
+          ],
+          config: schemaConfig
+        });
 
-      if (response && response.text) {
-        return JSON.parse(response.text);
+        if (response && response.text) {
+          return JSON.parse(response.text);
+        }
+      } catch (err: any) {
+        lastError = err;
+        const errStr = String(err?.message || err?.status || '');
+        console.warn(`Tentativa ${attempt} com ${modelName} falhou (${errStr})...`);
+        
+        // Se for erro 404 (modelo inválido), pula direto para o próximo modelo sem retry
+        if (errStr.includes('404') || errStr.includes('NOT_FOUND')) {
+          break;
+        }
+
+        // Aguarda 1.5s antes da próxima tentativa
+        await new Promise(res => setTimeout(res, 1500));
       }
-    } catch (err: any) {
-      console.warn(`Tentativa com ${modelName} falhou (${err?.status || err?.message}). Tentando próximo modelo...`);
-      lastError = err;
-      // Pausa breve de 1s antes do próximo modelo
-      await new Promise(res => setTimeout(res, 1000));
     }
   }
 
-  // Se todos os modelos falharem
-  const status = lastError?.status || lastError?.code || '';
-  if (String(status) === '503' || String(lastError?.message).includes('503') || String(lastError?.message).includes('high demand')) {
-    throw new Error('Os servidores da Google AI estão com pico temporário de demanda. Clique em "Tentar Novamente" em alguns segundos.');
+  // Se todas as tentativas falharem
+  const errMsg = String(lastError?.message || '');
+  if (errMsg.includes('503') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE')) {
+    throw new Error('Servidores da Google AI com pico temporário de demanda. Aguarde 5 segundos e clique em "Tentar Novamente com IA".');
   }
   handleApiError(lastError);
 };
