@@ -704,24 +704,25 @@ export const scanBLeedForm = async (
   existingMentors: { id: string; name: string }[] = [],
   availableMembers: string[] = []
 ): Promise<ScanBLeedResponse> => {
-  try {
-    const ai = new GoogleGenAI({ apiKey });
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('Chave da API do Gemini (VITE_GEMINI_API_KEY) não configurada. Adicione nas variáveis de ambiente da Vercel.');
+  }
 
-    // Extrair mimeType e base64 limpo
-    let mimeType = 'image/jpeg';
-    let base64Data = imageBase64OrDataUrl;
+  // Extrair mimeType e base64 limpo
+  let mimeType = 'image/jpeg';
+  let base64Data = imageBase64OrDataUrl;
 
-    if (imageBase64OrDataUrl.startsWith('data:')) {
-      const match = imageBase64OrDataUrl.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
-        mimeType = match[1];
-        base64Data = match[2];
-      }
+  if (imageBase64OrDataUrl.startsWith('data:')) {
+    const match = imageBase64OrDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      mimeType = match[1];
+      base64Data = match[2];
     }
+  }
 
-    const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
 
-    const prompt = `
+  const prompt = `
 Você é um especialista em OCR inteligente e análise de formulários da metodologia B-LEED para a equipe de robótica FIRST Tech Challenge Bazinga! 73.
 
 Analise cuidadosamente a imagem do formulário oficial B-Leed enviado. O formulário pode estar preenchido à mão (manuscrito) ou impresso.
@@ -761,60 +762,82 @@ INSTRUÇÕES DE CLASSIFICAÇÃO E EXTRAÇÃO:
 
 2. CAMPOS COMUNS A TODOS OS 3 FORMULÁRIOS:
    - date: Data informada no campo "Data: __ / __ / ____". Converta para o padrão "YYYY-MM-DD". Se o ano estiver ausente, use ${currentYear}. Se a data estiver em branco, use a data de hoje.
-   - workloadHours: Número de horas informado no campo "Carga Horária:". Converta para número decimal (ex: "2h" -> 2, "1h30" -> 1.5). Se estiver em branco, retorne 2.
+   - workloadHours: Número de horas informado no campo "Carga Horária:". Converta para número decimal (ex: "2h" -> 2, "1h30" -> 1.5, "20 minutos" -> 0.33). Se estiver em branco, retorne 2.
    - participants: Array de strings contendo os nomes dos membros participantes identificados na caixa "Membros Participantes:". Mapeie a caligrafia para os nomes correspondentes da lista oficial de membros.
 
 Responda estritamente em formato JSON estruturado conforme o schema.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          inlineData: {
-            mimeType,
-            data: base64Data,
-          }
+  const schemaConfig = {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        formType: {
+          type: Type.STRING,
+          enum: ["mentorias", "evolucao_coletiva", "desenvolvimento_autonomo"]
         },
-        {
-          text: prompt
-        }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            formType: {
-              type: Type.STRING,
-              enum: ["mentorias", "evolucao_coletiva", "desenvolvimento_autonomo"]
-            },
-            date: { type: Type.STRING },
-            workloadHours: { type: Type.NUMBER },
-            participants: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            mentorName: { type: Type.STRING },
-            isNewMentor: { type: Type.BOOLEAN },
-            objectives: { type: Type.STRING },
-            solutions: { type: Type.STRING },
-            nextSteps: { type: Type.STRING },
-            invitedTeam: { type: Type.STRING },
-            meetingObjectives: { type: Type.STRING },
-            solutionsFound: { type: Type.STRING },
-            courseName: { type: Type.STRING },
-            courseObjectives: { type: Type.STRING },
-            courseSyllabus: { type: Type.STRING },
-            keyLearnings: { type: Type.STRING }
-          },
-          required: ["formType", "date", "workloadHours", "participants"]
-        }
-      }
-    });
+        date: { type: Type.STRING },
+        workloadHours: { type: Type.NUMBER },
+        participants: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING }
+        },
+        mentorName: { type: Type.STRING },
+        isNewMentor: { type: Type.BOOLEAN },
+        objectives: { type: Type.STRING },
+        solutions: { type: Type.STRING },
+        nextSteps: { type: Type.STRING },
+        invitedTeam: { type: Type.STRING },
+        meetingObjectives: { type: Type.STRING },
+        solutionsFound: { type: Type.STRING },
+        courseName: { type: Type.STRING },
+        courseObjectives: { type: Type.STRING },
+        courseSyllabus: { type: Type.STRING },
+        keyLearnings: { type: Type.STRING }
+      },
+      required: ["formType", "date", "workloadHours", "participants"]
+    }
+  };
 
-    return JSON.parse(response.text);
-  } catch (error) {
-    handleApiError(error);
+  const ai = new GoogleGenAI({ apiKey });
+  // Lista de modelos em ordem de fallback caso o Google esteja sobrecarregado (503)
+  const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: [
+          {
+            inlineData: {
+              mimeType,
+              data: base64Data,
+            }
+          },
+          {
+            text: prompt
+          }
+        ],
+        config: schemaConfig
+      });
+
+      if (response && response.text) {
+        return JSON.parse(response.text);
+      }
+    } catch (err: any) {
+      console.warn(`Tentativa com ${modelName} falhou (${err?.status || err?.message}). Tentando próximo modelo...`);
+      lastError = err;
+      // Pausa breve de 1s antes do próximo modelo
+      await new Promise(res => setTimeout(res, 1000));
+    }
   }
+
+  // Se todos os modelos falharem
+  const status = lastError?.status || lastError?.code || '';
+  if (String(status) === '503' || String(lastError?.message).includes('503') || String(lastError?.message).includes('high demand')) {
+    throw new Error('Os servidores da Google AI estão com pico temporário de demanda. Clique em "Tentar Novamente" em alguns segundos.');
+  }
+  handleApiError(lastError);
 };
