@@ -113,7 +113,7 @@ export default function ActivityEvaluationModal({
       const current = prev[username] || { username, realmScores: {}, totalXp: 0 };
       const updatedRealmScores = { ...current.realmScores, [realm]: safeVal };
       
-      const newTotalXp = Object.values(updatedRealmScores).reduce((sum, v) => sum + (Number(v) || 0), 0);
+      const newTotalXp = (Object.values(updatedRealmScores) as number[]).reduce((sum: number, v: number) => sum + (Number(v) || 0), 0);
 
       return {
         ...prev,
@@ -137,12 +137,12 @@ export default function ActivityEvaluationModal({
   };
 
   const applyBatchToAll = () => {
-    const nonZeroBatch = Object.entries(batchRealms).reduce((acc, [realm, val]) => {
-      if (val && val > 0) acc[realm as Realm] = val;
+    const nonZeroBatch = (Object.entries(batchRealms) as [Realm, number | undefined][]).reduce((acc, [realm, val]) => {
+      if (val != null && val > 0) acc[realm] = val;
       return acc;
     }, {} as Partial<Record<Realm, number>>);
 
-    const batchTotal = Object.values(nonZeroBatch).reduce((sum, v) => sum + (v || 0), 0);
+    const batchTotal = (Object.values(nonZeroBatch) as number[]).reduce((sum: number, v: number) => sum + (v || 0), 0);
 
     setMemberScores(prev => {
       const updated = { ...prev };
@@ -181,7 +181,7 @@ export default function ActivityEvaluationModal({
   };
 
   const currentMemberScore = memberScores[selectedMember] || { username: selectedMember, realmScores: {}, totalXp: 0 };
-  const grandTotalXp = Object.values(memberScores).reduce((sum, m) => sum + (m.totalXp || 0), 0);
+  const grandTotalXp = (Object.values(memberScores) as MemberSkillScore[]).reduce((sum: number, m: MemberSkillScore) => sum + (m.totalXp || 0), 0);
 
   const typeBadge = () => {
     if (activityType === 'autonomous_dev') {

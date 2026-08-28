@@ -416,7 +416,7 @@ export default function FormsTab({ currentUser, userRole }: FormsTabProps) {
                             title="Ver ou Editar Avaliação"
                           >
                             <Award className="w-3.5 h-3.5" />
-                            <span>+{Object.values(item.evaluation.memberScores).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
+                            <span>+{(Object.values(item.evaluation.memberScores) as { totalXp?: number }[]).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
                             {isTech && <span className="text-[10px] font-bold text-white/60 hover:text-white ml-0.5">• Avaliar</span>}
                           </button>
                         ) : isTech ? (

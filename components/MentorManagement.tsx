@@ -4,7 +4,7 @@ import {
   Users, UserPlus, GraduationCap, Calendar, MapPin, Video, Award, 
   Trash2, Edit, Check, X, ChevronDown, Plus, Search, Building, 
   AlertTriangle, RefreshCw, Clock, ArrowRight, UserCheck, Heart,
-  Star, FileText, ChevronRight, Link2, Image
+  Star, FileText, ChevronRight, Link2, Image, Sparkles
 } from 'lucide-react';
 import { Mentor, MentorshipRecord, VolunteerWork, VolunteerContribution, UserRole, ActivityEvaluation } from '../types';
 import ActivityEvaluationModal from './ActivityEvaluationModal';
@@ -545,7 +545,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                                 title="Ver ou Editar Avaliação"
                               >
                                 <Award className="w-3.5 h-3.5" />
-                                <span>+{Object.values(rec.evaluation.memberScores).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
+                                <span>+{(Object.values(rec.evaluation.memberScores) as { totalXp?: number }[]).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
                                 {isTech && <span className="text-[10px] font-bold text-white/60 hover:text-white ml-0.5">• Avaliar</span>}
                               </button>
                             ) : isTech ? (
@@ -629,35 +629,6 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="relative group w-14 h-14 rounded-xl overflow-hidden border border-white/10 hover:border-accent-primary transition-all block shrink-0"
-                                >
-                                  <img src={link} alt={`img-${idx + 1}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Link2 className="w-3.5 h-3.5 text-white" />
-                                  </div>
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-                          <div className="space-y-1.5">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted flex items-center gap-1">
-                              <Image className="w-3 h-3" /> Imagens / Evidências
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                              {rec.imageLinks.map((link, idx) => (
-                                <a
-                                  key={idx}
-                                  href={link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="relative group w-14 h-14 rounded-xl overflow-hidden border border-white/10 hover:border-accent-primary/50 transition-all block shrink-0"
                                 >
                                   <img src={link} alt={`img-${idx + 1}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
