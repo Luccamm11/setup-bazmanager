@@ -328,7 +328,13 @@ export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 
 // ─── Notification Types ──────────────────────────────────────────────────────
 
-export type NotificationType = 'new_mission' | '5w2h_submitted' | '5w2h_reviewed' | 'mission_completed';
+export type NotificationType = 
+  | 'new_mission' 
+  | '5w2h_submitted' 
+  | '5w2h_reviewed' 
+  | 'mission_completed'
+  | 'evaluation_pending'
+  | 'activity_evaluated';
 
 export interface AppNotification {
   id: string;
@@ -411,17 +417,58 @@ export interface Mentor {
 
 export interface MentorshipRecord {
   id: string;
-  mentorId: string;
+  mentorId?: string;
+  mentorName: string;
   date: string; // ISO string ou YYYY-MM-DD
-  type: 'online' | 'presential';
-  locationType?: 'our_lab' | 'visited_them' | 'other';
-  locationName?: string; // Nome do local customizado
-  area: string; // Área em que ajudou
+  workloadHours: number; // Carga horária em horas (do formulário B-Leed)
   participants: string[]; // usernames dos membros participantes
-  advantages: string; // texto livre
+  objectives: string; // Objetivos da Mentoria
+  solutions: string; // Soluções Encontradas
+  nextSteps: string; // Próximos Passos
+  area?: string; // Área de foco / especialidade do mentor
   imageLinks?: string[]; // Links externos de imagens/evidências
-  durationMinutes?: number; // Duração da sessão em minutos
+  evaluation?: ActivityEvaluation; // Avaliação e pontuação atribuída pelos técnicos
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
 }
+
+// ─── Scan B-Leed OCR Types ──────────────────────────────────────────────────
+export interface BLeedScanMentoriasData {
+  formType: 'mentorias';
+  date: string; // YYYY-MM-DD
+  workloadHours: number;
+  mentorName: string;
+  isNewMentor?: boolean;
+  participants: string[];
+  objectives: string;
+  solutions: string;
+  nextSteps: string;
+}
+
+export interface BLeedScanEvolucaoData {
+  formType: 'evolucao_coletiva';
+  date: string; // YYYY-MM-DD
+  workloadHours: number;
+  invitedTeam: string;
+  participants: string[];
+  meetingObjectives: string;
+  solutionsFound: string;
+  nextSteps: string;
+}
+
+export interface BLeedScanAutonomoData {
+  formType: 'desenvolvimento_autonomo';
+  date: string; // YYYY-MM-DD
+  workloadHours: number;
+  courseName: string;
+  participants: string[];
+  courseObjectives: string;
+  courseSyllabus: string;
+  keyLearnings: string;
+}
+
+export type BLeedScanData = BLeedScanMentoriasData | BLeedScanEvolucaoData | BLeedScanAutonomoData;
 
 // Contribuição individual de um voluntário em um trabalho
 export interface VolunteerContribution {
@@ -606,6 +653,21 @@ export interface BProjectItem {
 
 // ─── Forms / Registros de Formulários Types ─────────────────────────────────
 
+export interface MemberSkillScore {
+  username: string;
+  realmScores: Partial<Record<Realm, number>>;
+  totalXp: number;
+  feedback?: string;
+}
+
+export interface ActivityEvaluation {
+  id: string;
+  evaluatedBy: string; // Username do técnico avaliador (ex: 'Jonas')
+  evaluatedAt: string; // ISO string
+  memberScores: Record<string, MemberSkillScore>; // username -> MemberSkillScore
+  generalNotes?: string;
+}
+
 export type FormType = 'autonomous_dev' | 'collective_evolution';
 
 export interface AutonomousDevForm {
@@ -623,6 +685,7 @@ export interface AutonomousDevForm {
   createdBy: string;             // Username do criador
   createdAt: string;             // ISO string
   updatedAt: string;             // ISO string
+  evaluation?: ActivityEvaluation; // Avaliação e pontuação atribuída pelos técnicos
 }
 
 export interface CollectiveEvolutionForm {
@@ -638,9 +701,11 @@ export interface CollectiveEvolutionForm {
   createdBy: string;             // Username do criador
   createdAt: string;             // ISO string
   updatedAt: string;             // ISO string
+  evaluation?: ActivityEvaluation; // Avaliação e pontuação atribuída pelos técnicos
 }
 
 export type FormRecord = AutonomousDevForm | CollectiveEvolutionForm;
+
 
 
 

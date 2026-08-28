@@ -6,7 +6,8 @@ import {
   AlertTriangle, RefreshCw, Clock, ArrowRight, UserCheck, Heart,
   Star, FileText, ChevronRight, Link2, Image
 } from 'lucide-react';
-import { Mentor, MentorshipRecord, VolunteerWork, VolunteerContribution, UserRole } from '../types';
+import { Mentor, MentorshipRecord, VolunteerWork, VolunteerContribution, UserRole, ActivityEvaluation } from '../types';
+import ActivityEvaluationModal from './ActivityEvaluationModal';
 
 interface MentorManagementProps {
   currentUser: string;
@@ -41,6 +42,8 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   // Tabs: 'records' | 'people' | 'volunteer_works'
   const [activeTab, setActiveTab] = useState<'records' | 'people' | 'volunteer_works'>('records');
 
+  const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
+
   // State
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [records, setRecords] = useState<MentorshipRecord[]>([]);
@@ -48,6 +51,9 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Evaluation modal
+  const [evaluatingRecord, setEvaluatingRecord] = useState<MentorshipRecord | null>(null);
 
   // Search/Filters
   const [mentorSearch, setMentorSearch] = useState('');
@@ -66,15 +72,15 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   const [recordModalOpen, setRecordModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MentorshipRecord | null>(null);
   const [recMentorId, setRecMentorId] = useState('');
+  const [recMentorName, setRecMentorName] = useState('');
   const [recDate, setRecDate] = useState('');
-  const [recType, setRecType] = useState<'online' | 'presential'>('presential');
-  const [recLocationType, setRecLocationType] = useState<'our_lab' | 'visited_them' | 'other'>('our_lab');
-  const [recLocationName, setRecLocationName] = useState('');
+  const [recWorkloadHours, setRecWorkloadHours] = useState<number | ''>(2);
   const [recArea, setRecArea] = useState('');
   const [recParticipants, setRecParticipants] = useState<string[]>([]);
-  const [recAdvantages, setRecAdvantages] = useState('');
+  const [recObjectives, setRecObjectives] = useState('');
+  const [recSolutions, setRecSolutions] = useState('');
+  const [recNextSteps, setRecNextSteps] = useState('');
   const [recImageLinks, setRecImageLinks] = useState<string[]>([]);
-  const [recDurationMinutes, setRecDurationMinutes] = useState<number | ''>('');
   const [mentorDropdownOpen, setMentorDropdownOpen] = useState(false);
 
   // ─── Volunteer Work modal ──────────────────────────────────────────────────
@@ -179,24 +185,28 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   // ─── Mentorship Record handlers ────────────────────────────────────────────
   const handleSaveRecord = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recMentorId || !recDate || !recArea || recParticipants.length === 0) {
-      alert('Preencha os campos obrigatórios (Mentor, Data, Área de Ajuda e Participantes).');
+    const resolvedMentor = mentors.find(m => m.id === recMentorId);
+    const resolvedName = recMentorName.trim() || (resolvedMentor ? resolvedMentor.name : '');
+    
+    if (!resolvedName || !recDate || recParticipants.length === 0 || !recObjectives.trim() || !recSolutions.trim() || !recNextSteps.trim()) {
+      alert('Preencha todos os campos do formulário B-Leed (Mentor, Data, Participantes, Objetivos, Soluções e Próximos Passos).');
       return;
     }
     try {
       const payload = {
         action: editingRecord ? 'editRecord' : 'addRecord',
         id: editingRecord?.id,
-        mentorId: recMentorId,
+        mentorId: recMentorId || undefined,
+        mentorName: resolvedName,
         date: recDate,
-        type: recType,
-        locationType: recType === 'presential' ? recLocationType : undefined,
-        locationName: recType === 'presential' && recLocationType !== 'our_lab' ? recLocationName : undefined,
-        area: recArea,
+        workloadHours: Number(recWorkloadHours) || 2,
+        area: recArea || resolvedMentor?.area || 'Geral',
         participants: recParticipants,
-        advantages: recAdvantages,
+        objectives: recObjectives.trim(),
+        solutions: recSolutions.trim(),
+        nextSteps: recNextSteps.trim(),
         imageLinks: recImageLinks,
-        durationMinutes: recDurationMinutes ? Number(recDurationMinutes) : undefined,
+        createdBy: currentUser,
       };
       const res = await fetch('/api/mentors', {
         method: 'POST',
@@ -208,10 +218,10 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
       setRecordModalOpen(false);
       setEditingRecord(null);
-      setRecMentorId(''); setRecDate(''); setRecType('presential');
-      setRecLocationType('our_lab'); setRecLocationName('');
-      setRecArea(''); setRecParticipants([]); setRecAdvantages('');
-      setRecImageLinks([]); setRecDurationMinutes('');
+      setRecMentorId(''); setRecMentorName(''); setRecDate('');
+      setRecWorkloadHours(2); setRecArea(''); setRecParticipants([]);
+      setRecObjectives(''); setRecSolutions(''); setRecNextSteps('');
+      setRecImageLinks([]);
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar registro de mentoria.');
@@ -232,18 +242,39 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     }
   };
 
+  const handleSaveEvaluation = async (evaluation: ActivityEvaluation) => {
+    if (!evaluatingRecord) return;
+    const res = await fetch('/api/mentors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'evaluateRecord',
+        username: currentUser,
+        recordId: evaluatingRecord.id,
+        evaluation,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setRecords(prev => prev.map(r => r.id === evaluatingRecord.id ? { ...r, evaluation: data.evaluation } : r));
+      setEvaluatingRecord(null);
+    } else {
+      throw new Error(data.error || 'Falha ao salvar avaliação.');
+    }
+  };
+
   const openEditRecord = (rec: MentorshipRecord) => {
     setEditingRecord(rec);
-    setRecMentorId(rec.mentorId);
+    setRecMentorId(rec.mentorId || '');
+    setRecMentorName(rec.mentorName || '');
     setRecDate(rec.date);
-    setRecType(rec.type);
-    setRecLocationType(rec.locationType || 'our_lab');
-    setRecLocationName(rec.locationName || '');
-    setRecArea(rec.area);
-    setRecParticipants(rec.participants);
-    setRecAdvantages(rec.advantages || '');
+    setRecWorkloadHours(rec.workloadHours || 2);
+    setRecArea(rec.area || '');
+    setRecParticipants(rec.participants || []);
+    setRecObjectives(rec.objectives || '');
+    setRecSolutions(rec.solutions || '');
+    setRecNextSteps(rec.nextSteps || '');
     setRecImageLinks(rec.imageLinks || []);
-    setRecDurationMinutes(rec.durationMinutes || '');
     setRecordModalOpen(true);
   };
 
@@ -346,9 +377,15 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
   const filteredRecords = records.filter(r => {
     const mentor = mentors.find(m => m.id === r.mentorId);
-    const mName = mentor ? mentor.name.toLowerCase() : '';
+    const mName = (r.mentorName || mentor?.name || '').toLowerCase();
     const q = recordSearch.toLowerCase();
-    return r.area.toLowerCase().includes(q) || mName.includes(q) || (r.locationName && r.locationName.toLowerCase().includes(q));
+    return (
+      mName.includes(q) ||
+      (r.objectives && r.objectives.toLowerCase().includes(q)) ||
+      (r.solutions && r.solutions.toLowerCase().includes(q)) ||
+      (r.nextSteps && r.nextSteps.toLowerCase().includes(q)) ||
+      (r.area && r.area.toLowerCase().includes(q))
+    );
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const filteredWorks = volunteerWorks.filter(w =>
@@ -376,16 +413,16 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
             Mentores & Voluntários
           </h1>
           <p className="text-text-secondary text-sm mt-1.5">
-            Gerencie mentores, voluntários e registros de mentorias e trabalhos voluntários.
+            Gerencie mentores, voluntários e formulários oficiais de mentorias e ações da equipe.
           </p>
         </div>
 
         {/* Tab Buttons */}
         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 flex-wrap">
           {[
-            { key: 'records', label: 'Sessões', icon: Calendar },
-            { key: 'people', label: 'Pessoas', icon: Users },
-            { key: 'volunteer_works', label: 'Trabalhos', icon: Heart },
+            { key: 'records', label: 'Mentorias (B-Leed)', icon: Calendar },
+            { key: 'people', label: 'Mentores Cadastrados', icon: Users },
+            { key: 'volunteer_works', label: 'Trabalhos Voluntários', icon: Heart },
             { key: 'statistics', label: 'Estatísticas', icon: Star },
           ].map(tab => {
             const Icon = tab.icon;
@@ -424,7 +461,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
         </div>
       ) : (
         <div>
-          {/* ═══════════════ TAB: SESSIONS ═══════════════ */}
+          {/* ═══════════════ TAB: SESSIONS (MENTORIAS B-LEED) ═══════════════ */}
           {activeTab === 'records' && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -433,21 +470,22 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                   <input
                     value={recordSearch}
                     onChange={e => setRecordSearch(e.target.value)}
-                    placeholder="Pesquisar por mentor, área ou local..."
+                    placeholder="Pesquisar por mentor, objetivos ou soluções..."
                     className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 placeholder:text-white/20 transition-all"
                   />
                 </div>
                 <button
                   onClick={() => {
                     setEditingRecord(null);
-                    setRecMentorId(''); setRecDate(new Date().toISOString().split('T')[0]);
-                    setRecType('presential'); setRecLocationType('our_lab');
-                    setRecLocationName(''); setRecArea(''); setRecParticipants([]); setRecAdvantages('');
+                    setRecMentorId(''); setRecMentorName(''); setRecDate(new Date().toISOString().split('T')[0]);
+                    setRecWorkloadHours(2); setRecArea(''); setRecParticipants([]);
+                    setRecObjectives(''); setRecSolutions(''); setRecNextSteps('');
+                    setRecImageLinks([]);
                     setRecordModalOpen(true);
                   }}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary border border-accent-primary/30 text-white font-bold text-sm hover:opacity-90 transition-all shadow-glow-primary shrink-0"
                 >
-                  <Plus className="w-4 h-4" /> Registrar Mentoria
+                  <Plus className="w-4 h-4" /> Registrar Mentoria Estratégica
                 </button>
               </div>
 
@@ -455,12 +493,15 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                 <div className="text-center py-16 bg-white/[0.02] border border-white/5 rounded-2xl">
                   <Calendar className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-60" />
                   <p className="text-white font-bold">Nenhuma mentoria encontrada</p>
-                  <p className="text-text-secondary text-xs mt-1">Registre uma mentoria ou modifique os termos da busca.</p>
+                  <p className="text-text-secondary text-xs mt-1">Registre uma mentoria ou faça um scan da folha B-Leed.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-5">
                   {filteredRecords.map(rec => {
                     const mentor = mentors.find(m => m.id === rec.mentorId);
+                    const displayName = rec.mentorName || mentor?.name || 'Mentor Convidado';
+                    const workload = rec.workloadHours || 2;
+
                     return (
                       <motion.div
                         key={rec.id}
@@ -469,10 +510,14 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white/[0.03] border border-white/10 hover:border-white/20 rounded-2xl p-5 sm:p-6 transition-all duration-300 space-y-4"
                       >
-                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                        {/* Header do Card B-Leed */}
+                        <div className="flex items-start justify-between gap-4 flex-wrap pb-3 border-b border-white/5">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-lg font-bold text-white">{mentor ? mentor.name : 'Mentor Excluído'}</h3>
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 font-black uppercase tracking-wider">
+                                B - LEED • Mentorias Estratégicas
+                              </span>
+                              <h3 className="text-lg font-black text-white">{displayName}</h3>
                               {mentor && <RoleBadge role={mentor.role} />}
                               {mentor?.organization && (
                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-text-secondary border border-white/10">
@@ -480,71 +525,127 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-text-muted flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-accent-primary" />
-                              {new Date(rec.date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                              {rec.durationMinutes && (
-                                <span className="flex items-center gap-1 text-[10px] bg-accent-primary/10 text-accent-primary border border-accent-primary/20 px-2 py-0.5 rounded-full font-bold ml-2">
-                                  <Clock className="w-3 h-3" /> {rec.durationMinutes} min
-                                </span>
-                              )}
-                            </p>
+                            <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap mt-1">
+                              <span className="flex items-center gap-1.5 font-medium text-white/80">
+                                <Calendar className="w-3.5 h-3.5 text-accent-primary" />
+                                {new Date(rec.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                              </span>
+                              <span className="flex items-center gap-1 text-[11px] bg-accent-primary/15 text-accent-primary border border-accent-primary/25 px-2.5 py-0.5 rounded-full font-bold">
+                                <Clock className="w-3 h-3" /> {workload}h Carga Horária
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => openEditRecord(rec)} className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-text-secondary transition-all">
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Botão Avaliar / Status de Avaliação */}
+                            {rec.evaluation ? (
+                              <button
+                                onClick={() => setEvaluatingRecord(rec)}
+                                className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition-all cursor-pointer shadow-sm"
+                                title="Ver ou Editar Avaliação"
+                              >
+                                <Award className="w-3.5 h-3.5" />
+                                <span>+{Object.values(rec.evaluation.memberScores).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
+                                {isTech && <span className="text-[10px] font-bold text-white/60 hover:text-white ml-0.5">• Avaliar</span>}
+                              </button>
+                            ) : isTech ? (
+                              <button
+                                onClick={() => setEvaluatingRecord(rec)}
+                                className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/40 px-3 py-1.5 rounded-lg border border-amber-500/40 hover:border-amber-400 transition-all cursor-pointer shadow-sm animate-pulse"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                Avaliar
+                              </button>
+                            ) : (
+                              <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-1 rounded border border-white/10">
+                                Pendente Avaliação
+                              </span>
+                            )}
+
+                            <button onClick={() => openEditRecord(rec)} className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-text-secondary transition-all" title="Editar">
                               <Edit className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => handleDeleteRecord(rec.id)} className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-red-500/20 hover:text-red-400 text-text-secondary transition-all">
+                            <button onClick={() => handleDeleteRecord(rec.id)} className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-red-500/20 hover:text-red-400 text-text-secondary transition-all" title="Excluir">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-white/5">
-                          <div className="space-y-1">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">Modalidade / Local</span>
-                            <div className="flex items-center gap-2 text-sm text-white">
-                              {rec.type === 'online' ? (
-                                <><Video className="w-4 h-4 text-cyan-400" /><span>Online / Virtual</span></>
-                              ) : (
-                                <><MapPin className="w-4 h-4 text-emerald-400" />
-                                <span>
-                                  {rec.locationType === 'our_lab' && 'Nosso Laboratório'}
-                                  {rec.locationType === 'visited_them' && `Visitamos: ${rec.locationName || ''}`}
-                                  {rec.locationType === 'other' && `Outro: ${rec.locationName || ''}`}
-                                </span></>
-                              )}
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">Área de Foco</span>
-                            <p className="text-sm text-white font-medium flex items-center gap-1.5">
-                              <Award className="w-4 h-4 text-yellow-400" /> {rec.area}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">Membros Participantes</span>
-                            <div className="flex flex-wrap gap-1">
-                              {rec.participants.map(username => {
-                                const mbr = members.find(m => m.username === username);
-                                return (
-                                  <span key={username} className="text-[10px] px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary border border-accent-primary/20">
-                                    {mbr ? mbr.displayName : username}
-                                  </span>
-                                );
-                              })}
-                            </div>
+                        {/* Membros Participantes */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">Membros Participantes</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {rec.participants && rec.participants.map(username => {
+                              const mbr = members.find(m => m.username === username);
+                              return (
+                                <span key={username} className="text-[11px] px-2.5 py-0.5 rounded-lg bg-accent-primary/10 text-accent-primary border border-accent-primary/20 font-medium">
+                                  {mbr ? mbr.displayName : username}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        {rec.advantages && (
-                          <div className="p-3.5 rounded-xl bg-white/[0.01] border border-white/5 text-xs space-y-1">
-                            <span className="font-bold text-text-secondary block">Vantagens e Anotações:</span>
-                            <p className="text-text-primary leading-relaxed whitespace-pre-wrap">{rec.advantages}</p>
+                        {/* 3 Blocos Oficiais B-Leed */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                          <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                            <span className="text-[11px] font-black text-blue-400 uppercase tracking-wider block">
+                              🎯 Objetivos da Mentoria:
+                            </span>
+                            <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">
+                              {rec.objectives || 'Não especificado.'}
+                            </p>
                           </div>
-                        )}
+
+                          <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                            <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider block">
+                              💡 Soluções Encontradas:
+                            </span>
+                            <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">
+                              {rec.solutions || 'Não especificado.'}
+                            </p>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                            <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider block">
+                              🚀 Próximos Passos:
+                            </span>
+                            <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">
+                              {rec.nextSteps || 'Não especificado.'}
+                            </p>
+                          </div>
+                        </div>
 
                         {rec.imageLinks && rec.imageLinks.length > 0 && (
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted flex items-center gap-1">
+                              <Image className="w-3 h-3" /> Evidências / Fotos Anexadas
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {rec.imageLinks.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="relative group w-14 h-14 rounded-xl overflow-hidden border border-white/10 hover:border-accent-primary transition-all block shrink-0"
+                                >
+                                  <img src={link} alt={`img-${idx + 1}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Link2 className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
                           <div className="space-y-1.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted flex items-center gap-1">
                               <Image className="w-3 h-3" /> Imagens / Evidências
@@ -806,15 +907,15 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               '#EC4899', '#06B6D4', '#F43F5E', '#14B8A6', '#84CC16'
             ];
 
-            // 1. Mentorship statistics (aggr by mentor id)
+            // 1. Mentorship statistics (aggr by mentor name/id)
             const mentorStats = mentors.filter(m => m.role === 'mentor' || m.role === 'both').map(m => {
-              const minutes = records
-                .filter(r => r.mentorId === m.id)
-                .reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
-              return { name: m.name, minutes, id: m.id };
-            }).filter(item => item.minutes > 0).sort((a, b) => b.minutes - a.minutes);
+              const hours = records
+                .filter(r => r.mentorId === m.id || (r.mentorName && r.mentorName.toLowerCase() === m.name.toLowerCase()))
+                .reduce((acc, curr) => acc + (curr.workloadHours || (curr.durationMinutes ? curr.durationMinutes / 60 : 2)), 0);
+              return { name: m.name, hours, id: m.id };
+            }).filter(item => item.hours > 0).sort((a, b) => b.hours - a.hours);
 
-            const totalMentorMinutes = mentorStats.reduce((acc, curr) => acc + curr.minutes, 0);
+            const totalMentorHours = mentorStats.reduce((acc, curr) => acc + curr.hours, 0);
 
             // 2. Volunteer statistics (aggr by volunteer id)
             const volunteerStats = volunteerPersons.map(v => {
@@ -833,10 +934,10 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                 {/* Mentorship Chart */}
                 <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-6">
                   <h3 className="text-lg font-black text-white flex items-center gap-2">
-                    <GraduationCap className="text-accent-primary w-5 h-5" /> Mentoria (Duração Total)
+                    <GraduationCap className="text-accent-primary w-5 h-5" /> Mentoria (Carga Horária Total)
                   </h3>
-                  {totalMentorMinutes === 0 ? (
-                    <div className="text-center py-16 text-text-secondary italic">Nenhum dado de mentoria com duração registrada.</div>
+                  {totalMentorHours === 0 ? (
+                    <div className="text-center py-16 text-text-secondary italic">Nenhum dado de mentoria registrado.</div>
                   ) : (
                     <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
                       <div className="relative w-40 h-40">
@@ -844,7 +945,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                           {(() => {
                             let currentOffset = 0;
                             return mentorStats.map((item, idx) => {
-                              const pct = (item.minutes / totalMentorMinutes) * 100;
+                              const pct = (item.hours / totalMentorHours) * 100;
                               const color = COLORS[idx % COLORS.length];
                               const strokeDash = `${pct} ${100 - pct}`;
                               const strokeOffset = 100 - currentOffset + 25;
@@ -874,10 +975,10 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                               {mentorStats[hoveredPieIndex.index].name}
                             </span>
                             <span className="text-xs font-black text-white">
-                              {mentorStats[hoveredPieIndex.index].minutes} min
+                              {mentorStats[hoveredPieIndex.index].hours}h
                             </span>
                             <span className="text-[9px] text-text-muted">
-                              {((mentorStats[hoveredPieIndex.index].minutes / totalMentorMinutes) * 100).toFixed(0)}%
+                              {((mentorStats[hoveredPieIndex.index].hours / totalMentorHours) * 100).toFixed(0)}%
                             </span>
                           </div>
                         )}
@@ -895,7 +996,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                             >
                               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
                               <span className="text-xs text-text-secondary truncate max-w-[120px] font-medium" title={item.name}>{item.name}</span>
-                              <span className="text-xs font-bold text-white ml-auto">{item.minutes}m ({((item.minutes / totalMentorMinutes) * 100).toFixed(0)}%)</span>
+                              <span className="text-xs font-bold text-white ml-auto">{item.hours}h ({((item.hours / totalMentorHours) * 100).toFixed(0)}%)</span>
                             </div>
                           );
                         })}
@@ -1085,7 +1186,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-accent-primary" />
-                  {editingRecord ? 'Editar Registro de Mentoria' : 'Registrar Sessão de Mentoria'}
+                  {editingRecord ? 'Editar Mentoria Estratégica (B-Leed)' : 'Registrar Mentoria Estratégica (B-Leed)'}
                 </h3>
                 <button onClick={() => setRecordModalOpen(false)} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary transition-all">
                   <X className="w-4 h-4" />
@@ -1093,32 +1194,58 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               </div>
 
               <form onSubmit={handleSaveRecord} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Mentor Selector */}
-                  <div className="relative">
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Mentor *</label>
-                    <button type="button" onClick={() => setMentorDropdownOpen(v => !v)}
-                      className="w-full flex items-center justify-between gap-2 bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white hover:border-white/20 transition-all"
-                    >
-                      <span className={selectedMentorObj ? 'text-white' : 'text-white/40'}>
-                        {selectedMentorObj ? selectedMentorObj.name : 'Selecionar Mentor'}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${mentorDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Mentor Selector / Name */}
+                  <div className="sm:col-span-2 relative">
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Mentor Convidado *</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          value={recMentorName}
+                          onChange={e => {
+                            setRecMentorName(e.target.value);
+                            const found = mentors.find(m => m.name.toLowerCase() === e.target.value.trim().toLowerCase());
+                            setRecMentorId(found ? found.id : '');
+                          }}
+                          placeholder="Digite ou selecione o nome do mentor..."
+                          required
+                          className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/60 transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMentorDropdownOpen(v => !v)}
+                        className="px-3 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white text-xs font-bold flex items-center gap-1 shrink-0"
+                        title="Ver lista de mentores cadastrados"
+                      >
+                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${mentorDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+
                     <AnimatePresence>
                       {mentorDropdownOpen && (
-                        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                        <motion.div
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
                           className="absolute z-50 top-full mt-1 w-full bg-[#1b1f35] border border-white/10 rounded-xl shadow-2xl overflow-y-auto max-h-48 custom-scrollbar"
                         >
                           {mentorPersons.length === 0 ? (
                             <div className="p-3 text-xs text-text-muted text-center">Nenhum mentor cadastrado</div>
                           ) : (
                             mentorPersons.filter(m => m.active).map(m => (
-                              <button key={m.id} type="button"
-                                onClick={() => { setRecMentorId(m.id); setMentorDropdownOpen(false); }}
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => {
+                                  setRecMentorId(m.id);
+                                  setRecMentorName(m.name);
+                                  if (m.area && !recArea) setRecArea(m.area);
+                                  setMentorDropdownOpen(false);
+                                }}
                                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/10 ${recMentorId === m.id ? 'text-white bg-accent-primary/20 font-bold' : 'text-white/80'}`}
                               >
-                                {m.name}
+                                {m.name} {m.organization ? `(${m.organization})` : ''}
                               </button>
                             ))
                           )}
@@ -1127,90 +1254,58 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                     </AnimatePresence>
                   </div>
 
-                  {/* Date */}
+                  {/* Carga Horária */}
                   <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Data da Mentoria *</label>
-                    <input type="date" value={recDate} required onChange={e => setRecDate(e.target.value)}
-                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Modality */}
-                  <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Modalidade *</label>
-                    <div className="flex bg-[#1b1f35] p-1 rounded-xl border border-white/10">
-                      {[{ v: 'presential', label: 'Presencial', Icon: MapPin }, { v: 'online', label: 'Online', Icon: Video }].map(({ v, label, Icon }) => (
-                        <button key={v} type="button" onClick={() => setRecType(v as any)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${recType === v ? 'bg-accent-primary text-white shadow-glow-primary' : 'text-text-secondary hover:text-white'}`}
-                        >
-                          <Icon className="w-3.5 h-3.5" /> {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Area */}
-                  <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Área Específica *</label>
-                    <input value={recArea} onChange={e => setRecArea(e.target.value)}
-                      placeholder="Ex: Programação de Odometria" required
-                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Duration */}
-                  <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Duração (Minutos) *</label>
-                    <input type="number" min="1" value={recDurationMinutes} required onChange={e => setRecDurationMinutes(e.target.value ? Number(e.target.value) : '')}
-                      placeholder="Ex: 60"
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Carga Horária (h) *</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={recWorkloadHours}
+                      required
+                      onChange={e => setRecWorkloadHours(e.target.value ? Number(e.target.value) : '')}
+                      placeholder="Ex: 2"
                       className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all placeholder:text-white/20"
                     />
                   </div>
                 </div>
 
-                {/* Location for presential */}
-                <AnimatePresence>
-                  {recType === 'presential' && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden space-y-3">
-                      <div>
-                        <label className="text-xs text-text-secondary mb-1.5 block font-bold">Local Presencial</label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { value: 'our_lab', label: '🏫 Nosso Laboratório' },
-                            { value: 'visited_them', label: '🚗 Visitamos o Mentor' },
-                            { value: 'other', label: '📌 Outro' }
-                          ].map(opt => (
-                            <button key={opt.value} type="button" onClick={() => setRecLocationType(opt.value as any)}
-                              className={`px-3 py-2 rounded-lg border text-xs font-bold transition-all ${recLocationType === opt.value ? 'bg-accent-primary/10 border-accent-primary text-accent-primary' : 'bg-[#1b1f35] border-white/5 text-text-secondary hover:text-white'}`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      {recLocationType !== 'our_lab' && (
-                        <input value={recLocationName} onChange={e => setRecLocationName(e.target.value)}
-                          placeholder={recLocationType === 'visited_them' ? 'Ex: UTFPR Bloco G' : 'Ex: Faculdade X'}
-                          required
-                          className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all"
-                        />
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Date */}
+                  <div>
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Data *</label>
+                    <input
+                      type="date"
+                      value={recDate}
+                      required
+                      onChange={e => setRecDate(e.target.value)}
+                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all"
+                    />
+                  </div>
+
+                  {/* Area / Especialidade */}
+                  <div>
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Área / Especialidade</label>
+                    <input
+                      value={recArea}
+                      onChange={e => setRecArea(e.target.value)}
+                      placeholder="Ex: Mecânica, Programação, Portfólio"
+                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all"
+                    />
+                  </div>
+                </div>
 
                 {/* Participants */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-text-secondary block font-bold">Membros Participantes *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-[#1b1f35] rounded-xl border border-white/10 custom-scrollbar">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-2 bg-[#1b1f35] rounded-xl border border-white/10 custom-scrollbar">
                     {members.map(m => {
                       const selected = recParticipants.includes(m.username);
                       return (
-                        <button key={m.username} type="button" onClick={() => toggleParticipant(m.username)}
+                        <button
+                          key={m.username}
+                          type="button"
+                          onClick={() => toggleParticipant(m.username)}
                           className={`flex items-center gap-2 p-2 rounded-lg text-left transition-all border ${selected ? 'bg-accent-primary/10 border-accent-primary text-accent-primary' : 'bg-white/[0.02] border-transparent hover:bg-white/5 text-text-secondary'}`}
                         >
                           <div className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-all ${selected ? 'bg-accent-primary border-accent-primary' : 'border-white/20'}`}>
@@ -1223,12 +1318,45 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                   </div>
                 </div>
 
-                {/* Notes */}
+                {/* 3 Blocos B-Leed */}
                 <div>
-                  <label className="text-xs text-text-secondary mb-1.5 block font-bold">Vantagens Obtidas / Notas</label>
-                  <textarea value={recAdvantages} onChange={e => setRecAdvantages(e.target.value)}
-                    placeholder="Quais ganhos e aprendizados a equipe obteve?"
-                    rows={3}
+                  <label className="text-xs text-blue-400 mb-1.5 block font-bold uppercase tracking-wider">
+                    🎯 Objetivos da Mentoria *
+                  </label>
+                  <textarea
+                    value={recObjectives}
+                    required
+                    onChange={e => setRecObjectives(e.target.value)}
+                    placeholder="Quais eram os objetivos desta sessão de mentoria?"
+                    rows={2}
+                    className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-emerald-400 mb-1.5 block font-bold uppercase tracking-wider">
+                    💡 Soluções Encontradas *
+                  </label>
+                  <textarea
+                    value={recSolutions}
+                    required
+                    onChange={e => setRecSolutions(e.target.value)}
+                    placeholder="Quais soluções, técnicas ou orientações foram desenvolvidas?"
+                    rows={2}
+                    className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-amber-400 mb-1.5 block font-bold uppercase tracking-wider">
+                    🚀 Próximos Passos *
+                  </label>
+                  <textarea
+                    value={recNextSteps}
+                    required
+                    onChange={e => setRecNextSteps(e.target.value)}
+                    placeholder="Quais os próximos passos definidos para a equipe aplicar?"
+                    rows={2}
                     className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all resize-none"
                   />
                 </div>
@@ -1237,7 +1365,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs text-text-secondary font-bold flex items-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Links de Imagens / Evidências
+                      <Image className="w-3.5 h-3.5" /> Links de Imagens / Evidências (Opcional)
                     </label>
                     <button
                       type="button"
@@ -1247,21 +1375,9 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                       <Plus className="w-3 h-3" /> Adicionar
                     </button>
                   </div>
-                  {recImageLinks.length === 0 && (
-                    <p className="text-[11px] text-text-muted italic">Nenhum link adicionado ainda.</p>
-                  )}
                   <div className="space-y-2">
                     {recImageLinks.map((link, idx) => (
                       <div key={idx} className="flex items-center gap-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#1b1f35] border border-white/10 overflow-hidden">
-                          {link && link.startsWith('http') ? (
-                            <img src={link} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Link2 className="w-3 h-3 text-text-muted" />
-                            </div>
-                          )}
-                        </div>
                         <input
                           type="url"
                           value={link}
@@ -1287,7 +1403,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
                 <div className="flex gap-3 pt-2">
                   <button type="submit" className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white text-sm font-bold shadow-glow-primary hover:opacity-95 transition-all">
-                    Confirmar Registro
+                    Confirmar Registro B-Leed
                   </button>
                   <button type="button" onClick={() => setRecordModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white transition-all">
                     Cancelar
@@ -1483,6 +1599,24 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
           </div>
         )}
       </AnimatePresence>
+
+      {/* ─── Modal de Avaliação de Habilidades & XP ─── */}
+      {evaluatingRecord && (
+        <ActivityEvaluationModal
+          isOpen={!!evaluatingRecord}
+          onClose={() => setEvaluatingRecord(null)}
+          activityId={evaluatingRecord.id}
+          activityTitle={`Mentoria com ${mentors.find(m => m.id === evaluatingRecord.mentorId)?.name || 'Mentor'} (${evaluatingRecord.area})`}
+          activityType="mentorship"
+          activityDate={evaluatingRecord.date}
+          workloadOrDuration={evaluatingRecord.durationMinutes ? `${evaluatingRecord.durationMinutes} min` : undefined}
+          participants={evaluatingRecord.participants}
+          initialEvaluation={evaluatingRecord.evaluation}
+          userRole={userRole}
+          currentUser={currentUser}
+          onSaveEvaluation={handleSaveEvaluation}
+        />
+      )}
     </div>
   );
 }

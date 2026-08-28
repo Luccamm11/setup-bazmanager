@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Check, Trash2, X, Target, ClipboardCheck, FileCheck2, Trophy } from 'lucide-react';
+import { Bell, Check, Trash2, X, Target, ClipboardCheck, FileCheck2, Trophy, Award, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { AppNotification, NotificationType } from '../types';
 
@@ -17,6 +17,8 @@ const typeConfig: Record<NotificationType, { icon: React.ReactNode; color: strin
   '5w2h_submitted': { icon: <ClipboardCheck size={14} />, color: 'text-amber-400', bg: 'bg-amber-500/10' },
   '5w2h_reviewed': { icon: <FileCheck2 size={14} />, color: 'text-accent-green', bg: 'bg-accent-green/10' },
   mission_completed: { icon: <Trophy size={14} />, color: 'text-accent-tertiary', bg: 'bg-accent-tertiary/10' },
+  evaluation_pending: { icon: <Sparkles size={14} />, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  activity_evaluated: { icon: <Award size={14} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 };
 
 const timeAgo = (isoDate: string): string => {

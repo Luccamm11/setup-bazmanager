@@ -52,6 +52,7 @@ import MentorManagement from './components/MentorManagement';
 import PrototypesTab from './components/Prototypes/PrototypesTab';
 import BProjectsTab from './components/BProjects/BProjectsTab';
 import FormsTab from './components/Forms/FormsTab';
+import ScanBLeedTab from './components/ScanBLeed/ScanBLeedTab';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
 import LearningTrails from './components/LearningTrails';
@@ -62,7 +63,7 @@ import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare } from 'lucide-react';
 
-type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -381,6 +382,9 @@ const App: React.FC = () => {
       setView('team_missions');
     } else if (notification.type === '5w2h_submitted' || notification.type === '5w2h_reviewed') {
       setView('5w2h');
+    } else if (notification.type === 'evaluation_pending' || notification.type === 'activity_evaluated') {
+      const isMentorship = notification.message?.toLowerCase().includes('mentoria') || notification.title?.toLowerCase().includes('mentoria');
+      setView(isMentorship ? 'mentor_management' : 'forms');
     }
   }, []);
 
@@ -2048,6 +2052,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'prototypes': return <PrototypesTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'projects': return <PrototypesTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'forms': return <FormsTab currentUser={currentUser || ''} userRole={userRole} />;
+      case 'scan_bleed': return <ScanBLeedTab currentUser={currentUser || ''} userRole={userRole} onNavigate={(v) => setView(v as View)} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
     }

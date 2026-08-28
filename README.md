@@ -2,7 +2,7 @@
 
 > Plataforma completa de desenvolvimento de membros, gestão técnica, inventário e governança para a equipe de robótica **Bazinga! 73** (FIRST Tech Challenge), baseada na metodologia **B-LEED**.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/LuccaHP/Bazinga-LevelUp)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Luccamm11/setup-bazmanager)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.2-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646cff.svg)](https://vitejs.dev/)
@@ -282,8 +282,8 @@ Configure as seguintes variáveis no arquivo `.env.local` (desenvolvimento) e na
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/LuccaHP/Bazinga-LevelUp.git
-cd Bazinga-LevelUp/setup-bazmanager
+git clone https://github.com/Luccamm11/setup-bazmanager.git
+cd setup-bazmanager
 
 # 2. Instalar dependências
 npm install

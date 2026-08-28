@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
-import type { FormRecord, AutonomousDevForm, CollectiveEvolutionForm } from '../types.js';
+import type { FormRecord, AutonomousDevForm, CollectiveEvolutionForm, ActivityEvaluation } from '../types.js';
+import { notifyTechniciansOnActivityCreated, applyActivityEvaluation } from './_lib/evaluationHelper.js';
 
 const FORMS_KEY = 'levelup_forms_records';
 const TECHNICIANS = ['Jonas', 'Ramon'];
@@ -47,7 +48,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // POST /api/forms - Criar novo formulário ou executar ações
   if (method === 'POST') {
-    const { action, username, form, formId } = req.body;
+    const { action, username, form, formId, evaluation } = req.body;
+
+    // Se for ação de avaliação (exclusivo para técnicos)
+    if (action === 'evaluateForm') {
+      if (!username || !formId || !evaluation) {
+        return res.status(400).json({ success: false, error: 'Usuário, ID do formulário e dados de avaliação são obrigatórios.' });
+      }
+
+      if (!isTech(username)) {
+        return res.status(403).json({ success: false, error: 'Apenas técnicos podem avaliar formulários.' });
+      }
+
+      try {
+        const forms = await loadForms();
+        const index = forms.findIndex(f => f.id === formId);
+        if (index === -1) {
+          return res.status(404).json({ success: false, error: 'Formulário não encontrado.' });
+        }
+
+        const existing = forms[index];
+        const prevEvaluation = existing.evaluation;
+
+        const newEvaluation: ActivityEvaluation = {
+          id: evaluation.id || `eval-${Date.now()}`,
+          evaluatedBy: username,
+          evaluatedAt: new Date().toISOString(),
+          memberScores: evaluation.memberScores || {},
+          generalNotes: evaluation.generalNotes ? evaluation.generalNotes.trim() : undefined,
+        };
+
+        existing.evaluation = newEvaluation;
+        existing.updatedAt = new Date().toISOString();
+        forms[index] = existing;
+
+        await saveForms(forms);
+
+        const activityTitle = existing.type === 'autonomous_dev' 
+          ? (existing as AutonomousDevForm).courseName 
+          : `Reunião c/ ${(existing as CollectiveEvolutionForm).invitedTeam}`;
+
+        await applyActivityEvaluation({
+          evaluation: newEvaluation,
+          activityTitle,
+          activityType: existing.type,
+          previousEvaluation: prevEvaluation,
+        });
+
+        return res.status(200).json({ success: true, form: existing, evaluation: newEvaluation });
+      } catch (err: any) {
+        console.error('Forms EVALUATE error:', err.message);
+        return res.status(500).json({ success: false, error: 'Erro ao processar avaliação.' });
+      }
+    }
 
     // Se for ação de delete via POST
     if (action === 'deleteForm') {
@@ -127,14 +180,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const newId = `form-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
       let newForm: FormRecord;
+      let activityTitle = '';
 
       if (form.type === 'autonomous_dev') {
+        activityTitle = (form.courseName || '').trim();
         const autoForm: AutonomousDevForm = {
           id: newId,
           type: 'autonomous_dev',
           date: form.date || now.split('T')[0],
           workloadHours: Number(form.workloadHours) || 0,
-          courseName: (form.courseName || '').trim(),
+          courseName: activityTitle,
           courseUrl: (form.courseUrl || '').trim() || undefined,
           certificateUrl: (form.certificateUrl || '').trim() || undefined,
           participants: Array.isArray(form.participants) && form.participants.length > 0 ? form.participants : [username],
@@ -147,6 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
         newForm = autoForm;
       } else if (form.type === 'collective_evolution') {
+        activityTitle = `Reunião c/ ${(form.invitedTeam || '').trim()}`;
         const collectiveForm: CollectiveEvolutionForm = {
           id: newId,
           type: 'collective_evolution',
@@ -168,6 +224,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       forms.push(newForm);
       await saveForms(forms);
+
+      // Notificar técnicos sobre a nova atividade criada
+      await notifyTechniciansOnActivityCreated({
+        activityTitle,
+        activityType: form.type,
+        author: username,
+        activityId: newId,
+      });
 
       return res.status(201).json({ success: true, form: newForm });
     } catch (err: any) {

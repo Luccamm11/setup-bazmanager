@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
-import { Mentor, MentorshipRecord, VolunteerWork } from '../types';
+import { Mentor, MentorshipRecord, VolunteerWork, ActivityEvaluation } from '../types';
+import { notifyTechniciansOnActivityCreated, applyActivityEvaluation } from './_lib/evaluationHelper.js';
 
+const TECHNICIANS = ['Jonas', 'Ramon'];
 const MENTORS_KEY = 'levelup_mentors';
 const RECORDS_KEY = 'levelup_mentorship_records';
 const VOLUNTEER_WORKS_KEY = 'levelup_volunteer_works';
@@ -103,31 +105,115 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'addRecord') {
-        const { mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks, durationMinutes } = req.body;
-        if (!mentorId || !date || !type || !area || !participants) {
-          return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
+        const { mentorId, mentorName, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks, createdBy } = req.body;
+        if (!date || !participants || participants.length === 0 || !objectives || !solutions || !nextSteps) {
+          return res.status(400).json({ error: 'Dados obrigatórios do formulário de mentoria ausentes (data, participantes, objetivos, soluções e próximos passos).' });
         }
         const records = await getRecords();
+        const mentors = await getMentors();
+        let targetMentor = mentorId ? mentors.find(m => m.id === mentorId) : undefined;
+
+        // Se foi passado mentorName mas não mentorId, tentar encontrar ou criar mentor
+        let finalMentorId = mentorId;
+        let finalMentorName = mentorName ? mentorName.trim() : (targetMentor ? targetMentor.name : 'Mentor Convidado');
+
+        if (!targetMentor && mentorName && mentorName.trim()) {
+          const existingByName = mentors.find(m => m.name.toLowerCase() === mentorName.trim().toLowerCase());
+          if (existingByName) {
+            targetMentor = existingByName;
+            finalMentorId = existingByName.id;
+            finalMentorName = existingByName.name;
+          } else {
+            // Criação automática do mentor se não existir
+            const newMentor: Mentor = {
+              id: `mentor-${Date.now()}`,
+              name: mentorName.trim(),
+              area: area ? area.trim() : 'Mentoria Técnica B-LEED',
+              active: true,
+              role: 'mentor',
+            };
+            mentors.push(newMentor);
+            await saveMentors(mentors);
+            targetMentor = newMentor;
+            finalMentorId = newMentor.id;
+          }
+        }
+
+        const now = new Date().toISOString();
         const newRecord: MentorshipRecord = {
           id: `record-${Date.now()}`,
-          mentorId,
+          mentorId: finalMentorId,
+          mentorName: finalMentorName,
           date,
-          type,
-          locationType,
-          locationName: locationName ? locationName.trim() : undefined,
-          area: area.trim(),
-          participants,
-          advantages: advantages ? advantages.trim() : '',
+          workloadHours: workloadHours ? Number(workloadHours) : 2,
+          participants: Array.isArray(participants) ? participants : [participants],
+          objectives: objectives.trim(),
+          solutions: solutions.trim(),
+          nextSteps: nextSteps.trim(),
+          area: area ? area.trim() : (targetMentor?.area || 'Geral'),
           imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
-          durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
+          createdAt: now,
+          updatedAt: now,
+          createdBy: createdBy || (Array.isArray(participants) && participants[0]) || 'Membro',
         };
         records.push(newRecord);
         await saveRecords(records);
+
+        // Notificar técnicos sobre a nova mentoria cadastrada
+        const author = createdBy || (Array.isArray(participants) && participants[0]) || 'Membro';
+        const activityTitle = `Mentoria com ${finalMentorName}`;
+
+        await notifyTechniciansOnActivityCreated({
+          activityTitle,
+          activityType: 'mentorship',
+          author,
+          activityId: newRecord.id,
+        });
+
         return res.status(201).json({ success: true, record: newRecord });
       }
 
+      if (action === 'evaluateRecord') {
+        const { username, recordId, evaluation } = req.body;
+        if (!username || !recordId || !evaluation) {
+          return res.status(400).json({ error: 'Usuário, ID do registro e dados de avaliação são obrigatórios.' });
+        }
+
+        if (!TECHNICIANS.includes(username)) {
+          return res.status(403).json({ error: 'Apenas técnicos podem avaliar mentorias.' });
+        }
+
+        const records = await getRecords();
+        const idx = records.findIndex(r => r.id === recordId);
+        if (idx === -1) return res.status(404).json({ error: 'Registro de mentoria não encontrado.' });
+
+        const prevEvaluation = records[idx].evaluation;
+        const newEvaluation: ActivityEvaluation = {
+          id: evaluation.id || `eval-${Date.now()}`,
+          evaluatedBy: username,
+          evaluatedAt: new Date().toISOString(),
+          memberScores: evaluation.memberScores || {},
+          generalNotes: evaluation.generalNotes ? evaluation.generalNotes.trim() : undefined,
+        };
+
+        records[idx].evaluation = newEvaluation;
+        records[idx].updatedAt = new Date().toISOString();
+        await saveRecords(records);
+
+        const activityTitle = `Mentoria com ${records[idx].mentorName || 'Mentor'}`;
+
+        await applyActivityEvaluation({
+          evaluation: newEvaluation,
+          activityTitle,
+          activityType: 'mentorship',
+          previousEvaluation: prevEvaluation,
+        });
+
+        return res.status(200).json({ success: true, record: records[idx], evaluation: newEvaluation });
+      }
+
       if (action === 'editRecord') {
-        const { id, mentorId, date, type, locationType, locationName, area, participants, advantages, imageLinks, durationMinutes } = req.body;
+        const { id, mentorId, mentorName, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do registro é obrigatório.' });
 
         const records = await getRecords();
@@ -135,15 +221,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (idx === -1) return res.status(404).json({ error: 'Registro de mentoria não encontrado.' });
 
         if (mentorId !== undefined) records[idx].mentorId = mentorId;
+        if (mentorName !== undefined) records[idx].mentorName = mentorName.trim();
         if (date !== undefined) records[idx].date = date;
-        if (type !== undefined) records[idx].type = type;
-        if (locationType !== undefined) records[idx].locationType = locationType;
-        if (locationName !== undefined) records[idx].locationName = locationName ? locationName.trim() : undefined;
-        if (area !== undefined) records[idx].area = area.trim();
+        if (workloadHours !== undefined) records[idx].workloadHours = Number(workloadHours);
         if (participants !== undefined) records[idx].participants = participants;
-        if (advantages !== undefined) records[idx].advantages = advantages ? advantages.trim() : '';
+        if (objectives !== undefined) records[idx].objectives = objectives.trim();
+        if (solutions !== undefined) records[idx].solutions = solutions.trim();
+        if (nextSteps !== undefined) records[idx].nextSteps = nextSteps.trim();
+        if (area !== undefined) records[idx].area = area.trim();
         if (imageLinks !== undefined) records[idx].imageLinks = Array.isArray(imageLinks) ? imageLinks : [];
-        if (durationMinutes !== undefined) records[idx].durationMinutes = durationMinutes ? Number(durationMinutes) : undefined;
+        records[idx].updatedAt = new Date().toISOString();
 
         await saveRecords(records);
         return res.status(200).json({ success: true, record: records[idx] });

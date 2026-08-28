@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -13,7 +13,8 @@ interface MenuProps {
 const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
-  const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean }[] = [
+  const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean; highlight?: boolean }[] = [
+    { view: 'scan_bleed',       label: 'Scan B-Leed',             desc: 'Fotografe uma ficha B-Leed impressa e cadastre automaticamente com OCR por IA', icon: ScanLine, highlight: true },
     { view: 'b_projects',       label: 'B-Project',               desc: 'Central de planejamento de robôs, decisões técnicas, cronograma Gantt e testes', icon: FolderKanban },
     { view: 'prototypes',       label: 'Protótipos',              desc: 'Registro ágil de protótipos de bancada, fotos compactadas e lições aprendidas', icon: Wrench },
     { view: 'forms',            label: 'Formulários',             desc: 'Registre atividades de Desenvolvimento Autônomo e Evolução Coletiva com outras equipes', icon: ClipboardList },
@@ -47,6 +48,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
         {menuItems.map(item => {
           const Icon = item.icon;
           const isTechItem = item.techOnly;
+          const isHighlight = item.highlight;
           return (
             <button
               key={item.view}
@@ -54,18 +56,23 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
               className={`p-6 rounded-lg border text-left transition-all duration-200 ${
                 isTechItem
                   ? 'bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20 hover:border-orange-500/40 hover:from-orange-500/15 hover:to-red-500/15'
+                  : isHighlight
+                  ? 'bg-gradient-to-br from-blue-500/15 to-indigo-600/15 border-blue-500/30 hover:border-blue-400/60 hover:from-blue-500/20 hover:to-indigo-600/20 ring-1 ring-blue-500/10'
                   : item.view === 'team_missions'
                   ? 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:border-blue-500/40 hover:from-blue-500/15 hover:to-cyan-500/15'
                   : 'bg-primary border-border-color hover:bg-border-color/50 hover:border-accent-primary'
               }`}
             >
               <div className="flex items-center space-x-4">
-                <Icon className={`w-8 h-8 ${isTechItem ? 'text-orange-400' : item.view === 'team_missions' ? 'text-blue-400' : 'text-accent-primary'}`} />
+                <Icon className={`w-8 h-8 ${isTechItem ? 'text-orange-400' : isHighlight ? 'text-blue-400' : item.view === 'team_missions' ? 'text-blue-400' : 'text-accent-primary'}`} />
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-text-primary">{item.label}</h3>
                     {isTechItem && (
                       <span className="text-[8px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-black uppercase tracking-wider">Técnico</span>
+                    )}
+                    {isHighlight && (
+                      <span className="text-[8px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-black uppercase tracking-wider">IA</span>
                     )}
                   </div>
                   <p className="text-sm text-text-secondary">{item.desc}</p>

@@ -671,3 +671,150 @@ export const generateJournalChecklist = async (apiKey:string, reflectionText: st
         handleApiError(error);
     }
 };
+
+// ─── Scan B-Leed OCR com Gemini Vision ──────────────────────────────────────
+export interface ScanBLeedResponse {
+  formType: 'mentorias' | 'evolucao_coletiva' | 'desenvolvimento_autonomo';
+  date: string; // YYYY-MM-DD
+  workloadHours: number;
+  participants: string[];
+  
+  // Mentoria Estratégica
+  mentorName?: string;
+  isNewMentor?: boolean;
+  objectives?: string;
+  solutions?: string;
+  nextSteps?: string;
+
+  // Evolução Coletiva
+  invitedTeam?: string;
+  meetingObjectives?: string;
+  solutionsFound?: string;
+
+  // Desenvolvimento Autônomo
+  courseName?: string;
+  courseObjectives?: string;
+  courseSyllabus?: string;
+  keyLearnings?: string;
+}
+
+export const scanBLeedForm = async (
+  apiKey: string,
+  imageBase64OrDataUrl: string,
+  existingMentors: { id: string; name: string }[] = [],
+  availableMembers: string[] = []
+): Promise<ScanBLeedResponse> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Extrair mimeType e base64 limpo
+    let mimeType = 'image/jpeg';
+    let base64Data = imageBase64OrDataUrl;
+
+    if (imageBase64OrDataUrl.startsWith('data:')) {
+      const match = imageBase64OrDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        mimeType = match[1];
+        base64Data = match[2];
+      }
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    const prompt = `
+Você é um especialista em OCR inteligente e análise de formulários da metodologia B-LEED para a equipe de robótica FIRST Tech Challenge Bazinga! 73.
+
+Analise cuidadosamente a imagem do formulário oficial B-Leed enviado. O formulário pode estar preenchido à mão (manuscrito) ou impresso.
+
+LISTA DE MEMBROS OFICIAIS DA EQUIPE (faça match com os nomes manuscritos):
+${availableMembers.length > 0 ? availableMembers.join(', ') : 'Jonas, Ramon, Lucca, Clarice, Ana Clara, Bernardo, Enzo Soares, Pedro, Yan, Guilherme, Enzo Resende, Sara Galdino'}
+
+LISTA DE MENTORES JÁ CADASTRADOS NO SISTEMA:
+${existingMentors.length > 0 ? existingMentors.map(m => m.name).join(', ') : 'Nenhum'}
+
+INSTRUÇÕES DE CLASSIFICAÇÃO E EXTRAÇÃO:
+1. IDENTIFICAÇÃO DO FORMULÁRIO:
+   - Se o título for "B - Leed | Mentorias Estratégicas" ou contiver "Mentor Convidado":
+     Defina "formType": "mentorias".
+     Extraia:
+     - mentorName: Nome do mentor convidado escrito no campo "Mentor Convidado".
+     - isNewMentor: true se o mentorName NÃO estiver na lista de mentores já cadastrados; false se já existir.
+     - objectives: Transcrição fiel do campo "OBJETIVOS DA MENTORIA:".
+     - solutions: Transcrição fiel do campo "SOLUÇÕES ENCONTRADAS:".
+     - nextSteps: Transcrição fiel do campo "PRÓXIMOS PASSOS:".
+
+   - Se o título for "B - Leed | Evolução Coletiva" ou contiver "Equipe Convidada":
+     Defina "formType": "evolucao_coletiva".
+     Extraia:
+     - invitedTeam: Nome da equipe parceira/convidada escrito no campo "Equipe Convidada:".
+     - meetingObjectives: Transcrição fiel do campo "OBJETIVOS DA REUNIÃO:".
+     - solutionsFound: Transcrição fiel do campo "SOLUÇÕES ENCONTRADAS:".
+     - nextSteps: Transcrição fiel do campo "PRÓXIMOS PASSOS:".
+
+   - Se o título for "B - Leed | Desenvolvimento Autônomo" ou contiver "Nome do Curso":
+     Defina "formType": "desenvolvimento_autonomo".
+     Extraia:
+     - courseName: Nome do curso escrito no campo "Nome do Curso:".
+     - courseObjectives: Transcrição fiel do campo "OBJETIVOS DO CURSO:".
+     - courseSyllabus: Transcrição fiel do campo "EMENTA DO CURSO:".
+     - keyLearnings: Transcrição fiel do campo "PRINCIPAIS PONTOS APRENDIDOS:".
+
+2. CAMPOS COMUNS A TODOS OS 3 FORMULÁRIOS:
+   - date: Data informada no campo "Data: __ / __ / ____". Converta para o padrão "YYYY-MM-DD". Se o ano estiver ausente, use ${currentYear}. Se a data estiver em branco, use a data de hoje.
+   - workloadHours: Número de horas informado no campo "Carga Horária:". Converta para número decimal (ex: "2h" -> 2, "1h30" -> 1.5). Se estiver em branco, retorne 2.
+   - participants: Array de strings contendo os nomes dos membros participantes identificados na caixa "Membros Participantes:". Mapeie a caligrafia para os nomes correspondentes da lista oficial de membros.
+
+Responda estritamente em formato JSON estruturado conforme o schema.
+`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          inlineData: {
+            mimeType,
+            data: base64Data,
+          }
+        },
+        {
+          text: prompt
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            formType: {
+              type: Type.STRING,
+              enum: ["mentorias", "evolucao_coletiva", "desenvolvimento_autonomo"]
+            },
+            date: { type: Type.STRING },
+            workloadHours: { type: Type.NUMBER },
+            participants: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            mentorName: { type: Type.STRING },
+            isNewMentor: { type: Type.BOOLEAN },
+            objectives: { type: Type.STRING },
+            solutions: { type: Type.STRING },
+            nextSteps: { type: Type.STRING },
+            invitedTeam: { type: Type.STRING },
+            meetingObjectives: { type: Type.STRING },
+            solutionsFound: { type: Type.STRING },
+            courseName: { type: Type.STRING },
+            courseObjectives: { type: Type.STRING },
+            courseSyllabus: { type: Type.STRING },
+            keyLearnings: { type: Type.STRING }
+          },
+          required: ["formType", "date", "workloadHours", "participants"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    handleApiError(error);
+  }
+};

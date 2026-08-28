@@ -5,7 +5,8 @@ import {
   Calendar, ExternalLink, Award, FileText, AlertCircle,
   Trash2, Edit3, Eye, Copy, Check, X, UserCheck, Sparkles
 } from 'lucide-react';
-import { FormRecord, AutonomousDevForm, CollectiveEvolutionForm, FormType, UserRole } from '../../types';
+import { FormRecord, AutonomousDevForm, CollectiveEvolutionForm, FormType, UserRole, ActivityEvaluation } from '../../types';
+import ActivityEvaluationModal from '../ActivityEvaluationModal';
 
 // ─── Classe de input reutilizável (padrão do projeto) ────────────────────────
 const INPUT_CLS = 'w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-blue-500 text-sm transition-all';
@@ -32,6 +33,7 @@ export default function FormsTab({ currentUser, userRole }: FormsTabProps) {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingForm, setEditingForm] = useState<FormRecord | null>(null);
   const [detailForm, setDetailForm] = useState<FormRecord | null>(null);
+  const [evaluatingForm, setEvaluatingForm] = useState<FormRecord | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -102,6 +104,27 @@ export default function FormsTab({ currentUser, userRole }: FormsTabProps) {
   };
 
   const openCreateModal = () => { resetFormState(); setCreateModalOpen(true); };
+
+  const handleSaveEvaluation = async (evaluation: ActivityEvaluation) => {
+    if (!evaluatingForm) return;
+    const res = await fetch('/api/forms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'evaluateForm',
+        username: currentUser,
+        formId: evaluatingForm.id,
+        evaluation,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setForms(prev => prev.map(f => f.id === evaluatingForm.id ? { ...f, evaluation: data.evaluation } : f));
+      setEvaluatingForm(null);
+    } else {
+      throw new Error(data.error || 'Falha ao salvar avaliação.');
+    }
+  };
 
   const openEditModal = (item: FormRecord) => {
     setEditingForm(item);
@@ -378,14 +401,42 @@ export default function FormsTab({ currentUser, userRole }: FormsTabProps) {
                 >
                   <div>
                     {/* Badge + meta */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border ${isAuto ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>
                         {isAuto ? <BookOpen className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
                         {isAuto ? 'Desenv. Autônomo' : 'Evolução Coletiva'}
                       </span>
-                      <div className="flex items-center gap-2 text-xs text-white/40">
-                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{item.date}</span>
-                        <span className="flex items-center gap-1 font-bold text-white/60"><Clock className="w-3 h-3 text-blue-400" />{item.workloadHours}h</span>
+                      
+                      <div className="flex items-center gap-2">
+                        {/* Botão Avaliar / Badge de Avaliação */}
+                        {item.evaluation ? (
+                          <button
+                            onClick={() => setEvaluatingForm(item)}
+                            className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all cursor-pointer shadow-sm"
+                            title="Ver ou Editar Avaliação"
+                          >
+                            <Award className="w-3.5 h-3.5" />
+                            <span>+{Object.values(item.evaluation.memberScores).reduce((s, m) => s + (m.totalXp || 0), 0)} XP</span>
+                            {isTech && <span className="text-[10px] font-bold text-white/60 hover:text-white ml-0.5">• Avaliar</span>}
+                          </button>
+                        ) : isTech ? (
+                          <button
+                            onClick={() => setEvaluatingForm(item)}
+                            className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/40 px-2.5 py-1 rounded-lg border border-amber-500/40 hover:border-amber-400 transition-all cursor-pointer shadow-sm animate-pulse"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            Avaliar
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                            Pendente
+                          </span>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-white/40">
+                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{item.date}</span>
+                          <span className="flex items-center gap-1 font-bold text-white/60"><Clock className="w-3 h-3 text-blue-400" />{item.workloadHours}h</span>
+                        </div>
                       </div>
                     </div>
 
@@ -776,6 +827,28 @@ export default function FormsTab({ currentUser, userRole }: FormsTabProps) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* ─── Modal de Avaliação de Habilidades & XP ─── */}
+      {evaluatingForm && (
+        <ActivityEvaluationModal
+          isOpen={!!evaluatingForm}
+          onClose={() => setEvaluatingForm(null)}
+          activityId={evaluatingForm.id}
+          activityTitle={
+            evaluatingForm.type === 'autonomous_dev'
+              ? (evaluatingForm as AutonomousDevForm).courseName
+              : `Reunião c/ ${(evaluatingForm as CollectiveEvolutionForm).invitedTeam}`
+          }
+          activityType={evaluatingForm.type}
+          activityDate={evaluatingForm.date}
+          workloadOrDuration={`${evaluatingForm.workloadHours}h`}
+          participants={evaluatingForm.participants}
+          initialEvaluation={evaluatingForm.evaluation}
+          userRole={userRole}
+          currentUser={currentUser}
+          onSaveEvaluation={handleSaveEvaluation}
+        />
+      )}
     </div>
   );
 }
