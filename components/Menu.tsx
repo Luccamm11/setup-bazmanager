@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine, Target } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -14,7 +14,8 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean; highlight?: boolean }[] = [
-    { view: 'scan_bleed',       label: 'Scan B-Leed',             desc: 'Fotografe uma ficha B-Leed impressa e cadastre automaticamente com OCR por IA', icon: ScanLine, highlight: true },
+    { view: 'goals_board',      label: 'Quadro de Metas',         desc: 'Acompanhe as metas macro, financeiras, B-Leed, alcance FIRST e presença digital', icon: Target, highlight: true },
+    { view: 'scan_bleed',       label: 'Scan B-Leed',             desc: 'Fotografe uma ficha B-Leed impressa e cadastre automaticamente com OCR por IA', icon: ScanLine },
     { view: 'b_projects',       label: 'B-Project',               desc: 'Central de planejamento de robôs, decisões técnicas, cronograma Gantt e testes', icon: FolderKanban },
     { view: 'prototypes',       label: 'Protótipos',              desc: 'Registro ágil de protótipos de bancada, fotos compactadas e lições aprendidas', icon: Wrench },
     { view: 'forms',            label: 'Formulários',             desc: 'Registre atividades de Desenvolvimento Autônomo e Evolução Coletiva com outras equipes', icon: ClipboardList },

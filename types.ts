@@ -706,6 +706,53 @@ export interface CollectiveEvolutionForm {
 
 export type FormRecord = AutonomousDevForm | CollectiveEvolutionForm;
 
+// ─── Quadro de Metas / Goals Board Types ─────────────────────────────────────
 
+export type GoalValueType = 'currency' | 'hours' | 'number';
 
-
+export interface GoalsBoardColumn {
+  id: string;
+  label: string;
+  targetText: string;
+  targetValue: number;
+  type: GoalValueType;
+  unit?: string;
+}
+
+export interface GoalsBoardCategory {
+  id: string;
+  title: string;
+  icon: string;
+  color: 'emerald' | 'amber' | 'purple' | 'blue' | 'rose' | 'cyan';
+  macroTargetText: string;
+  macroTargetValue: number;
+  columns: GoalsBoardColumn[];
+}
+
+export interface GoalCellLog {
+  id: string;
+  username: string;
+  previousValue: number | null;
+  newValue: number | null;
+  timestamp: string;
+  note?: string;
+}
+
+export interface GoalsBoardMonth {
+  id: string;
+  name: string;
+  previsto: Record<string, number | null>;
+  realizado: Record<string, number | null>;
+  logs?: Record<string, GoalCellLog[]>;
+}
+
+export interface GoalsBoardData {
+  id: string;
+  teamName: string;
+  subtitle?: string;
+  season?: string;
+  categories: GoalsBoardCategory[];
+  months: GoalsBoardMonth[];
+  updatedAt: string;
+  updatedBy: string;
+}

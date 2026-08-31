@@ -28,6 +28,7 @@ const FIXED_KEYS = [
   'levelup_prototypes',
   'levelup_b_projects',
   'levelup_forms_records',
+  'levelup_goals_board',
 ];
 
 const FALLBACK_MEMBERS = [
