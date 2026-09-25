@@ -1,9 +1,9 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine, Target } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine, Target, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
-type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board';
+type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'chatbot' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board' | 'competitions';
 
 interface MenuProps {
   onNavigate: (view: View) => void;
@@ -14,6 +14,7 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean; highlight?: boolean }[] = [
+    { view: 'competitions',     label: 'Competições',             desc: 'Central de competições, checklists de viagem (ida e volta) e partidas (pré e pós match)', icon: Trophy, highlight: true },
     { view: 'goals_board',      label: 'Quadro de Metas',         desc: 'Acompanhe as metas macro, financeiras, B-Leed, alcance FIRST e presença digital', icon: Target, highlight: true },
     { view: 'scan_bleed',       label: 'Scan B-Leed',             desc: 'Fotografe uma ficha B-Leed impressa e cadastre automaticamente com OCR por IA', icon: ScanLine },
     { view: 'b_projects',       label: 'B-Project',               desc: 'Central de planejamento de robôs, decisões técnicas, cronograma Gantt e testes', icon: FolderKanban },

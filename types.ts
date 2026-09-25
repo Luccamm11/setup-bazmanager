@@ -756,3 +756,108 @@ export interface GoalsBoardData {
   updatedAt: string;
   updatedBy: string;
 }
+
+// ─── Competições & Checklists Types ──────────────────────────────────────────
+
+export interface TravelDepartureItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  packed: boolean;
+  packedBy?: string;
+  packedAt?: string;
+  notes?: string;
+}
+
+export interface TravelReturnItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  origin: 'departure' | 'acquired_at_event';
+  packed: boolean;
+  packedBy?: string;
+  packedAt?: string;
+  notes?: string;
+}
+
+export interface TravelChecklistHub {
+  departureCategories: string[];
+  departureItems: TravelDepartureItem[];
+  returnItems: TravelReturnItem[];
+}
+
+export interface HotelDepartureItem {
+  id: string;
+  task: string;
+  category: string;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface PreMatchChecklist {
+  batteryVoltage: string;
+  batteryCode: string;
+  radioLinked: boolean;
+  bumpersSecured: boolean;
+  autonomousSelected: boolean;
+  mechanismsInitialState: boolean;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface PostMatchChecklist {
+  robotCondition: 'perfect' | 'minor_issue' | 'damaged';
+  breakagesReport: string;
+  postBatteryVoltage: string;
+  motorsTempOk: boolean;
+  urgentPitMaintenance: boolean;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface MatchRecord {
+  id: string;
+  matchNumber: string;
+  roundType: 'practice' | 'qualification' | 'playoff';
+  allianceColor: 'red' | 'blue';
+  scheduledTime?: string;
+  preMatch: PreMatchChecklist;
+  postMatch: PostMatchChecklist;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface MatchesChecklistHub {
+  hotelDepartureChecklist: HotelDepartureItem[];
+  matches: MatchRecord[];
+}
+
+export interface CompetitionEvent {
+  id: string;
+  name: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  status: 'upcoming' | 'ongoing' | 'completed';
+  description?: string;
+  travelChecklist: TravelChecklistHub;
+  matchesChecklist: MatchesChecklistHub;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+}
+
+export interface CompetitionData {
+  events: CompetitionEvent[];
+  activeEventId: string | null;
+  updatedAt: string;
+  updatedBy: string;
+}

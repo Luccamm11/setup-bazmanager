@@ -54,6 +54,7 @@ import BProjectsTab from './components/BProjects/BProjectsTab';
 import FormsTab from './components/Forms/FormsTab';
 import ScanBLeedTab from './components/ScanBLeed/ScanBLeedTab';
 import GoalsBoardTab from './components/GoalsBoard/GoalsBoardTab';
+import CompetitionsHub from './components/competitions/CompetitionsHub';
 import FinanceDashboard from './components/FinanceDashboard';
 import KanbanBoard from './components/KanbanBoard';
 import LearningTrails from './components/LearningTrails';
@@ -62,9 +63,9 @@ import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, gene
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare } from 'lucide-react';
+import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare, Trophy } from 'lucide-react';
 
-type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board';
+type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board' | 'competitions';
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
@@ -2055,6 +2056,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'forms': return <FormsTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'scan_bleed': return <ScanBLeedTab currentUser={currentUser || ''} userRole={userRole} onNavigate={(v) => setView(v as View)} />;
       case 'goals_board': return <GoalsBoardTab currentUser={currentUser || ''} userRole={userRole} />;
+      case 'competitions': return <CompetitionsHub currentUser={currentUser || ''} userRole={userRole} />;
       case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
       default: return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
     }
@@ -2072,6 +2074,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       { view: 'journey', label: t('common:nav.journey'), icon: ScrollText },
       { view: 'chat', label: 'Chat', icon: MessageSquare },
       { view: 'inventory', label: t('common:nav.inventory'), icon: Package },
+      { view: 'competitions', label: 'Competições', icon: Trophy },
       { view: 'more', label: t('common:nav.more'), icon: MoreHorizontal },
   ];
   
