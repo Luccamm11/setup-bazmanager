@@ -38,7 +38,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/competitions');
+      const res = await fetch('/api/crud?type=competitions');
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
@@ -76,7 +76,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
     setData(nextData);
 
     try {
-      const res = await fetch('/api/competitions', {
+      const res = await fetch('/api/crud?type=competitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,7 +98,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
   const handleSelectEvent = async (eventId: string) => {
     setData(prev => ({ ...prev, activeEventId: eventId }));
     try {
-      await fetch('/api/competitions', {
+      await fetch('/api/crud?type=competitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,7 +203,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
     setData(nextData);
 
     try {
-      await fetch('/api/competitions', {
+      await fetch('/api/crud?type=competitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -237,7 +237,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
     }));
 
     try {
-      await fetch('/api/competitions', {
+      await fetch('/api/crud?type=competitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

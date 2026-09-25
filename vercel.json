@@ -17,6 +17,10 @@
     {
       "source": "/api/login",
       "destination": "/api/members?action=login"
+    },
+    {
+      "source": "/api/competitions",
+      "destination": "/api/crud?type=competitions"
     }
   ]
 }
