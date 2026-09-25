@@ -798,6 +798,12 @@ export interface HotelDepartureItem {
   notes?: string;
 }
 
+export interface CustomChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
 export interface PreMatchChecklist {
   batteryVoltage: string;
   batteryCode: string;
@@ -805,6 +811,7 @@ export interface PreMatchChecklist {
   bumpersSecured: boolean;
   autonomousSelected: boolean;
   mechanismsInitialState: boolean;
+  customItems?: CustomChecklistItem[];
   completed: boolean;
   completedBy?: string;
   completedAt?: string;
@@ -817,6 +824,7 @@ export interface PostMatchChecklist {
   postBatteryVoltage: string;
   motorsTempOk: boolean;
   urgentPitMaintenance: boolean;
+  customItems?: CustomChecklistItem[];
   completed: boolean;
   completedBy?: string;
   completedAt?: string;
@@ -835,6 +843,16 @@ export interface MatchRecord {
   createdBy: string;
 }
 
+export interface ChecklistAuditLog {
+  id: string;
+  checklistType: 'travel_departure' | 'travel_return' | 'hotel_departure' | 'match_pre' | 'match_post';
+  action: 'checked' | 'unchecked' | 'created' | 'updated' | 'deleted';
+  itemName: string;
+  username: string;
+  timestamp: string;
+  details?: string;
+}
+
 export interface MatchesChecklistHub {
   hotelDepartureChecklist: HotelDepartureItem[];
   matches: MatchRecord[];
@@ -850,6 +868,7 @@ export interface CompetitionEvent {
   description?: string;
   travelChecklist: TravelChecklistHub;
   matchesChecklist: MatchesChecklistHub;
+  historyLogs?: ChecklistAuditLog[];
   createdAt: string;
   createdBy: string;
   updatedAt: string;
