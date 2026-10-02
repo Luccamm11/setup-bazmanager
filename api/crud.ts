@@ -379,6 +379,8 @@ async function handleVerifyIntegrity(req: VercelRequest, res: VercelResponse) {
     console.error('Integrity verification error:', error.message);
     return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
+}
+
 async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   const COMPETITIONS_KEY = 'levelup_competitions_data';
 
