@@ -90,23 +90,30 @@ async function supabaseSet(key: string, value: string): Promise<'OK'> {
   return 'OK';
 }
 
+const isSupabaseEnabled = (): boolean => {
+  if (process.env.USE_SUPABASE === 'true') return true;
+  const hasUrl = Boolean((process.env.SUPABASE_URL || '').trim());
+  const hasKey = Boolean((process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim());
+  return hasUrl && hasKey;
+};
+
 const dbWrapper = {
   get: async (key: string): Promise<string | null> => {
-    if (process.env.USE_SUPABASE === 'true') {
+    if (isSupabaseEnabled()) {
       return supabaseGet(key);
     }
     if (!redisClient) {
-      throw new Error('REDIS_URL not configured and USE_SUPABASE is not true.');
+      throw new Error('REDIS_URL not configured and SUPABASE is not configured.');
     }
     return redisClient.get(key);
   },
 
   set: async (key: string, value: string): Promise<'OK'> => {
-    if (process.env.USE_SUPABASE === 'true') {
+    if (isSupabaseEnabled()) {
       return supabaseSet(key, value);
     }
     if (!redisClient) {
-      throw new Error('REDIS_URL not configured and USE_SUPABASE is not true.');
+      throw new Error('REDIS_URL not configured and SUPABASE is not configured.');
     }
     return redisClient.set(key, value);
   },

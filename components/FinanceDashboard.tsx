@@ -283,8 +283,9 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
       transactions.forEach(tx => {
         if (!tx.date) return;
-        const txDate = new Date(tx.date);
-        const txMonth = txDate.getMonth(); // 0-indexed
+        // Parse seguro de YYYY-MM-DD para evitar perda por fuso horário
+        const parts = tx.date.split('-');
+        const txMonth = parts.length >= 2 ? parseInt(parts[1], 10) - 1 : new Date(tx.date).getMonth();
 
         if (txMonth === m.monthIndex) {
           const cat = (tx.category || '').toLowerCase();
@@ -352,8 +353,9 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
       transactions.forEach(tx => {
         if (!tx.date) return;
-        const d = new Date(tx.date);
-        if (d.getMonth() === index) {
+        const parts = tx.date.split('-');
+        const txMonth = parts.length >= 2 ? parseInt(parts[1], 10) - 1 : new Date(tx.date).getMonth();
+        if (txMonth === index) {
           if (tx.type === 'income') income += tx.amount;
           else if (tx.type === 'expense') expense += tx.amount;
           else if (tx.type === 'investment') {
