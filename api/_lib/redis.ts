@@ -91,7 +91,9 @@ async function supabaseSet(key: string, value: string): Promise<'OK'> {
 }
 
 const isSupabaseEnabled = (): boolean => {
-  if (process.env.USE_SUPABASE === 'true') return true;
+  // Trim to handle edge cases like " true\n" from Vercel CLI env injection
+  const useSupabase = (process.env.USE_SUPABASE || '').trim().toLowerCase();
+  if (useSupabase === 'true') return true;
   const hasUrl = Boolean((process.env.SUPABASE_URL || '').trim());
   const hasKey = Boolean((process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim());
   return hasUrl && hasKey;
