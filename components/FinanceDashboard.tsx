@@ -241,6 +241,15 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
 
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+  };
+
   // General Totals
   const { balance, totalIncome, totalExpense, investmentsProfit } = useMemo(() => {
     let income = 0;
@@ -347,6 +356,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
 
   // Annual Budget Flow (Inspired by Orçamento Excel)
   const annualData = useMemo(() => {
+    let runningAccumulated = 0;
     return ALL_MONTHS.map((monthName, index) => {
       let income = 0;
       let expense = 0;
@@ -365,12 +375,16 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
         }
       });
 
+      const monthBalance = income - expense;
+      runningAccumulated += monthBalance;
+
       return {
         name: monthName.substring(0, 3),
         fullName: monthName,
         Receita: income,
         Despesa: expense,
-        Saldo: income - expense
+        Saldo: monthBalance,
+        SaldoAcumulado: runningAccumulated
       };
     });
   }, [transactions]);
@@ -879,6 +893,103 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
             </div>
           </div>
 
+          {/* Matriz Mensal do Orçamento (Inspirada no Excel Bazinga) */}
+          <div className="bg-surface/40 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
+            <div className="p-5 sm:p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h4 className="text-lg font-black text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-accent-green" />
+                  Matriz Anual do Orçamento (Janeiro a Dezembro)
+                </h4>
+                <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                  Consolidado mês a mês de Rendimentos, Gastos, Saldo Mensal e Saldo Acumulado (Plano Bazinga 2026)
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[850px]">
+                <thead>
+                  <tr className="bg-white/5 border-b border-white/10 text-xs font-bold text-text-secondary uppercase tracking-wider">
+                    <th className="p-3.5 sticky left-0 bg-surface/90 backdrop-blur-sm z-10 border-r border-white/10 min-w-[150px]">Fluxo / Mês</th>
+                    {annualData.map(m => (
+                      <th key={m.name} className="p-3.5 text-right font-semibold text-white/80">{m.name}</th>
+                    ))}
+                    <th className="p-3.5 text-right text-accent-primary font-black border-l border-white/10 bg-white/5">Total Ano</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-xs sm:text-sm">
+                  {/* Linha Rendimentos */}
+                  <tr className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-3.5 font-bold text-accent-green sticky left-0 bg-surface/90 backdrop-blur-sm z-10 border-r border-white/10 flex items-center gap-1.5">
+                      <TrendingUp size={14} /> Rendimentos
+                    </td>
+                    {annualData.map(m => (
+                      <td key={m.name} className="p-3.5 text-right font-medium text-accent-green">
+                        {m.Receita > 0 ? formatCurrency(m.Receita) : '-'}
+                      </td>
+                    ))}
+                    <td className="p-3.5 text-right font-black text-accent-green border-l border-white/10 bg-accent-green/5">
+                      {formatCurrency(totalIncome)}
+                    </td>
+                  </tr>
+
+                  {/* Linha Gastos */}
+                  <tr className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-3.5 font-bold text-accent-red sticky left-0 bg-surface/90 backdrop-blur-sm z-10 border-r border-white/10 flex items-center gap-1.5">
+                      <TrendingDown size={14} /> Gastos
+                    </td>
+                    {annualData.map(m => (
+                      <td key={m.name} className="p-3.5 text-right font-medium text-accent-red">
+                        {m.Despesa > 0 ? formatCurrency(m.Despesa) : '-'}
+                      </td>
+                    ))}
+                    <td className="p-3.5 text-right font-black text-accent-red border-l border-white/10 bg-accent-red/5">
+                      {formatCurrency(totalExpense)}
+                    </td>
+                  </tr>
+
+                  {/* Linha Saldo do Mês */}
+                  <tr className="bg-white/[0.015] hover:bg-white/[0.03] transition-colors font-semibold">
+                    <td className="p-3.5 font-bold text-white sticky left-0 bg-surface/90 backdrop-blur-sm z-10 border-r border-white/10">
+                      Saldo do Mês
+                    </td>
+                    {annualData.map(m => {
+                      const isZero = m.Saldo === 0 && m.Receita === 0 && m.Despesa === 0;
+                      return (
+                        <td key={m.name} className={`p-3.5 text-right font-bold ${
+                          isZero ? 'text-text-muted' : m.Saldo >= 0 ? 'text-accent-green' : 'text-accent-red'
+                        }`}>
+                          {isZero ? '-' : formatCurrency(m.Saldo)}
+                        </td>
+                      );
+                    })}
+                    <td className={`p-3.5 text-right font-black border-l border-white/10 ${balance >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10'}`}>
+                      {formatCurrency(balance)}
+                    </td>
+                  </tr>
+
+                  {/* Linha Saldo Acumulado */}
+                  <tr className="bg-white/[0.03] hover:bg-white/[0.05] transition-colors font-black border-t border-white/10">
+                    <td className="p-3.5 font-black text-accent-primary sticky left-0 bg-surface/90 backdrop-blur-sm z-10 border-r border-white/10 flex items-center gap-1.5">
+                      <Wallet size={14} /> Saldo Acumulado
+                    </td>
+                    {annualData.map(m => (
+                      <td key={m.name} className={`p-3.5 text-right font-black ${
+                        m.SaldoAcumulado >= 0 ? 'text-white' : 'text-accent-red'
+                      }`}>
+                        {formatCurrency(m.SaldoAcumulado)}
+                      </td>
+                    ))}
+                    <td className={`p-3.5 text-right font-black text-accent-primary border-l border-white/10 bg-accent-primary/10 text-sm`}>
+                      {formatCurrency(balance)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Breakdown por Categorias */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Gastos por Categoria */}
@@ -1033,7 +1144,7 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ userRole }) => {
                       return (
                         <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="p-4 text-white/80 whitespace-nowrap text-xs sm:text-sm">
-                            {new Date(tx.date).toLocaleDateString('pt-BR')}
+                            {formatDateDisplay(tx.date)}
                           </td>
                           <td className="p-4 text-white font-medium text-sm">
                             {tx.description}
