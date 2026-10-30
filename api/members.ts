@@ -1,9 +1,36 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
+import { hashPassword, verifyPassword, createToken, authenticateRequest } from './_lib/auth.js';
 
 // Registry key for the members list in Supabase/Redis
 const MEMBERS_REGISTRY_KEY = 'levelup_members_registry';
 const LEGACY_KEY = 'levelup_team_legacy';
+const CREDENTIALS_KEY = 'levelup_members_credentials';
+const DEFAULT_PASSWORD = '021083';
+
+interface StoredCredential {
+  hash: string;
+  salt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+type CredentialsMap = Record<string, StoredCredential>;
+
+async function getCredentials(): Promise<CredentialsMap> {
+  const raw = await redis.get(CREDENTIALS_KEY);
+  if (raw) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+async function saveCredentials(creds: CredentialsMap) {
+  await redis.set(CREDENTIALS_KEY, JSON.stringify(creds));
+}
 
 // Default members seeded on first call if registry is empty
 const DEFAULT_MEMBERS = [
@@ -77,16 +104,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ success: false, message: 'Usuário inválido ou inativo.' });
       }
 
-      if (password === '021083') {
-        const role = isTechnician ? 'technician' : 'member';
-        const memberObj = members.find((m: any) => m.username === username);
-        const awardFocus = isTechnician ? null : (memberObj?.awardFocus || null);
-        return res.status(200).json({ success: true, username, role, awardFocus });
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ success: false, message: 'Senha não fornecida.' });
       }
 
-      return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+      const credentials = await getCredentials();
+      const userCred = credentials[username];
+
+      let isPasswordValid = false;
+      if (userCred && userCred.hash && userCred.salt) {
+        isPasswordValid = verifyPassword(password, userCred.hash, userCred.salt);
+      } else {
+        // Fallback transitório para senha padrão até o primeiro reset pelo técnico
+        isPasswordValid = password === DEFAULT_PASSWORD;
+      }
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+      }
+
+      const role = isTechnician ? 'technician' : 'member';
+      const memberObj = members.find((m: any) => m.username === username);
+      const awardFocus = isTechnician ? null : (memberObj?.awardFocus || null);
+
+      const token = createToken({ username, role, awardFocus });
+
+      return res.status(200).json({
+        success: true,
+        token,
+        username,
+        role,
+        awardFocus,
+      });
     } catch (err: any) {
       return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  // ─── Sub-Rota: CHANGE PASSWORD ─────────────────────────────────────────────
+  if (targetAction === 'change-password') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const auth = authenticateRequest(req);
+    if (!auth.valid || !auth.user) {
+      return res.status(401).json({ success: false, error: 'Acesso não autorizado. Token inválido ou expirado.' });
+    }
+
+    const isTech = auth.user.role === 'technician' || TECHNICIANS.includes(auth.user.username);
+    const { targetUser, newPassword } = req.body;
+
+    // Apenas técnicos podem trocar a senha de qualquer membro; ou o próprio usuário para sua conta
+    if (!isTech && auth.user.username !== targetUser) {
+      return res.status(403).json({ success: false, error: 'Apenas técnicos têm permissão para redefinir senhas.' });
+    }
+
+    if (!targetUser || !newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 4) {
+      return res.status(400).json({ success: false, error: 'A senha deve conter no mínimo 4 caracteres.' });
+    }
+
+    try {
+      const credentials = await getCredentials();
+      const { hash, salt } = hashPassword(newPassword.trim());
+
+      credentials[targetUser] = {
+        hash,
+        salt,
+        updatedAt: new Date().toISOString(),
+        updatedBy: auth.user.username,
+      };
+
+      await saveCredentials(credentials);
+
+      return res.status(200).json({
+        success: true,
+        message: `Senha de ${targetUser} atualizada com sucesso!`,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 

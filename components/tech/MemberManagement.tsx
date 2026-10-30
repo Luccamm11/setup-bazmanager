@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPlus, UserX, Edit3, Check, X, RefreshCw,
-  Users, AlertTriangle, ChevronDown, Award, Search,
+  Users, AlertTriangle, ChevronDown, Award, Search, KeyRound, Lock,
 } from 'lucide-react';
 
 interface MemberEntry {
@@ -149,6 +149,86 @@ const EditForm: React.FC<EditFormProps> = ({ member, onSave, onCancel }) => {
   );
 };
 
+// ─── Inline Password Form ──────────────────────────────────────────────────
+
+interface PasswordFormProps {
+  member: MemberEntry;
+  onSuccess: (msg: string) => void;
+  onCancel: () => void;
+}
+
+const PasswordForm: React.FC<PasswordFormProps> = ({ member, onSuccess, onCancel }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!newPassword || newPassword.trim().length < 4) {
+      setErr('A senha deve ter pelo menos 4 caracteres.');
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      const res = await fetch('/api/members?action=change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUser: member.username, newPassword: newPassword.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSuccess(`Senha de ${member.displayName} atualizada com sucesso!`);
+      } else {
+        setErr(data.error || 'Erro ao atualizar senha.');
+      }
+    } catch (e: any) {
+      setErr(e.message || 'Falha na conexão com o servidor.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="mt-3 pt-3 border-t border-white/10 space-y-3"
+    >
+      <div>
+        <label className="text-xs text-yellow-400 font-bold mb-1 flex items-center gap-1">
+          <KeyRound className="w-3.5 h-3.5" />
+          Nova senha para {member.displayName}
+        </label>
+        <input
+          type="text"
+          placeholder="Digite a nova senha..."
+          value={newPassword}
+          onChange={e => setNewPassword(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/60"
+        />
+        {err && <p className="text-xs text-red-400 mt-1">{err}</p>}
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-sm font-bold hover:bg-yellow-500/30 transition-all disabled:opacity-50"
+        >
+          {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+          Salvar Senha
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-text-secondary text-sm hover:text-white transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 // ─── Member Card ─────────────────────────────────────────────────────────────
 
 interface MemberCardProps {
@@ -156,10 +236,12 @@ interface MemberCardProps {
   currentUser: string;
   onEdit: (data: Partial<MemberEntry>) => Promise<void>;
   onToggleActive: (active: boolean) => Promise<void>;
+  onPasswordSuccess?: (msg: string) => void;
 }
 
-const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, onToggleActive }) => {
+const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, onToggleActive, onPasswordSuccess }) => {
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -202,13 +284,22 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, on
         {/* Action buttons */}
         <div className="flex gap-1.5 shrink-0">
           {member.active && (
-            <button
-              onClick={() => setEditing(v => !v)}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-text-secondary transition-all"
-              title="Editar"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
+            <>
+              <button
+                onClick={() => { setChangingPassword(v => !v); setEditing(false); }}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-yellow-500/20 hover:text-yellow-400 text-text-secondary transition-all"
+                title="Definir Senha do Membro"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => { setEditing(v => !v); setChangingPassword(false); }}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-text-secondary transition-all"
+                title="Editar"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
 
           {member.active ? (
@@ -255,6 +346,16 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, on
             member={member}
             onSave={async data => { await onEdit(data); setEditing(false); }}
             onCancel={() => setEditing(false)}
+          />
+        )}
+        {changingPassword && (
+          <PasswordForm
+            member={member}
+            onSuccess={msg => {
+              setChangingPassword(false);
+              if (onPasswordSuccess) onPasswordSuccess(msg);
+            }}
+            onCancel={() => setChangingPassword(false)}
           />
         )}
       </AnimatePresence>
@@ -381,6 +482,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [showInactive, setShowInactive] = useState(false);
   const [search, setSearch] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -450,6 +552,24 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
         </button>
       </div>
 
+      {/* Feedback Banner */}
+      {feedbackMsg && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="p-3 rounded-xl bg-green-500/20 border border-green-500/30 text-green-300 text-sm flex items-center justify-between"
+        >
+          <span className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-green-400" />
+            {feedbackMsg}
+          </span>
+          <button onClick={() => setFeedbackMsg(null)} className="text-green-400/60 hover:text-green-300">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
+
       {/* Add Member */}
       <AddMemberForm currentUser={currentUser} onAdded={fetchMembers} />
 
@@ -498,6 +618,10 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
                 currentUser={currentUser}
                 onEdit={data => handleEdit(member.username, data)}
                 onToggleActive={active => handleToggleActive(member.username, active)}
+                onPasswordSuccess={msg => {
+                  setFeedbackMsg(msg);
+                  setTimeout(() => setFeedbackMsg(null), 5000);
+                }}
               />
             ))}
           </AnimatePresence>

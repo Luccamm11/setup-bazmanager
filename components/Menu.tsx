@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine, Target, Trophy } from 'lucide-react';
+import { Store as LucideStore, Landmark, BarChart2, BookOpen, Award, Terminal, BookText, Timer, Dna, BotMessageSquare, Users, Shield, FileDown, Printer, UserCog, GraduationCap, FolderKanban, ClipboardList, Wrench, ScanLine, Target, Trophy, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '../types';
 
@@ -8,6 +8,7 @@ type View = 'home' | 'store' | 'staking' | 'system_log' | 'dashboard' | 'story_l
 interface MenuProps {
   onNavigate: (view: View) => void;
   userRole: UserRole;
+  onLogout?: () => void;
 }
 
 const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
@@ -83,6 +84,22 @@ const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
             </button>
           );
         })}
+
+        {onLogout && (
+          <button
+            key="logout"
+            onClick={onLogout}
+            className="p-6 rounded-lg border text-left transition-all duration-200 bg-red-500/10 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/15"
+          >
+            <div className="flex items-center space-x-4">
+              <LogOut className="w-8 h-8 text-red-400" />
+              <div>
+                <h3 className="text-xl font-bold text-red-300">Sair da Conta</h3>
+                <p className="text-sm text-red-200/70">Encerrar sessão com segurança neste dispositivo</p>
+              </div>
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );

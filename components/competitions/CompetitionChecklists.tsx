@@ -5,12 +5,13 @@ import {
   CheckCircle2, Circle, Trash2, Edit3, AlertTriangle, Battery,
   BatteryCharging, RefreshCw, Radio, Check, X, Search, Flag,
   ChevronRight, Calendar, Info, Award, User, Clock, ArrowRight,
-  Flame, Sparkles, Filter, BarChart2, History, ListPlus
+  Flame, Sparkles, Filter, BarChart2, History, ListPlus, Shield,
+  ClipboardList
 } from 'lucide-react';
 import {
   CompetitionEvent, TravelDepartureItem, TravelReturnItem,
   HotelDepartureItem, MatchRecord, UserRole, ChecklistAuditLog,
-  CustomChecklistItem
+  CustomChecklistItem, CustomChecklistSection, CustomChecklistItemData
 } from '../../types';
 import MatchesAnalyticsChart from './MatchesAnalyticsChart';
 import ChecklistHistoryTimeline from './ChecklistHistoryTimeline';
@@ -27,6 +28,7 @@ type ChecklistSubTab =
   | 'travel_return'
   | 'hotel_departure'
   | 'matches'
+  | 'custom_checklists'
   | 'analytics'
   | 'history';
 
@@ -38,11 +40,14 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<ChecklistSubTab>('travel_departure');
 
+  // Determinar se é Técnico
+  const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
+
   // Filtros da Ida
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchDeparture, setSearchDeparture] = useState('');
 
-  // Modais de Criação
+  // Modais de Criação (Ida)
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('Robô & Mecânica');
@@ -78,13 +83,32 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   const [newMatchAlliance, setNewMatchAlliance] = useState<'red' | 'blue'>('blue');
   const [newMatchTime, setNewMatchTime] = useState('');
 
-  // Inputs para itens customizados de inspeção no Match
+  // Inputs para pontos customizados de inspeção no Match
   const [customPreLabel, setCustomPreLabel] = useState('');
   const [customPostLabel, setCustomPostLabel] = useState('');
+
+  // Modais para Checklists Personalizados (Adicionados por Técnicos)
+  const [isNewCustomChecklistModalOpen, setIsNewCustomChecklistModalOpen] = useState(false);
+  const [newCustomChecklistTitle, setNewCustomChecklistTitle] = useState('');
+  const [newCustomChecklistCategory, setNewCustomChecklistCategory] = useState('Geral');
+  const [newCustomChecklistDesc, setNewCustomChecklistDesc] = useState('');
+
+  const [editingCustomChecklist, setEditingCustomChecklist] = useState<CustomChecklistSection | null>(null);
+
+  const [activeCustomChecklistForNewItem, setActiveCustomChecklistForNewItem] = useState<string | null>(null);
+  const [newCustomItemName, setNewCustomItemName] = useState('');
+  const [newCustomItemQuantity, setNewCustomItemQuantity] = useState(1);
+  const [newCustomItemNotes, setNewCustomItemNotes] = useState('');
+
+  const [editingCustomItem, setEditingCustomItem] = useState<{
+    sectionId: string;
+    item: CustomChecklistItemData;
+  } | null>(null);
 
   // ─── Helpers de Atualização e Auditoria ──────────────────────────────────────
   const travel = event.travelChecklist;
   const matchesData = event.matchesChecklist;
+  const customChecklists = event.customChecklists || [];
   const historyLogs = event.historyLogs || [];
 
   const createLog = (
@@ -167,7 +191,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleAddDepartureItem = async () => {
-    if (!newItemName.trim()) return;
+    if (!isTech || !newItemName.trim()) return;
     const category = customCategoryInput.trim() ? customCategoryInput.trim() : newItemCategory;
 
     const newItem: TravelDepartureItem = {
@@ -207,7 +231,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleSaveEditDepartureItem = async () => {
-    if (!editingDepartureItem || !editingDepartureItem.name.trim()) return;
+    if (!isTech || !editingDepartureItem || !editingDepartureItem.name.trim()) return;
 
     const updatedItems = travel.departureItems.map(item =>
       item.id === editingDepartureItem.id ? editingDepartureItem : item
@@ -238,6 +262,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteDepartureItem = async (itemId: string) => {
+    if (!isTech) return;
     const itemToDelete = travel.departureItems.find(i => i.id === itemId);
     const newLog = createLog(
       'travel_departure',
@@ -258,6 +283,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
 
   // ─── Handlers Viagem Volta ────────────────────────────────────────────────────
   const handleSyncReturnFromDeparture = async () => {
+    if (!isTech) return;
     const existingAcquired = travel.returnItems.filter(i => i.origin === 'acquired_at_event');
     const mapped = travel.departureItems.map(dep => {
       const existing = travel.returnItems.find(r => r.name.toLowerCase() === dep.name.toLowerCase());
@@ -328,7 +354,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleAddReturnItem = async () => {
-    if (!newReturnName.trim()) return;
+    if (!isTech || !newReturnName.trim()) return;
 
     const newItem: TravelReturnItem = {
       id: `ret-${Date.now()}`,
@@ -362,7 +388,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleSaveEditReturnItem = async () => {
-    if (!editingReturnItem || !editingReturnItem.name.trim()) return;
+    if (!isTech || !editingReturnItem || !editingReturnItem.name.trim()) return;
 
     const updated = travel.returnItems.map(item =>
       item.id === editingReturnItem.id ? editingReturnItem : item
@@ -388,6 +414,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteReturnItem = async (itemId: string) => {
+    if (!isTech) return;
     const itemToDelete = travel.returnItems.find(i => i.id === itemId);
     const newLog = createLog(
       'travel_return',
@@ -444,7 +471,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleAddHotelItem = async () => {
-    if (!newHotelTask.trim()) return;
+    if (!isTech || !newHotelTask.trim()) return;
 
     const newItem: HotelDepartureItem = {
       id: `hotel-${Date.now()}`,
@@ -474,7 +501,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleSaveEditHotelItem = async () => {
-    if (!editingHotelItem || !editingHotelItem.task.trim()) return;
+    if (!isTech || !editingHotelItem || !editingHotelItem.task.trim()) return;
 
     const updated = matchesData.hotelDepartureChecklist.map(item =>
       item.id === editingHotelItem.id ? editingHotelItem : item
@@ -500,6 +527,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteHotelItem = async (itemId: string) => {
+    if (!isTech) return;
     const itemToDelete = matchesData.hotelDepartureChecklist.find(i => i.id === itemId);
     const newLog = createLog(
       'hotel_departure',
@@ -520,7 +548,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
 
   // ─── Handlers Partidas ────────────────────────────────────────────────────────
   const handleCreateNewMatch = async () => {
-    if (!newMatchNumber.trim()) return;
+    if (!isTech || !newMatchNumber.trim()) return;
 
     const newMatch: MatchRecord = {
       id: `match-${Date.now()}`,
@@ -594,14 +622,14 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleSaveMatchDetails = async () => {
-    if (!editingMatchDetails || !editingMatchDetails.matchNumber.trim()) return;
+    if (!isTech || !editingMatchDetails || !editingMatchDetails.matchNumber.trim()) return;
     await handleUpdateCurrentMatch(editingMatchDetails, 'Editou informações gerais da partida');
     setEditingMatchDetails(null);
   };
 
   // Itens Customizados Pré-Match
   const handleAddCustomPreItem = async () => {
-    if (!currentMatch || !customPreLabel.trim()) return;
+    if (!isTech || !currentMatch || !customPreLabel.trim()) return;
     const newItem: CustomChecklistItem = {
       id: `cpre-${Date.now()}`,
       label: customPreLabel.trim(),
@@ -634,7 +662,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteCustomPreItem = async (customId: string) => {
-    if (!currentMatch) return;
+    if (!isTech || !currentMatch) return;
     const currentCustom = currentMatch.preMatch.customItems || [];
     const updatedMatch: MatchRecord = {
       ...currentMatch,
@@ -648,7 +676,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
 
   // Itens Customizados Pós-Match
   const handleAddCustomPostItem = async () => {
-    if (!currentMatch || !customPostLabel.trim()) return;
+    if (!isTech || !currentMatch || !customPostLabel.trim()) return;
     const newItem: CustomChecklistItem = {
       id: `cpost-${Date.now()}`,
       label: customPostLabel.trim(),
@@ -681,7 +709,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteCustomPostItem = async (customId: string) => {
-    if (!currentMatch) return;
+    if (!isTech || !currentMatch) return;
     const currentCustom = currentMatch.postMatch.customItems || [];
     const updatedMatch: MatchRecord = {
       ...currentMatch,
@@ -694,6 +722,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
   };
 
   const handleDeleteMatch = async (matchId: string) => {
+    if (!isTech) return;
     const matchToDelete = matchesData.matches.find(m => m.id === matchId);
     const nextMatches = matchesData.matches.filter(m => m.id !== matchId);
     if (activeMatchId === matchId) {
@@ -711,6 +740,221 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
         ...matchesData,
         matches: nextMatches,
       },
+      historyLogs: [newLog, ...historyLogs],
+    });
+  };
+
+  // ─── Handlers Checklists Personalizados (Exclusivo Técnicos) ───────────────
+  const handleCreateCustomChecklist = async () => {
+    if (!isTech || !newCustomChecklistTitle.trim()) return;
+
+    const newSection: CustomChecklistSection = {
+      id: `custom-chk-${Date.now()}`,
+      title: newCustomChecklistTitle.trim(),
+      category: newCustomChecklistCategory.trim() || 'Geral',
+      description: newCustomChecklistDesc.trim() || undefined,
+      items: [],
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const nextSections = [...customChecklists, newSection];
+    const newLog = createLog(
+      'custom_checklist',
+      'created',
+      newSection.title,
+      `Técnico criou novo checklist: "${newSection.title}"`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+
+    setNewCustomChecklistTitle('');
+    setNewCustomChecklistDesc('');
+    setIsNewCustomChecklistModalOpen(false);
+  };
+
+  const handleSaveEditCustomChecklist = async () => {
+    if (!isTech || !editingCustomChecklist || !editingCustomChecklist.title.trim()) return;
+
+    const nextSections = customChecklists.map(s =>
+      s.id === editingCustomChecklist.id ? { ...editingCustomChecklist, updatedAt: new Date().toISOString() } : s
+    );
+
+    const newLog = createLog(
+      'custom_checklist',
+      'updated',
+      editingCustomChecklist.title,
+      `Técnico editou detalhes do checklist: "${editingCustomChecklist.title}"`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+
+    setEditingCustomChecklist(null);
+  };
+
+  const handleDeleteCustomChecklist = async (sectionId: string) => {
+    if (!isTech) return;
+    const target = customChecklists.find(s => s.id === sectionId);
+    if (!confirm(`Deseja realmente excluir o checklist "${target?.title}" e todos os seus itens?`)) return;
+
+    const nextSections = customChecklists.filter(s => s.id !== sectionId);
+    const newLog = createLog(
+      'custom_checklist',
+      'deleted',
+      target ? target.title : 'Checklist',
+      `Técnico excluiu checklist "${target?.title}"`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+  };
+
+  const handleAddCustomChecklistItem = async () => {
+    if (!isTech || !activeCustomChecklistForNewItem || !newCustomItemName.trim()) return;
+
+    const newItem: CustomChecklistItemData = {
+      id: `ci-${Date.now()}`,
+      name: newCustomItemName.trim(),
+      quantity: Number(newCustomItemQuantity) || 1,
+      completed: false,
+      notes: newCustomItemNotes.trim() || undefined,
+    };
+
+    const nextSections = customChecklists.map(section => {
+      if (section.id === activeCustomChecklistForNewItem) {
+        return {
+          ...section,
+          items: [...section.items, newItem],
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return section;
+    });
+
+    const newLog = createLog(
+      'custom_checklist',
+      'created',
+      newItem.name,
+      `Adicionou item ao checklist personalizado`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+
+    setNewCustomItemName('');
+    setNewCustomItemNotes('');
+    setNewCustomItemQuantity(1);
+    setActiveCustomChecklistForNewItem(null);
+  };
+
+  const handleToggleCustomChecklistItem = async (sectionId: string, itemId: string) => {
+    let targetName = '';
+    let targetDone = false;
+
+    const nextSections = customChecklists.map(section => {
+      if (section.id === sectionId) {
+        const updatedItems = section.items.map(item => {
+          if (item.id === itemId) {
+            const nextDone = !item.completed;
+            targetName = item.name;
+            targetDone = nextDone;
+            return {
+              ...item,
+              completed: nextDone,
+              completedBy: nextDone ? currentUser : undefined,
+              completedAt: nextDone ? new Date().toISOString() : undefined,
+            };
+          }
+          return item;
+        });
+        return { ...section, items: updatedItems };
+      }
+      return section;
+    });
+
+    const newLog = createLog(
+      'custom_checklist',
+      targetDone ? 'checked' : 'unchecked',
+      targetName,
+      targetDone ? 'Conferiu item de checklist da equipe' : 'Desmarcou item'
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+  };
+
+  const handleSaveEditCustomItem = async () => {
+    if (!isTech || !editingCustomItem || !editingCustomItem.item.name.trim()) return;
+
+    const { sectionId, item: updatedItem } = editingCustomItem;
+    const nextSections = customChecklists.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          items: section.items.map(i => (i.id === updatedItem.id ? updatedItem : i)),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return section;
+    });
+
+    const newLog = createLog(
+      'custom_checklist',
+      'updated',
+      updatedItem.name,
+      `Editou item do checklist da equipe`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
+      historyLogs: [newLog, ...historyLogs],
+    });
+
+    setEditingCustomItem(null);
+  };
+
+  const handleDeleteCustomItem = async (sectionId: string, itemId: string) => {
+    if (!isTech) return;
+    const nextSections = customChecklists.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          items: section.items.filter(i => i.id !== itemId),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return section;
+    });
+
+    const newLog = createLog(
+      'custom_checklist',
+      'deleted',
+      'Item',
+      `Excluiu item de checklist da equipe`
+    );
+
+    await onUpdateEvent({
+      ...event,
+      customChecklists: nextSections,
       historyLogs: [newLog, ...historyLogs],
     });
   };
@@ -808,6 +1052,22 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           </span>
         </button>
 
+        {/* Nova Sub-Aba: Checklists da Equipe (Adicionados por Técnicos) */}
+        <button
+          onClick={() => setActiveSubTab('custom_checklists')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+            activeSubTab === 'custom_checklists'
+              ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 shadow-glow-primary'
+              : 'text-text-secondary hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <ListPlus size={16} />
+          <span>Checklists Extras</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold">
+            {customChecklists.length}
+          </span>
+        </button>
+
         <button
           onClick={() => setActiveSubTab('analytics')}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
@@ -817,7 +1077,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           }`}
         >
           <BarChart2 size={16} />
-          <span>Gráficos Antes & Depois</span>
+          <span>Gráficos</span>
         </button>
 
         <button
@@ -855,13 +1115,20 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddItemModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
-              >
-                <Plus size={16} />
-                <span>Adicionar Item</span>
-              </button>
+              {isTech ? (
+                <button
+                  onClick={() => setIsAddItemModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
+                >
+                  <Plus size={16} />
+                  <span>Adicionar Item</span>
+                </button>
+              ) : (
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-text-muted border border-white/5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-orange-400" />
+                  <span>Gerenciado pelos Técnicos</span>
+                </span>
+              )}
             </div>
 
             <div className="mt-4">
@@ -969,30 +1236,32 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditingDepartureItem({ ...item });
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-cyan-300 hover:bg-cyan-500/10 transition-all"
-                    title="Editar item"
-                  >
-                    <Edit3 size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDeleteDepartureItem(item.id);
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
-                    title="Excluir item"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+                {isTech && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setEditingDepartureItem({ ...item });
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-cyan-300 hover:bg-cyan-500/10 transition-all"
+                      title="Editar item"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeleteDepartureItem(item.id);
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Excluir item"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1000,7 +1269,15 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           {filteredDepartureItems.length === 0 && (
             <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 p-6 text-text-muted">
               <PlaneTakeoff size={36} className="mx-auto mb-2 opacity-40 text-blue-400" />
-              <p className="text-sm">Nenhum item encontrado nesta categoria ou busca.</p>
+              <p className="text-sm">Nenhum item na lista de ida ainda.</p>
+              {isTech && (
+                <button
+                  onClick={() => setIsAddItemModalOpen(true)}
+                  className="mt-3 px-4 py-2 rounded-xl bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold"
+                >
+                  + Adicionar Primeiro Item
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1025,24 +1302,31 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleSyncReturnFromDeparture}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-500/30 font-bold text-xs uppercase tracking-wider transition-all duration-300"
-                  title="Sincronizar com itens levados na Ida"
-                >
-                  <RefreshCw size={14} />
-                  <span>Sincronizar da Ida</span>
-                </button>
+              {isTech ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={handleSyncReturnFromDeparture}
+                    className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-500/30 font-bold text-xs uppercase tracking-wider transition-all duration-300"
+                    title="Sincronizar com itens levados na Ida"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Sincronizar da Ida</span>
+                  </button>
 
-                <button
-                  onClick={() => setIsAddReturnItemModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary"
-                >
-                  <Plus size={16} />
-                  <span>Novo Item Ganho/Comprado</span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => setIsAddReturnItemModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary"
+                  >
+                    <Plus size={16} />
+                    <span>Novo Item Ganho/Comprado</span>
+                  </button>
+                </div>
+              ) : (
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-text-muted border border-white/5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-orange-400" />
+                  <span>Gerenciado pelos Técnicos</span>
+                </span>
+              )}
             </div>
 
             <div className="mt-4">
@@ -1112,30 +1396,32 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditingReturnItem({ ...item });
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-cyan-300 hover:bg-cyan-500/10 transition-all"
-                    title="Editar item"
-                  >
-                    <Edit3 size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDeleteReturnItem(item.id);
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
-                    title="Excluir item"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+                {isTech && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setEditingReturnItem({ ...item });
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-cyan-300 hover:bg-cyan-500/10 transition-all"
+                      title="Editar item"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeleteReturnItem(item.id);
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Excluir item"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1144,12 +1430,14 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
             <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 p-6 text-text-muted">
               <PlaneLanding size={36} className="mx-auto mb-2 opacity-40 text-cyan-400" />
               <p className="text-sm">Nenhum item na lista de retorno ainda.</p>
-              <button
-                onClick={handleSyncReturnFromDeparture}
-                className="mt-3 px-4 py-2 rounded-xl bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold"
-              >
-                Carregar itens levados na Ida
-              </button>
+              {isTech && (
+                <button
+                  onClick={handleSyncReturnFromDeparture}
+                  className="mt-3 px-4 py-2 rounded-xl bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold"
+                >
+                  Carregar itens levados na Ida
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1174,13 +1462,20 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddHotelItemModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
-              >
-                <Plus size={16} />
-                <span>Adicionar Tarefa</span>
-              </button>
+              {isTech ? (
+                <button
+                  onClick={() => setIsAddHotelItemModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
+                >
+                  <Plus size={16} />
+                  <span>Adicionar Tarefa</span>
+                </button>
+              ) : (
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-text-muted border border-white/5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-orange-400" />
+                  <span>Gerenciado pelos Técnicos</span>
+                </span>
+              )}
             </div>
 
             <div className="mt-4">
@@ -1233,33 +1528,50 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditingHotelItem({ ...item });
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-amber-300 hover:bg-amber-500/10 transition-all"
-                    title="Editar tarefa"
-                  >
-                    <Edit3 size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDeleteHotelItem(item.id);
-                    }}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
-                    title="Excluir"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+                {isTech && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setEditingHotelItem({ ...item });
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-amber-300 hover:bg-amber-500/10 transition-all"
+                      title="Editar tarefa"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeleteHotelItem(item.id);
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Excluir"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
+
+          {matchesData.hotelDepartureChecklist.length === 0 && (
+            <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 p-6 text-text-muted">
+              <Hotel size={36} className="mx-auto mb-2 opacity-40 text-amber-400" />
+              <p className="text-sm">Nenhuma checagem de saída do hotel cadastrada ainda.</p>
+              {isTech && (
+                <button
+                  onClick={() => setIsAddHotelItemModalOpen(true)}
+                  className="mt-3 px-4 py-2 rounded-xl bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-bold"
+                >
+                  + Adicionar Primeira Tarefa
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1277,26 +1589,33 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                {currentMatch && (
-                  <button
-                    onClick={() => setEditingMatchDetails({ ...currentMatch })}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wider border border-white/10"
-                    title="Editar informações da partida"
-                  >
-                    <Edit3 size={14} />
-                    <span>Editar Partida</span>
-                  </button>
-                )}
+              {isTech ? (
+                <div className="flex items-center gap-2">
+                  {currentMatch && (
+                    <button
+                      onClick={() => setEditingMatchDetails({ ...currentMatch })}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wider border border-white/10"
+                      title="Editar informações da partida"
+                    >
+                      <Edit3 size={14} />
+                      <span>Editar Partida</span>
+                    </button>
+                  )}
 
-                <button
-                  onClick={() => setIsNewMatchModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
-                >
-                  <Plus size={16} />
-                  <span>Nova Partida</span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => setIsNewMatchModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
+                  >
+                    <Plus size={16} />
+                    <span>Nova Partida</span>
+                  </button>
+                </div>
+              ) : (
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-text-muted border border-white/5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-orange-400" />
+                  <span>Configurado pelos Técnicos</span>
+                </span>
+              )}
             </div>
 
             {/* Carrossel de Partidas */}
@@ -1530,41 +1849,45 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                           {ci.label}
                         </span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCustomPreItem(ci.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-red-400 transition-all"
-                        title="Remover ponto de checagem"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {isTech && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomPreItem(ci.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-red-400 transition-all"
+                          title="Remover ponto de checagem"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   ))}
 
-                  {/* Adicionar Ponto de Inspeção Customizado Pré-Match */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="text"
-                      placeholder="+ Ponto customizado de checagem pré-match..."
-                      value={customPreLabel}
-                      onChange={e => setCustomPreLabel(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomPreItem();
-                        }
-                      }}
-                      className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500/50"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomPreItem}
-                      disabled={!customPreLabel.trim()}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 text-orange-400 text-xs font-bold"
-                    >
-                      Adicionar
-                    </button>
-                  </div>
+                  {/* Adicionar Ponto de Inspeção Customizado Pré-Match (Técnicos) */}
+                  {isTech && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        placeholder="+ Ponto customizado de checagem pré-match..."
+                        value={customPreLabel}
+                        onChange={e => setCustomPreLabel(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomPreItem();
+                          }
+                        }}
+                        className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomPreItem}
+                        disabled={!customPreLabel.trim()}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 text-orange-400 text-xs font-bold"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1793,40 +2116,44 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                           {ci.label}
                         </span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCustomPostItem(ci.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-red-400 transition-all"
-                        title="Remover ponto de inspeção pós-match"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {isTech && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomPostItem(ci.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-red-400 transition-all"
+                          title="Remover ponto de inspeção pós-match"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   ))}
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="text"
-                      placeholder="+ Ponto customizado de checagem pós-match..."
-                      value={customPostLabel}
-                      onChange={e => setCustomPostLabel(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomPostItem();
-                        }
-                      }}
-                      className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/50"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomPostItem}
-                      disabled={!customPostLabel.trim()}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 text-cyan-300 text-xs font-bold"
-                    >
-                      Adicionar
-                    </button>
-                  </div>
+                  {isTech && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        placeholder="+ Ponto customizado de checagem pós-match..."
+                        value={customPostLabel}
+                        onChange={e => setCustomPostLabel(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomPostItem();
+                          }
+                        }}
+                        className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomPostItem}
+                        disabled={!customPostLabel.trim()}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 text-cyan-300 text-xs font-bold"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <label className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 cursor-pointer transition-all">
@@ -1879,14 +2206,16 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
                     </span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteMatch(currentMatch.id)}
-                    className="p-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-text-muted hover:text-red-400 border border-white/5 transition-all"
-                    title="Excluir partida"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {isTech && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMatch(currentMatch.id)}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-text-muted hover:text-red-400 border border-white/5 transition-all"
+                      title="Excluir partida"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1894,12 +2223,247 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
             <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 p-6 text-text-muted">
               <ShieldCheck size={36} className="mx-auto mb-2 opacity-40 text-orange-400" />
               <p className="text-sm">Nenhuma partida registrada ainda.</p>
-              <button
-                onClick={() => setIsNewMatchModalOpen(true)}
-                className="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white font-bold text-xs uppercase tracking-wider"
-              >
-                Cadastrar Primeira Partida
-              </button>
+              {isTech && (
+                <button
+                  onClick={() => setIsNewMatchModalOpen(true)}
+                  className="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white font-bold text-xs uppercase tracking-wider"
+                >
+                  Cadastrar Primeira Partida
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────────────────
+          NOVA ABA: CHECKLISTS EXTRAS / PERSONALIZADOS DA EQUIPE
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'custom_checklists' && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-primary/40 border border-white/5 backdrop-blur-xl relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-black text-white">Checklists Extras da Equipe</h3>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
+                    {customChecklists.length} Listas Cadastradas
+                  </span>
+                </div>
+                <p className="text-sm text-text-secondary mt-1">
+                  Listas criadas pelos técnicos para cobrir áreas específicas do torneio (Pit, Juízes, Inspeção Técnica, Mídia, etc.).
+                </p>
+              </div>
+
+              {isTech ? (
+                <button
+                  onClick={() => setIsNewCustomChecklistModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
+                >
+                  <Plus size={16} />
+                  <span>Novo Checklist</span>
+                </button>
+              ) : (
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-white/5 text-text-muted border border-white/5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-orange-400" />
+                  <span>Criação reservada para os Técnicos</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Cards de cada Checklist Personalizado */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {customChecklists.map(checklist => {
+              const totalItems = checklist.items.length;
+              const completedCount = checklist.items.filter(i => i.completed).length;
+              const percent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+
+              return (
+                <div
+                  key={checklist.id}
+                  className="p-6 rounded-2xl bg-primary/40 border border-white/5 backdrop-blur-xl space-y-4 hover:border-white/10 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Header do Checklist */}
+                    <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/5">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-black text-lg text-white">{checklist.title}</h4>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-indigo-300 border border-indigo-500/30 font-bold uppercase">
+                            {checklist.category || 'Geral'}
+                          </span>
+                        </div>
+                        {checklist.description && (
+                          <p className="text-xs text-text-secondary mt-1">{checklist.description}</p>
+                        )}
+                        <span className="text-[10px] text-text-muted block mt-1">
+                          Criado por {checklist.createdBy}
+                        </span>
+                      </div>
+
+                      {isTech && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setEditingCustomChecklist({ ...checklist })}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
+                            title="Editar checklist"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomChecklist(checklist.id)}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="Excluir checklist"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-text-muted mb-1">
+                        <span>Progresso</span>
+                        <span className={percent === 100 ? 'text-emerald-400' : 'text-indigo-300'}>
+                          {completedCount}/{totalItems} ({percent}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden p-0.5 border border-white/5">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-500"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Lista de Itens */}
+                    <div className="space-y-2 pt-3">
+                      {checklist.items.map(item => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleToggleCustomChecklistItem(checklist.id, item.id)}
+                          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 group ${
+                            item.completed
+                              ? 'bg-indigo-950/20 border-indigo-500/30 opacity-80'
+                              : 'bg-white/5 border-white/5 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                            <div className="mt-0.5 shrink-0 text-indigo-400">
+                              {item.completed ? (
+                                <CheckCircle2 size={18} className="text-emerald-400" />
+                              ) : (
+                                <Circle size={18} className="opacity-40 group-hover:opacity-100" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-xs font-bold ${item.completed ? 'line-through text-text-secondary' : 'text-white'}`}>
+                                  {item.name}
+                                </span>
+                                {item.quantity && item.quantity > 1 && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-bold">
+                                    x{item.quantity}
+                                  </span>
+                                )}
+                              </div>
+                              {item.notes && (
+                                <span className="text-[11px] text-text-muted block truncate italic mt-0.5">
+                                  "{item.notes}"
+                                </span>
+                              )}
+                              {item.completed && item.completedBy && (
+                                <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 font-medium">
+                                  <User size={10} />
+                                  <span>Conferido por {item.completedBy}</span>
+                                  {item.completedAt && (
+                                    <span className="opacity-75">
+                                      ({new Date(item.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {isTech && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                              <button
+                                type="button"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setEditingCustomItem({ sectionId: checklist.id, item: { ...item } });
+                                }}
+                                className="p-1 rounded text-text-muted hover:text-white"
+                                title="Editar item"
+                              >
+                                <Edit3 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleDeleteCustomItem(checklist.id, item.id);
+                                }}
+                                className="p-1 rounded text-text-muted hover:text-red-400"
+                                title="Excluir item"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {checklist.items.length === 0 && (
+                        <p className="text-center py-4 text-xs text-text-muted italic">
+                          Nenhum item adicionado a este checklist ainda.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botão de Adicionar Item ao Checklist (Apenas Técnicos) */}
+                  {isTech && (
+                    <div className="pt-2 border-t border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => setActiveCustomChecklistForNewItem(checklist.id)}
+                        className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-indigo-300 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Plus size={14} />
+                        <span>Adicionar Item a este Checklist</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {customChecklists.length === 0 && (
+            <div className="text-center py-16 rounded-2xl border border-dashed border-white/10 p-6 text-text-muted space-y-3">
+              <ClipboardList size={40} className="mx-auto opacity-40 text-indigo-400" />
+              <div>
+                <h4 className="text-sm font-bold text-white">Nenhum checklist personalizado cadastrado</h4>
+                <p className="text-xs text-text-secondary mt-1 max-w-md mx-auto">
+                  {isTech
+                    ? 'Como técnico, você pode criar checklists específicos para qualquer etapa da competição (ex: Inspeção de Pista, Avaliação com Juízes, Organização do Pit).'
+                    : 'Apenas os técnicos podem cadastrar novos checklists estruturais. Quando criados, você poderá marcar e conferir os itens aqui.'}
+                </p>
+              </div>
+              {isTech && (
+                <button
+                  onClick={() => setIsNewCustomChecklistModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-glow-primary transition-all"
+                >
+                  + Criar Novo Checklist
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1923,7 +2487,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: ADICIONAR ITEM NA VIAGEM (IDA)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {isAddItemModalOpen && (
+        {isAddItemModalOpen && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2038,7 +2602,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: EDITAR ITEM DA VIAGEM (IDA)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {editingDepartureItem && (
+        {editingDepartureItem && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2135,7 +2699,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: ADICIONAR ITEM RETORNO (GANHO / COMPRADO LÁ)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {isAddReturnItemModalOpen && (
+        {isAddReturnItemModalOpen && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2242,7 +2806,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: EDITAR ITEM DE RETORNO (VOLTA)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {editingReturnItem && (
+        {editingReturnItem && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2346,7 +2910,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: ADICIONAR TAREFA SAÍDA DO HOTEL
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {isAddHotelItemModalOpen && (
+        {isAddHotelItemModalOpen && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2416,7 +2980,7 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
           MODAL: EDITAR TAREFA SAÍDA DO HOTEL
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {editingHotelItem && (
+        {editingHotelItem && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2478,10 +3042,352 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
       </AnimatePresence>
 
       {/* ───────────────────────────────────────────────────────────────────────
-          MODAL: CRIAR NOVA PARTIDA
+          MODAL: CRIAR NOVO CHECKLIST PERSONALIZADO (TÉCNICOS)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {isNewMatchModalOpen && (
+        {isNewCustomChecklistModalOpen && isTech && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-primary/95 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">
+                    <ListPlus size={18} />
+                  </div>
+                  <h3 className="text-lg font-black text-white">Criar Novo Checklist da Equipe</h3>
+                </div>
+                <button onClick={() => setIsNewCustomChecklistModalOpen(false)} className="p-1 rounded-lg text-text-muted hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Nome / Título do Checklist *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Inspeção de Pista, Apresentação dos Juízes, Organização do Pit..."
+                    value={newCustomChecklistTitle}
+                    onChange={e => setNewCustomChecklistTitle(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Categoria / Setor
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Pit, Juízes, Mecânica, Geral..."
+                    value={newCustomChecklistCategory}
+                    onChange={e => setNewCustomChecklistCategory(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Descrição / Instruções para os Membros
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Ex: Lista de pontos obrigatórios que a equipe deve conferir antes da avaliação oficial..."
+                    value={newCustomChecklistDesc}
+                    onChange={e => setNewCustomChecklistDesc(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsNewCustomChecklistModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateCustomChecklist}
+                  disabled={!newCustomChecklistTitle.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-glow-primary"
+                >
+                  Criar Checklist
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ───────────────────────────────────────────────────────────────────────
+          MODAL: EDITAR CHECKLIST PERSONALIZADO
+      ──────────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingCustomChecklist && isTech && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-primary/95 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="text-lg font-black text-white">Editar Checklist</h3>
+                <button onClick={() => setEditingCustomChecklist(null)} className="p-1 rounded-lg text-text-muted hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Título *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCustomChecklist.title}
+                    onChange={e => setEditingCustomChecklist({ ...editingCustomChecklist, title: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Categoria
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCustomChecklist.category || ''}
+                    onChange={e => setEditingCustomChecklist({ ...editingCustomChecklist, category: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Descrição
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editingCustomChecklist.description || ''}
+                    onChange={e => setEditingCustomChecklist({ ...editingCustomChecklist, description: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomChecklist(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditCustomChecklist}
+                  disabled={!editingCustomChecklist.title.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-glow-primary"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ───────────────────────────────────────────────────────────────────────
+          MODAL: ADICIONAR ITEM AO CHECKLIST PERSONALIZADO
+      ──────────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {activeCustomChecklistForNewItem && isTech && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-primary/95 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="text-lg font-black text-white">Adicionar Item ao Checklist</h3>
+                <button onClick={() => setActiveCustomChecklistForNewItem(null)} className="p-1 rounded-lg text-text-muted hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Nome do Item / Tarefa *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Verificar parafusos do braço, Testar autonomous 2..."
+                    value={newCustomItemName}
+                    onChange={e => setNewCustomItemName(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Quantidade (opcional)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newCustomItemQuantity}
+                    onChange={e => setNewCustomItemQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Instruções / Notas (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Apertar com chave 4mm, verificar folga..."
+                    value={newCustomItemNotes}
+                    onChange={e => setNewCustomItemNotes(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setActiveCustomChecklistForNewItem(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddCustomChecklistItem}
+                  disabled={!newCustomItemName.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-glow-primary"
+                >
+                  Adicionar Item
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ───────────────────────────────────────────────────────────────────────
+          MODAL: EDITAR ITEM DO CHECKLIST PERSONALIZADO
+      ──────────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingCustomItem && isTech && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-primary/95 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="text-lg font-black text-white">Editar Item do Checklist</h3>
+                <button onClick={() => setEditingCustomItem(null)} className="p-1 rounded-lg text-text-muted hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">
+                    Nome / Tarefa *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCustomItem.item.name}
+                    onChange={e =>
+                      setEditingCustomItem({
+                        ...editingCustomItem,
+                        item: { ...editingCustomItem.item, name: e.target.value },
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">Quantidade</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingCustomItem.item.quantity || 1}
+                    onChange={e =>
+                      setEditingCustomItem({
+                        ...editingCustomItem,
+                        item: {
+                          ...editingCustomItem.item,
+                          quantity: Math.max(1, parseInt(e.target.value) || 1),
+                        },
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1">Notas / Detalhes</label>
+                  <input
+                    type="text"
+                    value={editingCustomItem.item.notes || ''}
+                    onChange={e =>
+                      setEditingCustomItem({
+                        ...editingCustomItem,
+                        item: { ...editingCustomItem.item, notes: e.target.value },
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomItem(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditCustomItem}
+                  disabled={!editingCustomItem.item.name.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-glow-primary"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ───────────────────────────────────────────────────────────────────────
+          MODAL: CRIAR NOVA PARTIDA (TÉCNICOS)
+      ──────────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isNewMatchModalOpen && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -2574,10 +3480,10 @@ export const CompetitionChecklists: React.FC<CompetitionChecklistsProps> = ({
       </AnimatePresence>
 
       {/* ───────────────────────────────────────────────────────────────────────
-          MODAL: EDITAR INFORMAÇÕES DA PARTIDA
+          MODAL: EDITAR INFORMAÇÕES DA PARTIDA (TÉCNICOS)
       ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {editingMatchDetails && (
+        {editingMatchDetails && isTech && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}

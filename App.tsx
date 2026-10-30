@@ -63,7 +63,10 @@ import { generateDailyQuests, getAiChatResponseAndActions, devGenerateText, gene
 import { getUpcomingEvents, formatEventsForPrompt } from './services/googleCalendarService';
 import { getRecentActivity, formatActivityForPrompt as formatGithubActivityForPrompt } from './services/githubService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare, Trophy } from 'lucide-react';
+import { Dna, TreeDeciduous, Package, BotMessageSquare, Menu as MenuIcon, LayoutDashboard, MoreHorizontal, ScrollText, MessageSquare, Trophy, LogOut } from 'lucide-react';
+import { getStoredSession, saveSession, clearSession, setupAuthInterceptor } from './utils/authSession';
+
+setupAuthInterceptor();
 
 type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'more' | 'store' | 'staking' | 'system_log' | 'analytics' | 'story_log' | 'badges' | 'journal' | 'timer' | 'system_mechanics' | 'team_missions' | 'tech_dashboard' | 'journey' | 'printer_queue' | 'attendance' | 'finance' | 'kanban' | '5w2h' | 'learning_trails' | 'chat' | 'member_management' | 'mentor_management' | 'projects' | 'b_projects' | 'prototypes' | 'forms' | 'scan_bleed' | 'goals_board' | 'competitions';
 
@@ -222,8 +225,9 @@ const recalculateSkillTree = (
 
 const App: React.FC = () => {
   const { t, i18n } = useTranslation(['common', 'constants']);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>('member');
+  const initialSession = getStoredSession();
+  const [currentUser, setCurrentUser] = useState<string | null>(initialSession.username);
+  const [userRole, setUserRole] = useState<UserRole>(initialSession.role || 'member');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
 
   // Team missions state
@@ -536,6 +540,68 @@ const App: React.FC = () => {
     setLastLootboxClaim(data.lastLootboxClaim || null);
     setChatHistory(data.chatHistory || []);
   }, []);
+
+  const loadUserData = useCallback((username: string) => {
+    setIsInitialLoading(true);
+    return Promise.all([
+      fetch(`/api/persistence?username=${encodeURIComponent(username)}`).then(res => res.json()),
+      fetch(`/api/team-missions?member=${encodeURIComponent(username)}`).then(res => res.json()),
+    ])
+      .then(([userData, missionsData]) => {
+        if (userData.success && userData.data) {
+          const migratedData = migrateLoadedState(userData.data);
+          if (!migratedData.user.name || migratedData.user.name === "Awakened") {
+            migratedData.user.name = username;
+          }
+          setStateFromData(migratedData);
+        } else {
+          const member = getMemberByUsername(username);
+          if (member) {
+            const initialData = getInitialUserData(member);
+            setStateFromData(initialData);
+          } else {
+            setUser(prev => ({ ...prev, name: username }));
+          }
+        }
+        if (missionsData.success) {
+          setTeamMissions(missionsData.missions);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load user state from server:', err);
+        const member = getMemberByUsername(username);
+        if (member) {
+          const initialData = getInitialUserData(member);
+          setStateFromData(initialData);
+        } else {
+          setUser(prev => ({ ...prev, name: username }));
+        }
+      })
+      .finally(() => setIsInitialLoading(false));
+  }, [setStateFromData]);
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    setCurrentUser(null);
+    setUserRole('member');
+    setView('home');
+  }, []);
+
+  const initialLoadTriggered = useRef(false);
+  useEffect(() => {
+    if (currentUser && !initialLoadTriggered.current) {
+      initialLoadTriggered.current = true;
+      loadUserData(currentUser);
+    }
+  }, [currentUser, loadUserData]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+    window.addEventListener('bazmanager_auth_unauthorized', handleAuthExpired);
+    return () => window.removeEventListener('bazmanager_auth_unauthorized', handleAuthExpired);
+  }, [handleLogout]);
 
   const handleSaveApiKey = useCallback((newKey: string) => {
     localStorage.setItem('googleAiApiKey', newKey);
@@ -2040,15 +2106,15 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'system_mechanics': return <SystemMechanics />;
       case 'team_missions': return <TeamMissions missions={teamMissions} currentUser={currentUser || ''} onCompleteMission={handleCompleteTeamMission} onRefresh={() => fetchTeamMissions(currentUser || undefined)} isLoading={isTeamMissionsLoading} />;
       case 'printer_queue': return <PrinterQueue currentUser={currentUser || ''} />;
-      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onEditMission={(mission) => { setMissionToEdit(mission); setIsCreateMissionModalOpen(true); }} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} />;
-      case 'attendance': return userRole === 'technician' ? <AttendanceDashboard currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'tech_dashboard': return userRole === 'technician' ? <TechDashboard currentUser={currentUser || ''} missions={teamMissions} onCreateMission={() => setIsCreateMissionModalOpen(true)} onEditMission={(mission) => { setMissionToEdit(mission); setIsCreateMissionModalOpen(true); }} onDeleteMission={handleDeleteTeamMission} onRefreshMissions={() => fetchTeamMissions()} isMissionsLoading={isTeamMissionsLoading} /> : <Menu onNavigate={setView} userRole={userRole} onLogout={handleLogout} />;
+      case 'attendance': return userRole === 'technician' ? <AttendanceDashboard currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} onLogout={handleLogout} />;
       case 'finance': return <FinanceDashboard userRole={userRole} />;
       case 'kanban': return <KanbanBoard currentUser={currentUser || ''} userRole={userRole} missions={teamMissions} onCompleteMission={handleCompleteTeamMission} />;
       case 'journey': return <JourneyTab username={currentUser || ''} userRole={userRole} />;
       case '5w2h': return <FiveW2HBoard currentUser={currentUser || ''} userRole={userRole} onNotify={sendNotifications} />;
       case 'learning_trails': return <LearningTrails currentUser={currentUser || ''} userRole={userRole} />;
       case 'chat': return <TeamChat currentUser={currentUser || ''} />;
-      case 'member_management': return userRole === 'technician' ? <MemberManagement currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} />;
+      case 'member_management': return userRole === 'technician' ? <MemberManagement currentUser={currentUser || ''} /> : <Menu onNavigate={setView} userRole={userRole} onLogout={handleLogout} />;
       case 'mentor_management': return <MentorManagement currentUser={currentUser || ''} userRole={userRole} />;
       case 'b_projects': return <BProjectsTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'prototypes': return <PrototypesTab currentUser={currentUser || ''} userRole={userRole} />;
@@ -2057,7 +2123,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       case 'scan_bleed': return <ScanBLeedTab currentUser={currentUser || ''} userRole={userRole} onNavigate={(v) => setView(v as View)} />;
       case 'goals_board': return <GoalsBoardTab currentUser={currentUser || ''} userRole={userRole} />;
       case 'competitions': return <CompetitionsHub currentUser={currentUser || ''} userRole={userRole} />;
-      case 'more': return <Menu onNavigate={setView} userRole={userRole} />;
+      case 'more': return <Menu onNavigate={setView} userRole={userRole} onLogout={handleLogout} />;
       default: return <Home currentUser={currentUser || ''} notifications={appNotifications} teamMissions={teamMissions} onNavigate={setView as any} onMarkNotificationRead={handleMarkNotificationRead} onNotificationClick={handleNotificationClick} />;
     }
   };
@@ -2081,48 +2147,13 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
   if (!currentUser) {
     return (
       <LoginModal 
-        onLoginSuccess={(username, role) => {
+        onLoginSuccess={(username, role, token, awardFocus) => {
+          if (token) {
+            saveSession(token, username, role, awardFocus);
+          }
           setCurrentUser(username);
           setUserRole(role);
-          setIsInitialLoading(true);
-          
-          // Load user data and team missions in parallel
-          Promise.all([
-            fetch(`/api/persistence?username=${username}`).then(res => res.json()),
-            fetch(`/api/team-missions?member=${username}`).then(res => res.json()),
-          ])
-            .then(([userData, missionsData]) => {
-              if (userData.success && userData.data) {
-                const migratedData = migrateLoadedState(userData.data);
-                if (!migratedData.user.name || migratedData.user.name === "Awakened") {
-                  migratedData.user.name = username;
-                }
-                setStateFromData(migratedData);
-              } else {
-                // First login — generate initial data based on member's award focus
-                const member = getMemberByUsername(username);
-                if (member) {
-                  const initialData = getInitialUserData(member);
-                  setStateFromData(initialData);
-                } else {
-                  setUser(prev => ({ ...prev, name: username }));
-                }
-              }
-              if (missionsData.success) {
-                setTeamMissions(missionsData.missions);
-              }
-            })
-            .catch(err => {
-              console.error('Failed to load user state from server:', err);
-              const member = getMemberByUsername(username);
-              if (member) {
-                const initialData = getInitialUserData(member);
-                setStateFromData(initialData);
-              } else {
-                setUser(prev => ({ ...prev, name: username }));
-              }
-            })
-            .finally(() => setIsInitialLoading(false));
+          loadUserData(username);
         }} 
         isLoading={isInitialLoading} 
       />
@@ -2153,6 +2184,17 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             </button>
           ))}
         </nav>
+        {/* Logout button at bottom of desktop sidebar */}
+        <div className="p-3 border-t border-white/5 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-3 rounded-xl transition-all duration-300 group text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
+            title="Sair do Sistema"
+          >
+            <LogOut size={20} className="shrink-0 md:mx-auto lg:mx-0 opacity-70 group-hover:opacity-100 transition-opacity" />
+            <span className="ml-4 font-black tracking-[0.1em] text-[11px] uppercase hidden lg:block">Sair</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}

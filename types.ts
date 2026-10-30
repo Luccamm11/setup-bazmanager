@@ -399,6 +399,10 @@ export interface FiveW2HPlan {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNote?: string;
+  missionLevel?: number;
+  evidenceType?: EvidenceType;
+  evidenceMultiplier?: number;
+  competencyWeights?: { realm: Realm; percentage: number }[];
 
   // Links externos de imagens/evidências
   imageLinks?: string[];
@@ -658,6 +662,10 @@ export interface MemberSkillScore {
   realmScores: Partial<Record<Realm, number>>;
   totalXp: number;
   feedback?: string;
+  missionLevel?: number;
+  evidenceType?: EvidenceType;
+  evidenceMultiplier?: number;
+  competencyWeights?: { realm: Realm; percentage: number }[];
 }
 
 export interface ActivityEvaluation {
@@ -843,9 +851,30 @@ export interface MatchRecord {
   createdBy: string;
 }
 
+export interface CustomChecklistItemData {
+  id: string;
+  name: string;
+  category?: string;
+  quantity?: number;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface CustomChecklistSection {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  items: CustomChecklistItemData[];
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+}
 export interface ChecklistAuditLog {
   id: string;
-  checklistType: 'travel_departure' | 'travel_return' | 'hotel_departure' | 'match_pre' | 'match_post';
+  checklistType: 'travel_departure' | 'travel_return' | 'hotel_departure' | 'match_pre' | 'match_post' | 'custom_checklist';
   action: 'checked' | 'unchecked' | 'created' | 'updated' | 'deleted';
   itemName: string;
   username: string;
@@ -868,6 +897,7 @@ export interface CompetitionEvent {
   description?: string;
   travelChecklist: TravelChecklistHub;
   matchesChecklist: MatchesChecklistHub;
+  customChecklists?: CustomChecklistSection[];
   historyLogs?: ChecklistAuditLog[];
   createdAt: string;
   createdBy: string;

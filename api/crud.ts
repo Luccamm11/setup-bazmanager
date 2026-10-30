@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import redis from './_lib/redis.js';
+import { authenticateRequest } from './_lib/auth.js';
 import type { CompetitionData, CompetitionEvent, MatchRecord } from '../types.js';
 import { INITIAL_COMPETITIONS_DATA } from '../data/initialCompetitionsData.js';
 
@@ -414,6 +415,11 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
+    const auth = authenticateRequest(req);
+    if (!auth.valid || !auth.user) {
+      return res.status(401).json({ success: false, error: 'Acesso não autorizado. Token ausente ou inválido.' });
+    }
+
     const { action, username, data, eventId, payload } = req.body;
 
     if (!username) {
@@ -627,6 +633,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
+      const auth = authenticateRequest(req);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ success: false, error: 'Acesso não autorizado. Token ausente ou inválido.' });
+      }
+
       const { records, tasks, learning_trails, chat } = req.body;
       let data: any;
       if (type === 'kanban') {

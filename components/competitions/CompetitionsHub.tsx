@@ -18,6 +18,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
   currentUser,
   userRole,
 }) => {
+  const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
   const [data, setData] = useState<CompetitionData>(INITIAL_COMPETITIONS_DATA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,30 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
       const res = await fetch('/api/crud?type=competitions');
       const json = await res.json();
       if (json.success && json.data) {
-        setData(json.data);
+        const isLegacyId = (id: string) => /^(dep|ret|hotel)-([1-9]|1\d|20)$/.test(id) || id === 'match-practice-1';
+        const cleanedEvents = (json.data.events || []).map((ev: CompetitionEvent) => ({
+          ...ev,
+          travelChecklist: {
+            departureCategories: ev.travelChecklist?.departureCategories || [
+              'Robô & Mecânica',
+              'Eletrônica & Baterias',
+              'Ferramentas & Fixação',
+              'Estrutura do Pit',
+              'Documentação & Equipe',
+            ],
+            departureItems: (ev.travelChecklist?.departureItems || []).filter(item => !isLegacyId(item.id)),
+            returnItems: (ev.travelChecklist?.returnItems || []).filter(item => !isLegacyId(item.id)),
+          },
+          matchesChecklist: {
+            hotelDepartureChecklist: (ev.matchesChecklist?.hotelDepartureChecklist || []).filter(item => !isLegacyId(item.id)),
+            matches: (ev.matchesChecklist?.matches || []).filter(item => item.id !== 'match-practice-1'),
+          },
+          customChecklists: ev.customChecklists || [],
+        }));
+        setData({
+          ...json.data,
+          events: cleanedEvents,
+        });
       } else {
         throw new Error(json.error || 'Erro ao carregar dados de competições.');
       }
@@ -114,6 +138,10 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
 
   // Criar Novo Evento
   const handleCreateEvent = async () => {
+    if (!isTech) {
+      alert('Apenas técnicos podem cadastrar novas competições.');
+      return;
+    }
     if (!newEventName.trim()) return;
 
     const newEvent: CompetitionEvent = {
@@ -135,61 +163,14 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           'Estrutura do Pit',
           'Documentação & Equipe',
         ],
-        departureItems: [
-          {
-            id: `dep-${Date.now()}-1`,
-            name: 'Robô Principal de Competição',
-            category: 'Robô & Mecânica',
-            quantity: 1,
-            packed: false,
-          },
-          {
-            id: `dep-${Date.now()}-2`,
-            name: 'Bumpers Oficiais Azul e Vermelho',
-            category: 'Robô & Mecânica',
-            quantity: 2,
-            packed: false,
-          },
-          {
-            id: `dep-${Date.now()}-3`,
-            name: 'Baterias 12V testadas e rotuladas',
-            category: 'Eletrônica & Baterias',
-            quantity: 4,
-            packed: false,
-          },
-          {
-            id: `dep-${Date.now()}-4`,
-            name: 'Caixa de Ferramentas Principal',
-            category: 'Ferramentas & Fixação',
-            quantity: 1,
-            packed: false,
-          },
-        ],
+        departureItems: [],
         returnItems: [],
       },
       matchesChecklist: {
-        hotelDepartureChecklist: [
-          {
-            id: `hotel-${Date.now()}-1`,
-            task: 'Robô no carrinho de transporte',
-            category: 'Transporte Arena',
-            completed: false,
-          },
-          {
-            id: `hotel-${Date.now()}-2`,
-            task: 'Baterias cheias carregadas',
-            category: 'Transporte Arena',
-            completed: false,
-          },
-          {
-            id: `hotel-${Date.now()}-3`,
-            task: 'Óculos de proteção da equipe',
-            category: 'Segurança & Acesso',
-            completed: false,
-          },
-        ],
+        hotelDepartureChecklist: [],
         matches: [],
       },
+      customChecklists: [],
     };
 
     const nextEvents = [newEvent, ...data.events];
@@ -226,6 +207,10 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
 
   // Excluir Evento
   const handleDeleteEvent = async (eventId: string) => {
+    if (!isTech) {
+      alert('Apenas técnicos podem excluir competições.');
+      return;
+    }
     if (!confirm('Tem certeza que deseja excluir esta competição e todos os seus checklists?')) return;
 
     const nextEvents = data.events.filter(e => e.id !== eventId);
@@ -300,6 +285,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
             </div>
           )}
 
+          {isTech && (
           <button
             onClick={() => setIsNewEventModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-glow-primary shrink-0"
@@ -307,6 +293,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
             <Plus size={14} />
             <span>Novo Torneio</span>
           </button>
+          )}
 
           <button
             onClick={fetchCompetitions}
@@ -347,7 +334,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
               <span className="text-text-muted">Partidas: </span>
               <span className="font-bold text-orange-400">{activeStats.matchesCount}</span>
             </div>
-            {userRole === 'technician' && data.events.length > 1 && (
+            {isTech && data.events.length > 1 && (
               <button
                 onClick={() => handleDeleteEvent(activeEvent.id)}
                 className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"

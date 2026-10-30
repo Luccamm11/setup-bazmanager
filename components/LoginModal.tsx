@@ -6,7 +6,7 @@ import { UserRole } from '../types';
 import { ALL_MEMBERS, TECHNICIAN_USERNAMES, getMemberByUsername } from '../data/members';
 
 interface LoginModalProps {
-  onLoginSuccess: (username: string, role: UserRole) => void;
+  onLoginSuccess: (username: string, role: UserRole, token?: string, awardFocus?: string | null) => void;
   isLoading: boolean;
 }
 
@@ -50,7 +50,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess, isLoading }) =>
       const data = await response.json();
 
       if (data.success) {
-        onLoginSuccess(selectedUser, data.role || 'member');
+        onLoginSuccess(selectedUser, data.role || 'member', data.token, data.awardFocus);
       } else {
         setError(data.message || t('incorrectPassword'));
       }

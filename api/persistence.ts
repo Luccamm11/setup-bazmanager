@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
+import { authenticateRequest } from './_lib/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method } = req;
@@ -22,10 +23,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (method === 'POST') {
+    const auth = authenticateRequest(req);
+    if (!auth.valid || !auth.user) {
+      return res.status(401).json({ error: 'Unauthorized. Invalid or missing token.' });
+    }
+
     const { username, data } = req.body;
 
     if (!username || !data) {
       return res.status(400).json({ error: 'Username and data are required' });
+    }
+
+    // Only allow updating own data, or if user is a technician
+    if (auth.user.username !== username && auth.user.role !== 'technician') {
+      return res.status(403).json({ error: 'Forbidden. You cannot overwrite another user data.' });
     }
 
     try {
