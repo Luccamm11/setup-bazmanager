@@ -11,7 +11,7 @@ interface MenuProps {
   onLogout?: () => void;
 }
 
-const Menu: React.FC<MenuProps> = ({ onNavigate, userRole }) => {
+const Menu: React.FC<MenuProps> = ({ onNavigate, userRole, onLogout }) => {
   const { t } = useTranslation('common');
 
   const menuItems: { view: View; label: string; desc: string; icon: React.ElementType; techOnly?: boolean; highlight?: boolean }[] = [
