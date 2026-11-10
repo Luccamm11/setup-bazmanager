@@ -57,7 +57,7 @@ const JourneyTab: React.FC<JourneyTabProps> = ({ username, userRole }) => {
               <h3 className="text-2xl font-black text-white">Minha Jornada</h3>
             </div>
             <p className="text-text-secondary mb-6 text-sm leading-relaxed">
-              Recupera seu histórico de evolução (Árvore de Habilidades, XP ganho, e Missões Concluídas) guardado no banco de dados e gera um arquivo estritamente factual usando IA.
+              Exporta sua jornada completa na Metodologia B-LEED: Cursos e Estudos Autônomos (ementas e certificados), Mentorias Estratégicas com especialistas, Evolução Coletiva (alianças FIRST), Árvore de Competências, Projetos B-Projects e Tarefas Kanban.
             </p>
           </div>
           
@@ -85,7 +85,7 @@ const JourneyTab: React.FC<JourneyTabProps> = ({ username, userRole }) => {
                 <h3 className="text-2xl font-black text-white">Jornada da Equipe</h3>
               </div>
               <p className="text-text-secondary mb-6 text-sm leading-relaxed">
-                Agrega o desenvolvimento e XP de todos os 12 membros da equipe (B-LEED), exportando uma visão geral do crescimento técnico e do portfólio da robótica.
+                Consolida a jornada oficial de todos os integrantes da Bazinga! 73 (B-LEED): carga horária total dos 3 pilares, matriz de competências FTC, inventário de mentorias e parcerias inter-equipes para o Caderno de Engenharia.
               </p>
             </div>
             
@@ -104,7 +104,7 @@ const JourneyTab: React.FC<JourneyTabProps> = ({ username, userRole }) => {
       </div>
 
       <div className="mt-8 bg-white/5 border border-dashed border-white/10 p-6 rounded-2xl text-text-secondary text-sm">
-        <strong className="text-white">Aviso:</strong> A IA responsável pela geração (Gemini GenAI) foi instruída a rodar com Temperature 0. Isso significa que ela está restrita a formatar 100% dos dados reais do KV Store da Vercel. <u>A IA está terminantemente proibida de inventar ou deduzir eventos que não ocorreram na plataforma.</u>
+        <strong className="text-white">Auditoria B-LEED:</strong> A exportação compila 100% dos dados factuais registrados no banco de dados da plataforma (Desenvolvimento Autônomo, Mentorias Estratégicas, Evolução Coletiva, Projetos de Engenharia, Kanban e Competências), complementada com síntese analítica profissional alinhada aos prêmios da FIRST e à ODS 4 da ONU.
       </div>
     </div>
   );
