@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Skill, Realm, KnowledgeTopic, TopicDifficulty } from '../types';
-import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Wand2, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
+import { BrainCircuit, Heart, Zap, Sparkles, Edit, Trash2, PlusCircle, Layers, Search, BookText, Users, Mic2, ClipboardList, Code, Hammer, Globe } from 'lucide-react';
 import { TOPIC_XP_MAP } from '../constants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
@@ -178,7 +178,7 @@ const SkillCard: React.FC<SkillCardProps> = (props) => {
 
 const SkillTree: React.FC<SkillTreeProps> = (props) => {
   const { t } = useTranslation(['skills', 'common']);
-  const { user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, onGenerateRecommendations, readOnly } = props;
+  const { user, onUpdateTopicDifficulty, onAddSkill, onEditSkill, onDeleteSkill, onAddTopicToSkill, onEditTopic, onDeleteTopic, onOpenBulkAddModal, onUpdateSkillPriority, onToggleSkillActive, readOnly } = props;
   const [searchQuery, setSearchQuery] = useState('');
 
   const skillsByRealm = Object.values(user.skill_tree).reduce((acc: Record<Realm, Skill[]>, skill: Skill) => {
@@ -248,10 +248,6 @@ const SkillTree: React.FC<SkillTreeProps> = (props) => {
               <button onClick={onAddSkill} className="flex items-center space-x-2 bg-gradient-to-r from-accent-green to-emerald-500 hover:from-emerald-500 hover:to-accent-green text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-primary hover:shadow-glow-secondary active:scale-95 border border-white/10">
                   <PlusCircle size={18} />
                   <span>{t('add_skill')}</span>
-              </button>
-               <button onClick={onGenerateRecommendations} className="flex items-center space-x-2 bg-gradient-to-r from-accent-tertiary to-purple-500 hover:from-purple-500 hover:to-accent-tertiary text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-glow-tertiary hover:shadow-glow-primary active:scale-95 border border-white/10">
-                  <Wand2 size={18} />
-                  <span>{t('generate_topics')}</span>
               </button>
           </motion.div>
         )}
