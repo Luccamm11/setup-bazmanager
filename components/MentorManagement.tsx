@@ -71,8 +71,8 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   // ─── Mentorship Record modal ───────────────────────────────────────────────
   const [recordModalOpen, setRecordModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MentorshipRecord | null>(null);
-  const [recMentorId, setRecMentorId] = useState('');
-  const [recMentorName, setRecMentorName] = useState('');
+  const [selectedMentors, setSelectedMentors] = useState<{ id?: string; name: string }[]>([]);
+  const [customMentorInput, setCustomMentorInput] = useState('');
   const [recDate, setRecDate] = useState('');
   const [recWorkloadHours, setRecWorkloadHours] = useState<number | ''>(2);
   const [recArea, setRecArea] = useState('');
@@ -183,24 +183,64 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
   };
 
   // ─── Mentorship Record handlers ────────────────────────────────────────────
-  const handleSaveRecord = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const resolvedMentor = mentors.find(m => m.id === recMentorId);
-    const resolvedName = recMentorName.trim() || (resolvedMentor ? resolvedMentor.name : '');
-    
-    if (!resolvedName || !recDate || recParticipants.length === 0 || !recObjectives.trim() || !recSolutions.trim() || !recNextSteps.trim()) {
-      alert('Preencha todos os campos do formulário B-Leed (Mentor, Data, Participantes, Objetivos, Soluções e Próximos Passos).');
+  const handleAddCustomMentor = () => {
+    const name = customMentorInput.trim();
+    if (!name) return;
+    if (selectedMentors.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+      setCustomMentorInput('');
       return;
     }
+    const found = mentors.find(m => m.name.toLowerCase() === name.toLowerCase());
+    setSelectedMentors(prev => [...prev, { id: found?.id, name: found ? found.name : name }]);
+    if (found?.area && !recArea) {
+      setRecArea(found.area);
+    }
+    setCustomMentorInput('');
+  };
+
+  const handleToggleMentorFromList = (m: Mentor) => {
+    setSelectedMentors(prev => {
+      const exists = prev.some(item => (item.id && item.id === m.id) || item.name.toLowerCase() === m.name.toLowerCase());
+      if (exists) {
+        return prev.filter(item => !((item.id && item.id === m.id) || item.name.toLowerCase() === m.name.toLowerCase()));
+      } else {
+        if (m.area && !recArea) {
+          setRecArea(m.area);
+        }
+        return [...prev, { id: m.id, name: m.name }];
+      }
+    });
+  };
+
+  const handleRemoveMentor = (index: number) => {
+    setSelectedMentors(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleSaveRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedMentors.length === 0) {
+      alert('Selecione ou adicione ao menos um mentor para esta sessão de mentoria.');
+      return;
+    }
+    if (!recDate || recParticipants.length === 0 || !recObjectives.trim() || !recSolutions.trim() || !recNextSteps.trim()) {
+      alert('Preencha todos os campos do formulário B-Leed (Mentores, Data, Participantes, Objetivos, Soluções e Próximos Passos).');
+      return;
+    }
+    const mentorIds = selectedMentors.map(m => m.id).filter(Boolean) as string[];
+    const mentorNames = selectedMentors.map(m => m.name.trim());
+    const resolvedName = mentorNames.join(', ');
+
     try {
       const payload = {
         action: editingRecord ? 'editRecord' : 'addRecord',
         id: editingRecord?.id,
-        mentorId: recMentorId || undefined,
+        mentorId: mentorIds[0] || undefined,
         mentorName: resolvedName,
+        mentorIds,
+        mentorNames,
         date: recDate,
         workloadHours: Number(recWorkloadHours) || 2,
-        area: recArea || resolvedMentor?.area || 'Geral',
+        area: recArea || 'Geral',
         participants: recParticipants,
         objectives: recObjectives.trim(),
         solutions: recSolutions.trim(),
@@ -218,9 +258,15 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
       setRecordModalOpen(false);
       setEditingRecord(null);
-      setRecMentorId(''); setRecMentorName(''); setRecDate('');
-      setRecWorkloadHours(2); setRecArea(''); setRecParticipants([]);
-      setRecObjectives(''); setRecSolutions(''); setRecNextSteps('');
+      setSelectedMentors([]);
+      setCustomMentorInput('');
+      setRecDate('');
+      setRecWorkloadHours(2);
+      setRecArea('');
+      setRecParticipants([]);
+      setRecObjectives('');
+      setRecSolutions('');
+      setRecNextSteps('');
       setRecImageLinks([]);
       fetchData();
     } catch (err: any) {
@@ -265,8 +311,24 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
   const openEditRecord = (rec: MentorshipRecord) => {
     setEditingRecord(rec);
-    setRecMentorId(rec.mentorId || '');
-    setRecMentorName(rec.mentorName || '');
+    let initialMentors: { id?: string; name: string }[] = [];
+    if (rec.mentorNames && rec.mentorNames.length > 0) {
+      initialMentors = rec.mentorNames.map((name, idx) => ({
+        id: rec.mentorIds?.[idx],
+        name,
+      }));
+    } else if (rec.mentorName) {
+      const split = rec.mentorName.split(',').map(s => s.trim()).filter(Boolean);
+      initialMentors = split.map(name => {
+        const found = mentors.find(m => m.name.toLowerCase() === name.toLowerCase());
+        return {
+          id: found?.id || (split.length === 1 ? rec.mentorId : undefined),
+          name,
+        };
+      });
+    }
+    setSelectedMentors(initialMentors);
+    setCustomMentorInput('');
     setRecDate(rec.date);
     setRecWorkloadHours(rec.workloadHours || 2);
     setRecArea(rec.area || '');
@@ -377,10 +439,14 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
 
   const filteredRecords = records.filter(r => {
     const mentor = mentors.find(m => m.id === r.mentorId);
-    const mName = (r.mentorName || mentor?.name || '').toLowerCase();
+    const mNames = [
+      r.mentorName,
+      ...(r.mentorNames || []),
+      mentor?.name,
+    ].filter(Boolean).join(' ').toLowerCase();
     const q = recordSearch.toLowerCase();
     return (
-      mName.includes(q) ||
+      mNames.includes(q) ||
       (r.objectives && r.objectives.toLowerCase().includes(q)) ||
       (r.solutions && r.solutions.toLowerCase().includes(q)) ||
       (r.nextSteps && r.nextSteps.toLowerCase().includes(q)) ||
@@ -393,8 +459,7 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
     w.location.toLowerCase().includes(workSearch.toLowerCase())
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const selectedMentorObj = mentors.find(m => m.id === recMentorId);
-
+  
   // ─── Mentor-eligible persons (role mentor or both) ─────────────────────────
   const mentorPersons = mentors.filter(m => m.role === 'mentor' || m.role === 'both');
 
@@ -477,7 +542,9 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                 <button
                   onClick={() => {
                     setEditingRecord(null);
-                    setRecMentorId(''); setRecMentorName(''); setRecDate(new Date().toISOString().split('T')[0]);
+                    setSelectedMentors([]);
+                    setCustomMentorInput('');
+                    setRecDate(new Date().toISOString().split('T')[0]);
                     setRecWorkloadHours(2); setRecArea(''); setRecParticipants([]);
                     setRecObjectives(''); setRecSolutions(''); setRecNextSteps('');
                     setRecImageLinks([]);
@@ -498,8 +565,34 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               ) : (
                 <div className="grid grid-cols-1 gap-5">
                   {filteredRecords.map(rec => {
-                    const mentor = mentors.find(m => m.id === rec.mentorId);
-                    const displayName = rec.mentorName || mentor?.name || 'Mentor Convidado';
+                    let displayMentors: { id?: string; name: string; org?: string; role?: Mentor['role'] }[] = [];
+                    if (rec.mentorNames && rec.mentorNames.length > 0) {
+                      displayMentors = rec.mentorNames.map((name, idx) => {
+                        const mId = rec.mentorIds?.[idx];
+                        const found = mentors.find(m => (mId && m.id === mId) || m.name.toLowerCase() === name.toLowerCase());
+                        return {
+                          id: mId || found?.id,
+                          name,
+                          org: found?.organization,
+                          role: found?.role,
+                        };
+                      });
+                    } else {
+                      const mentor = mentors.find(m => m.id === rec.mentorId);
+                      const names = (rec.mentorName || mentor?.name || 'Mentor Convidado')
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                      displayMentors = names.map(name => {
+                        const found = mentors.find(m => m.name.toLowerCase() === name.toLowerCase());
+                        return {
+                          id: found?.id || rec.mentorId,
+                          name,
+                          org: found?.organization || mentor?.organization,
+                          role: found?.role || mentor?.role,
+                        };
+                      });
+                    }
                     const workload = rec.workloadHours || 2;
 
                     return (
@@ -512,18 +605,30 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                       >
                         {/* Header do Card B-Leed */}
                         <div className="flex items-start justify-between gap-4 flex-wrap pb-3 border-b border-white/5">
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 font-black uppercase tracking-wider">
                                 B - LEED • Mentorias Estratégicas
                               </span>
-                              <h3 className="text-lg font-black text-white">{displayName}</h3>
-                              {mentor && <RoleBadge role={mentor.role} />}
-                              {mentor?.organization && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-text-secondary border border-white/10">
-                                  {mentor.organization}
+                              {displayMentors.length > 1 && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent-primary/15 text-accent-primary border border-accent-primary/30 font-bold">
+                                  {displayMentors.length} Mentores
                                 </span>
                               )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {displayMentors.map((dm, idx) => (
+                                <div key={idx} className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10">
+                                  <GraduationCap className="w-3.5 h-3.5 text-accent-primary shrink-0" />
+                                  <h3 className="text-base font-black text-white">{dm.name}</h3>
+                                  {dm.role && <RoleBadge role={dm.role} />}
+                                  {dm.org && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-text-secondary border border-white/10">
+                                      {dm.org}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap mt-1">
                               <span className="flex items-center gap-1.5 font-medium text-white/80">
@@ -881,7 +986,11 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
             // 1. Mentorship statistics (aggr by mentor name/id)
             const mentorStats = mentors.filter(m => m.role === 'mentor' || m.role === 'both').map(m => {
               const hours = records
-                .filter(r => r.mentorId === m.id || (r.mentorName && r.mentorName.toLowerCase() === m.name.toLowerCase()))
+                .filter(r => {
+                  if (r.mentorIds && r.mentorIds.includes(m.id)) return true;
+                  if (r.mentorNames && r.mentorNames.some(name => name.toLowerCase() === m.name.toLowerCase())) return true;
+                  return r.mentorId === m.id || (r.mentorName && r.mentorName.toLowerCase().includes(m.name.toLowerCase()));
+                })
                 .reduce((acc, curr) => acc + (curr.workloadHours || (curr.durationMinutes ? curr.durationMinutes / 60 : 2)), 0);
               return { name: m.name, hours, id: m.id };
             }).filter(item => item.hours > 0).sort((a, b) => b.hours - a.hours);
@@ -1165,67 +1274,19 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
               </div>
 
               <form onSubmit={handleSaveRecord} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Mentor Selector / Name */}
-                  <div className="sm:col-span-2 relative">
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Mentor Convidado *</label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          value={recMentorName}
-                          onChange={e => {
-                            setRecMentorName(e.target.value);
-                            const found = mentors.find(m => m.name.toLowerCase() === e.target.value.trim().toLowerCase());
-                            setRecMentorId(found ? found.id : '');
-                          }}
-                          placeholder="Digite ou selecione o nome do mentor..."
-                          required
-                          className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/60 transition-all"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setMentorDropdownOpen(v => !v)}
-                        className="px-3 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white text-xs font-bold flex items-center gap-1 shrink-0"
-                        title="Ver lista de mentores cadastrados"
-                      >
-                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${mentorDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
-
-                    <AnimatePresence>
-                      {mentorDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          className="absolute z-50 top-full mt-1 w-full bg-[#1b1f35] border border-white/10 rounded-xl shadow-2xl overflow-y-auto max-h-48 custom-scrollbar"
-                        >
-                          {mentorPersons.length === 0 ? (
-                            <div className="p-3 text-xs text-text-muted text-center">Nenhum mentor cadastrado</div>
-                          ) : (
-                            mentorPersons.filter(m => m.active).map(m => (
-                              <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => {
-                                  setRecMentorId(m.id);
-                                  setRecMentorName(m.name);
-                                  if (m.area && !recArea) setRecArea(m.area);
-                                  setMentorDropdownOpen(false);
-                                }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/10 ${recMentorId === m.id ? 'text-white bg-accent-primary/20 font-bold' : 'text-white/80'}`}
-                              >
-                                {m.name} {m.organization ? `(${m.organization})` : ''}
-                              </button>
-                            ))
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                {/* Data e Carga Horária */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Data *</label>
+                    <input
+                      type="date"
+                      value={recDate}
+                      required
+                      onChange={e => setRecDate(e.target.value)}
+                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all"
+                    />
                   </div>
 
-                  {/* Carga Horária */}
                   <div>
                     <label className="text-xs text-text-secondary mb-1.5 block font-bold">Carga Horária (h) *</label>
                     <input
@@ -1241,29 +1302,130 @@ export default function MentorManagement({ currentUser, userRole }: MentorManage
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Date */}
-                  <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Data *</label>
-                    <input
-                      type="date"
-                      value={recDate}
-                      required
-                      onChange={e => setRecDate(e.target.value)}
-                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-primary/60 transition-all"
-                    />
+                {/* Mentores Convidados (Múltiplos Mentores) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-text-secondary font-bold flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-accent-primary" />
+                      Mentores da Sessão * ({selectedMentors.length})
+                    </label>
+                    <span className="text-[10px] text-text-muted">Adicione 1 ou mais mentores</span>
                   </div>
 
-                  {/* Area / Especialidade */}
-                  <div>
-                    <label className="text-xs text-text-secondary mb-1.5 block font-bold">Área / Especialidade</label>
-                    <input
-                      value={recArea}
-                      onChange={e => setRecArea(e.target.value)}
-                      placeholder="Ex: Mecânica, Programação, Portfólio"
-                      className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all"
-                    />
+                  {/* Chips dos Mentores Selecionados */}
+                  <div className="min-h-[48px] p-2.5 bg-[#1b1f35] border border-white/10 rounded-xl flex flex-wrap items-center gap-2">
+                    {selectedMentors.length === 0 ? (
+                      <span className="text-xs text-white/30 italic px-1">
+                        Nenhum mentor selecionado. Escolha na lista abaixo ou digite um novo.
+                      </span>
+                    ) : (
+                      selectedMentors.map((m, idx) => {
+                        const found = mentors.find(item => (m.id && item.id === m.id) || item.name.toLowerCase() === m.name.toLowerCase());
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-1.5 bg-accent-primary/15 border border-accent-primary/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold group animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <GraduationCap className="w-3.5 h-3.5 text-accent-primary shrink-0" />
+                            <span>{m.name}</span>
+                            {found?.organization && (
+                              <span className="text-[10px] text-white/50">({found.organization})</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMentor(idx)}
+                              className="text-white/40 hover:text-red-400 p-0.5 rounded transition-colors ml-0.5"
+                              title="Remover mentor"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
+
+                  {/* Seletor Rápido de Mentores Cadastrados + Campo para Novo Mentor */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customMentorInput}
+                        onChange={e => setCustomMentorInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomMentor();
+                          }
+                        }}
+                        placeholder="Digitar nome de outro mentor convidado..."
+                        className="flex-1 bg-[#16192a] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-accent-primary/60 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomMentor}
+                        disabled={!customMentorInput.trim()}
+                        className="px-3.5 py-2 bg-accent-primary/20 hover:bg-accent-primary/30 disabled:opacity-40 disabled:hover:bg-accent-primary/20 text-accent-primary border border-accent-primary/30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Adicionar
+                      </button>
+                    </div>
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setMentorDropdownOpen(v => !v)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 text-xs text-white/80 transition-all"
+                      >
+                        <span className="font-medium flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-text-muted" />
+                          Selecionar Mentores Cadastrados ({mentorPersons.filter(m => m.active).length})
+                        </span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${mentorDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {mentorDropdownOpen && (
+                        <div className="mt-1.5 p-2 bg-[#16192a] border border-white/10 rounded-xl max-h-40 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 custom-scrollbar">
+                          {mentorPersons.filter(m => m.active).map(m => {
+                            const isSelected = selectedMentors.some(sm => (sm.id && sm.id === m.id) || sm.name.toLowerCase() === m.name.toLowerCase());
+                            return (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => handleToggleMentorFromList(m)}
+                                className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-all border ${
+                                  isSelected
+                                    ? 'bg-accent-primary/20 border-accent-primary/40 text-white font-bold'
+                                    : 'bg-white/[0.02] border-transparent hover:bg-white/5 text-white/70'
+                                }`}
+                              >
+                                <div className="truncate pr-1">
+                                  <span>{m.name}</span>
+                                  {m.organization && <span className="text-[10px] text-white/40 ml-1">({m.organization})</span>}
+                                </div>
+                                {isSelected ? (
+                                  <Check className="w-3.5 h-3.5 text-accent-primary shrink-0" />
+                                ) : (
+                                  <Plus className="w-3 h-3 text-white/30 shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Area / Especialidade */}
+                <div>
+                  <label className="text-xs text-text-secondary mb-1.5 block font-bold">Área / Especialidade</label>
+                  <input
+                    value={recArea}
+                    onChange={e => setRecArea(e.target.value)}
+                    placeholder="Ex: Mecânica, Programação, Portfólio"
+                    className="w-full bg-[#1b1f35] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-accent-primary/60 transition-all"
+                  />
                 </div>
 
                 {/* Participants */}

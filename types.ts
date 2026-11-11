@@ -421,8 +421,10 @@ export interface Mentor {
 
 export interface MentorshipRecord {
   id: string;
-  mentorId?: string;
-  mentorName: string;
+  mentorId?: string; // ID do mentor principal
+  mentorName: string; // Nome(s) do(s) mentor(es)
+  mentorIds?: string[]; // IDs de todos os mentores vinculados
+  mentorNames?: string[]; // Nomes de todos os mentores vinculados
   date: string; // ISO string ou YYYY-MM-DD
   workloadHours: number; // Carga horária em horas (do formulário B-Leed)
   participants: string[]; // usernames dos membros participantes

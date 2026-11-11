@@ -105,52 +105,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'addRecord') {
-        const { mentorId, mentorName, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks, createdBy } = req.body;
+        const { mentorId, mentorName, mentorIds, mentorNames, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks, createdBy } = req.body;
         if (!date || !participants || participants.length === 0 || !objectives || !solutions || !nextSteps) {
           return res.status(400).json({ error: 'Dados obrigatórios do formulário de mentoria ausentes (data, participantes, objetivos, soluções e próximos passos).' });
         }
         const records = await getRecords();
         const mentors = await getMentors();
-        let targetMentor = mentorId ? mentors.find(m => m.id === mentorId) : undefined;
+        let mentorsModified = false;
 
-        // Se foi passado mentorName mas não mentorId, tentar encontrar ou criar mentor
-        let finalMentorId = mentorId;
-        let finalMentorName = mentorName ? mentorName.trim() : (targetMentor ? targetMentor.name : 'Mentor Convidado');
+        // Suporte a múltiplos mentores e compatibilidade com campo único
+        let resolvedNames: string[] = [];
+        let resolvedIds: (string | undefined)[] = [];
 
-        if (!targetMentor && mentorName && mentorName.trim()) {
-          const existingByName = mentors.find(m => m.name.toLowerCase() === mentorName.trim().toLowerCase());
-          if (existingByName) {
-            targetMentor = existingByName;
-            finalMentorId = existingByName.id;
-            finalMentorName = existingByName.name;
+        if (Array.isArray(mentorNames) && mentorNames.length > 0) {
+          resolvedNames = mentorNames.map((n: string) => String(n).trim()).filter(Boolean);
+          resolvedIds = Array.isArray(mentorIds) ? mentorIds : [];
+        } else if (mentorName && mentorName.trim()) {
+          resolvedNames = mentorName.split(',').map((s: string) => s.trim()).filter(Boolean);
+          resolvedIds = mentorId ? [mentorId] : [];
+        }
+
+        if (resolvedNames.length === 0) {
+          return res.status(400).json({ error: 'Informe ao menos um mentor para a mentoria.' });
+        }
+
+        const finalMentorIds: string[] = [];
+        const finalMentorNames: string[] = [];
+
+        for (let i = 0; i < resolvedNames.length; i++) {
+          const rawName = resolvedNames[i];
+          const providedId = resolvedIds[i];
+          let targetMentor = providedId ? mentors.find(m => m.id === providedId) : undefined;
+          if (!targetMentor) {
+            targetMentor = mentors.find(m => m.name.toLowerCase() === rawName.toLowerCase());
+          }
+
+          if (targetMentor) {
+            finalMentorIds.push(targetMentor.id);
+            finalMentorNames.push(targetMentor.name);
           } else {
             // Criação automática do mentor se não existir
             const newMentor: Mentor = {
-              id: `mentor-${Date.now()}`,
-              name: mentorName.trim(),
+              id: `mentor-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+              name: rawName,
               area: area ? area.trim() : 'Mentoria Técnica B-LEED',
               active: true,
               role: 'mentor',
             };
             mentors.push(newMentor);
-            await saveMentors(mentors);
-            targetMentor = newMentor;
-            finalMentorId = newMentor.id;
+            mentorsModified = true;
+            finalMentorIds.push(newMentor.id);
+            finalMentorNames.push(newMentor.name);
           }
         }
+
+        if (mentorsModified) {
+          await saveMentors(mentors);
+        }
+
+        const finalMentorId = finalMentorIds[0] || undefined;
+        const finalMentorName = finalMentorNames.join(', ');
 
         const now = new Date().toISOString();
         const newRecord: MentorshipRecord = {
           id: `record-${Date.now()}`,
           mentorId: finalMentorId,
           mentorName: finalMentorName,
+          mentorIds: finalMentorIds,
+          mentorNames: finalMentorNames,
           date,
           workloadHours: workloadHours ? Number(workloadHours) : 2,
           participants: Array.isArray(participants) ? participants : [participants],
           objectives: objectives.trim(),
           solutions: solutions.trim(),
           nextSteps: nextSteps.trim(),
-          area: area ? area.trim() : (targetMentor?.area || 'Geral'),
+          area: area ? area.trim() : (mentors.find(m => m.id === finalMentorId)?.area || 'Geral'),
           imageLinks: Array.isArray(imageLinks) ? imageLinks : [],
           createdAt: now,
           updatedAt: now,
@@ -161,7 +190,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Notificar técnicos sobre a nova mentoria cadastrada
         const author = createdBy || (Array.isArray(participants) && participants[0]) || 'Membro';
-        const activityTitle = `Mentoria com ${finalMentorName}`;
+        const activityTitle = finalMentorNames.length > 1
+          ? `Mentoria com ${finalMentorNames.join(', ')}`
+          : `Mentoria com ${finalMentorName}`;
 
         await notifyTechniciansOnActivityCreated({
           activityTitle,
@@ -213,15 +244,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === 'editRecord') {
-        const { id, mentorId, mentorName, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks } = req.body;
+        const { id, mentorId, mentorName, mentorIds, mentorNames, date, workloadHours, participants, objectives, solutions, nextSteps, area, imageLinks } = req.body;
         if (!id) return res.status(400).json({ error: 'ID do registro é obrigatório.' });
 
         const records = await getRecords();
         const idx = records.findIndex(r => r.id === id);
         if (idx === -1) return res.status(404).json({ error: 'Registro de mentoria não encontrado.' });
+        const mentors = await getMentors();
+        let mentorsModified = false;
 
-        if (mentorId !== undefined) records[idx].mentorId = mentorId;
-        if (mentorName !== undefined) records[idx].mentorName = mentorName.trim();
+        if (Array.isArray(mentorNames) || mentorName !== undefined) {
+          let resolvedNames: string[] = [];
+          let resolvedIds: (string | undefined)[] = [];
+
+          if (Array.isArray(mentorNames)) {
+            resolvedNames = mentorNames.map((n: string) => String(n).trim()).filter(Boolean);
+            resolvedIds = Array.isArray(mentorIds) ? mentorIds : [];
+          } else if (mentorName) {
+            resolvedNames = mentorName.split(',').map((s: string) => s.trim()).filter(Boolean);
+            resolvedIds = mentorId ? [mentorId] : [];
+          }
+
+          if (resolvedNames.length > 0) {
+            const finalMentorIds: string[] = [];
+            const finalMentorNames: string[] = [];
+
+            for (let i = 0; i < resolvedNames.length; i++) {
+              const rawName = resolvedNames[i];
+              const providedId = resolvedIds[i];
+              let targetMentor = providedId ? mentors.find(m => m.id === providedId) : undefined;
+              if (!targetMentor) {
+                targetMentor = mentors.find(m => m.name.toLowerCase() === rawName.toLowerCase());
+              }
+
+              if (targetMentor) {
+                finalMentorIds.push(targetMentor.id);
+                finalMentorNames.push(targetMentor.name);
+              } else {
+                const newMentor: Mentor = {
+                  id: `mentor-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                  name: rawName,
+                  area: area ? area.trim() : 'Mentoria Técnica B-LEED',
+                  active: true,
+                  role: 'mentor',
+                };
+                mentors.push(newMentor);
+                mentorsModified = true;
+                finalMentorIds.push(newMentor.id);
+                finalMentorNames.push(newMentor.name);
+              }
+            }
+
+            if (mentorsModified) {
+              await saveMentors(mentors);
+            }
+
+            records[idx].mentorIds = finalMentorIds;
+            records[idx].mentorNames = finalMentorNames;
+            records[idx].mentorName = finalMentorNames.join(', ');
+            records[idx].mentorId = finalMentorIds[0] || undefined;
+          }
+        }
+
         if (date !== undefined) records[idx].date = date;
         if (workloadHours !== undefined) records[idx].workloadHours = Number(workloadHours);
         if (participants !== undefined) records[idx].participants = participants;
