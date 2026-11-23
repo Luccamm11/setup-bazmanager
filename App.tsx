@@ -40,7 +40,6 @@ import RewardToast from './components/RewardToast';
 import AddEditBadgeModal from './components/AddEditBadgeModal';
 import AddStoreItemModal from './components/AddStoreItemModal';
 import RecommendationsModal from './components/RecommendationsModal';
-import NameEntryModal from './components/NameEntryModal';
 import TechDashboard from './components/TechDashboard';
 import TeamMissions from './components/TeamMissions';
 import PrinterQueue from './components/PrinterQueue';
@@ -228,7 +227,7 @@ const App: React.FC = () => {
   const initialSession = getStoredSession();
   const [currentUser, setCurrentUser] = useState<string | null>(initialSession.username);
   const [userRole, setUserRole] = useState<UserRole>(initialSession.role || 'member');
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(Boolean(initialSession.username));
 
   // Team missions state
   const [teamMissions, setTeamMissions] = useState<TeamMission[]>([]);
@@ -241,9 +240,15 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('googleAiApiKey') || '');
-  const [isNameEntryModalOpen, setIsNameEntryModalOpen] = useState(false);
 
-  const [user, _setUser] = useState<User>(INITIAL_USER);
+  const [user, _setUser] = useState<User>(() => {
+    if (!initialSession.username) return INITIAL_USER;
+    const member = getMemberByUsername(initialSession.username);
+    return {
+      ...INITIAL_USER,
+      name: member?.displayName || initialSession.username,
+    };
+  });
   const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
   const [storyLog, setStoryLog] = useState<StoryLogEntry[]>(INITIAL_STORY_LOG);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
@@ -260,19 +265,6 @@ const App: React.FC = () => {
   const [isLoadingQuests, setIsLoadingQuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastLootboxClaim, setLastLootboxClaim] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user.name === "Awakened") {
-      setIsNameEntryModalOpen(true);
-    } else {
-      setIsNameEntryModalOpen(false);
-    }
-  }, [user.name]);
-
-  const handleSaveName = (newName: string) => {
-    setUser(prev => ({ ...prev, name: newName }));
-    setIsNameEntryModalOpen(false);
-  };
   const [levelUpData, setLevelUpData] = useState<{ level: number, rank: string } | null>(null);
   const previousLevel = useRef<number>(user.level_overall);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -2151,6 +2143,8 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
           if (token) {
             saveSession(token, username, role, awardFocus);
           }
+          const member = getMemberByUsername(username);
+          _setUser(prev => ({ ...prev, name: member?.displayName || username }));
           setCurrentUser(username);
           setUserRole(role);
           loadUserData(username);
@@ -2158,11 +2152,6 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         isLoading={isInitialLoading} 
       />
     );
-  }
-
-
-  if (isNameEntryModalOpen) {
-    return <NameEntryModal onSave={handleSaveName} />;
   }
 
   return (
