@@ -33,6 +33,8 @@
     "syncing": "Syncing...",
     "synced": "Synced",
     "error": "Error",
+    "offline_popup": "You are offline",
+    "slow_internet_popup": "Your internet is slow",
     "idle": "Idle",
     "active": "Active",
     "inactive": "Inactive",

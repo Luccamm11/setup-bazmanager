@@ -21,6 +21,10 @@
     {
       "source": "/api/competitions",
       "destination": "/api/crud?type=competitions"
+    },
+    {
+      "source": "/api/biobuzz-ai",
+      "destination": "/api/generate-journey?mode=biobuzz_ai"
     }
   ]
 }

@@ -8,6 +8,8 @@ import {
 import { CompetitionData, CompetitionEvent, UserRole } from '../../types';
 import { INITIAL_COMPETITIONS_DATA } from '../../data/initialCompetitionsData';
 import CompetitionChecklists from './CompetitionChecklists';
+import StrategyScouting from './StrategyScouting';
+import BioBuzzAIAgent from './BioBuzzAIAgent';
 
 interface CompetitionsHubProps {
   currentUser: string;
@@ -24,7 +26,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Vista ativa: 'hub' (estilo Aba Mais com os cards) ou 'checklist' (módulo de checklists)
-  const [activeModule, setActiveModule] = useState<'hub' | 'checklists'>('checklists');
+  const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai'>('checklists');
 
   // Modal Novo Evento
   const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
@@ -115,6 +117,75 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
       }
     } catch (err) {
       console.error('Failed to sync event update to backend:', err);
+    }
+  };
+
+
+  // Sincronização Atômica para Estratégia, Scouting & IA (suporta múltiplos scouts simultâneos)
+  const handleStrategySync = async (action: string, payload: any) => {
+    if (!activeEvent) return;
+
+    // Atualização otimista local
+    setData(prev => {
+      const nextEvents = prev.events.map(ev => {
+        if (ev.id !== activeEvent.id) return ev;
+        const hub = {
+          teams: [...(ev.strategyScouting?.teams || [])],
+          matchScouts: [...(ev.strategyScouting?.matchScouts || [])],
+          pickList: [...(ev.strategyScouting?.pickList || [])],
+          tacticalPlays: [...(ev.strategyScouting?.tacticalPlays || [])],
+          aiTeamUpdates: [...(ev.strategyScouting?.aiTeamUpdates || [])],
+          aiChatHistory: [...(ev.strategyScouting?.aiChatHistory || [])],
+        };
+
+        if (action === 'upsert_scout_team') {
+          const idx = hub.teams.findIndex(t => t.teamNumber === payload.teamNumber || t.id === payload.id);
+          if (idx >= 0) hub.teams[idx] = { ...hub.teams[idx], ...payload };
+          else hub.teams.push(payload);
+        } else if (action === 'delete_scout_team') {
+          hub.teams = hub.teams.filter(t => t.teamNumber !== payload.teamNumber);
+          hub.matchScouts = hub.matchScouts.filter(m => m.teamNumber !== payload.teamNumber);
+          hub.pickList = hub.pickList.filter(pl => pl.teamNumber !== payload.teamNumber);
+        } else if (action === 'add_match_scout') {
+          hub.matchScouts.unshift(payload);
+        } else if (action === 'delete_match_scout') {
+          hub.matchScouts = hub.matchScouts.filter(m => m.id !== payload.scoutId);
+        } else if (action === 'save_pick_list') {
+          hub.pickList = payload;
+        } else if (action === 'upsert_tactical_play') {
+          const idx = hub.tacticalPlays.findIndex(pl => pl.id === payload.id);
+          if (idx >= 0) hub.tacticalPlays[idx] = payload;
+          else hub.tacticalPlays.unshift(payload);
+        } else if (action === 'delete_tactical_play') {
+          hub.tacticalPlays = hub.tacticalPlays.filter(pl => pl.id !== payload.playId);
+        } else if (action === 'save_ai_team_updates') {
+          hub.aiTeamUpdates = payload;
+        } else if (action === 'save_ai_chat') {
+          hub.aiChatHistory = payload;
+        }
+
+        return { ...ev, strategyScouting: hub };
+      });
+      return { ...prev, events: nextEvents };
+    });
+
+    try {
+      const res = await fetch('/api/crud?type=competitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          username: currentUser,
+          eventId: activeEvent.id,
+          payload,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setData(json.data);
+      }
+    } catch (err) {
+      console.error('Strategy sync failed:', err);
     }
   };
 
@@ -395,7 +466,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
             {/* Card 1: Checklists (Ativo) */}
             <div
               onClick={() => setActiveModule('checklists')}
-              className="p-6 rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-indigo-600/10 hover:border-blue-400 hover:from-blue-500/15 cursor-pointer transition-all duration-300 group"
+              className="p-6 rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-600/10 hover:border-blue-400 hover:from-blue-500/15 cursor-pointer transition-all duration-300 group"
             >
               <div className="flex items-center space-x-4">
                 <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">

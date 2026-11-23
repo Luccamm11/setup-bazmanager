@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import redis from './_lib/redis.js';
 import { GoogleGenAI } from '@google/genai';
+import { authenticateRequest } from './_lib/auth.js';
+import type { CompetitionData, CompetitionEvent } from '../types.js';
+import { BIOBUZZ_SYSTEM_KNOWLEDGE_BASE } from '../data/bioBuzzManual.js';
 
 const TECHNICIANS = ['Jonas', 'Ramon'];
 const DEFAULT_MEMBERS = [
@@ -424,10 +427,163 @@ function generateTeamMarkdown(data: {
   return lines.join('\n');
 }
 
+function buildScoutingContextForAI(ev: CompetitionEvent | null): string {
+  if (!ev) {
+    return 'Nenhum evento/torneio selecionado no momento. Responda com base no Manual Oficial do FTC BIOBUZZ™ 2026-2027.';
+  }
+  const hub = ev.strategyScouting;
+  const teams = hub?.teams || [];
+  const scouts = hub?.matchScouts || [];
+  const pickList = hub?.pickList || [];
+  const updates = hub?.aiTeamUpdates || [];
+  const lines: string[] = [];
+
+  lines.push(`TORNEIO ATIVO: ${ev.name} (${ev.location} | ${ev.startDate} a ${ev.endDate})`);
+  if (updates.length > 0) {
+    lines.push(`\n[ATUALIZAÇÕES E REGRAS EXTRAS DOS TÉCNICOS / TEAM UPDATES]:`);
+    updates.forEach(u => lines.push(`- ${u.title} (por ${u.addedBy}): ${u.content}`));
+  }
+
+  if (teams.length === 0 && scouts.length === 0) {
+    lines.push('\nAinda não há equipes registradas no Pit/Match Scouting deste torneio.');
+  } else {
+    lines.push(`\n[EQUIPES NO SCOUTING (${teams.length} cadastradas | ${scouts.length} partidas avaliadas)]:`);
+    const teamMap = new Map<number, any>();
+    teams.forEach(t => teamMap.set(t.teamNumber, { pit: t, matches: [] }));
+    scouts.forEach(m => {
+      if (!teamMap.has(m.teamNumber)) teamMap.set(m.teamNumber, { pit: null, matches: [] });
+      teamMap.get(m.teamNumber).matches.push(m);
+    });
+
+    Array.from(teamMap.entries()).forEach(([num, info]) => {
+      const pit = info.pit;
+      const ms = info.matches as any[];
+      const count = ms.length;
+      const avgScore = count > 0 ? (ms.reduce((a, b) => a + (b.calculatedContributionScore || 0), 0) / count).toFixed(1) : "N/A";
+      const avgTips = count > 0 ? (ms.reduce((a, b) => a + (b.autoHiveTips || 0) + (b.teleopHiveTips || 0), 0) / count).toFixed(1) : "N/A";
+      const avgFouls = count > 0 ? (ms.reduce((a, b) => a + (b.minorFouls || 0) + (b.majorFouls || 0), 0) / count).toFixed(1) : "0";
+      const breaks = ms.filter(m => m.robotDisabledOrBroken).length;
+      const pick = pickList.find(p => p.teamNumber === num);
+      const pickStr = pick ? ` | PICK LIST: Tier ${pick.tier} (#${pick.rankOrder})` : "";
+      const oprStr = pit?.ftcScoutOpr?.total !== undefined ? ` | OPR FTCScout: ${pit.ftcScoutOpr.total}` : "";
+      lines.push(`* Equipe #${num} (${pit?.teamName || "Sem nome"})${pickStr}${oprStr}`);
+      if (pit) {
+        lines.push(`  Pit: Drivetrain ${pit.drivetrain} | AprilTags: ${pit.usesAprilTags ? "Sim" : "Não"} | Pollen: ${pit.canScorePollen ? "Sim" : "Não"} | Nectar: ${pit.canScoreNectar ? "Sim" : "Não"} | Hive Tip: ${pit.canTipHive ? "Sim" : "Não"} | Flower Endgame: ${pit.canScoreFlowers ? "Sim" : "Não"} | Capacidade Max: ${pit.maxCapacity} | Papel: ${pit.teleopRolePreference}`);
+        lines.push(`  Auto (${pit.autoConsistency}/5): ${pit.autoRoutineDescription || "Não descrito"} | Fortes: ${pit.strengths || "-"} | Fracos: ${pit.weaknesses || "-"}`);
+      }
+      if (count > 0) {
+        lines.push(`  Match Stats (${count} jogos): Média Contribuída=${avgScore} pts | Média Hive Tips=${avgTips} | Faltas/jogo=${avgFouls} | Quebras/Disable=${breaks}`);
+      }
+    });
+  }
+  return lines.join("\n");
+}
+
+function buildDeterministicFallback(question: string, ev: CompetitionEvent | null): string {
+  const teams = ev?.strategyScouting?.teams || [];
+  const scouts = ev?.strategyScouting?.matchScouts || [];
+  const pickList = ev?.strategyScouting?.pickList || [];
+  const lines: string[] = [];
+  lines.push("⚠️ **Modo Offline/Contingência (Chave Gemini API não configurada no servidor ou indisponível no momento)**");
+  lines.push("");
+  lines.push("### Referência Rápida — FTC BIOBUZZ™ 2026–2027 (Manual Oficial):");
+  lines.push("- **Leave (Auto):** 3 pts | **Park (Auto/Endgame):** 5 pts | **Hive Tip:** 20 pts (destrava Nectar)");
+  lines.push("- **Cell restante:** 2 pts | **Bottom Nectar na Flower:** 5 pts | **Ownership da Flower:** 2 pts por cada elemento dentro dela");
+  lines.push("- **Ranking Points:** **Swarm RP** (>=16 pts Auto Leave+Park) | **Pollinator 1** (>=4 Hive Tips) | **Pollinator 2** (>=7 Hive Tips)");
+  lines.push("- **Regras Críticas:** Limite de posse G407 = **4 elementos** | Pinning max = **3s** (recuar 2ft) | Minor Foul = +5 adv. | Major Foul = +20 adv.");
+  if (teams.length > 0 || scouts.length > 0) {
+    lines.push("");
+    lines.push(`### Resumo do Scouting Atual (${ev?.name || "Torneio"}):`);
+    lines.push(`- Equipes no Pit: **${teams.length}** | Registros de Match: **${scouts.length}** | Na Pick List: **${pickList.length}**`);
+    const topTeams = teams.slice(0, 5).map(t => `#${t.teamNumber} (${t.teamName} - ${t.teleopRolePreference})`);
+    if (topTeams.length > 0) lines.push(`- Equipes mapeadas: ${topTeams.join(", ")}`);
+  }
+  lines.push("");
+  lines.push(`*Sua pergunta:* "${question}" — Configure \`GEMINI_API_KEY\` nas variáveis de ambiente da Vercel para respostas generativas completas.*`);
+  return lines.join("\n");
+}
+
+async function handleBioBuzzAI(req: VercelRequest, res: VercelResponse) {
+  const auth = authenticateRequest(req);
+  if (!auth.valid || !auth.user) {
+    return res.status(401).json({ success: false, error: 'Acesso não autorizado.' });
+  }
+
+  const { question, eventId, history } = req.body || {};
+  if (!question || typeof question !== 'string' || !question.trim()) {
+    return res.status(400).json({ success: false, error: 'Pergunta é obrigatória.' });
+  }
+
+  try {
+    const compData = await loadJson<CompetitionData | null>('levelup_competitions_data', null);
+    const activeEvent =
+      compData?.events?.find(e => e.id === (eventId || compData.activeEventId)) ||
+      compData?.events?.[0] ||
+      null;
+
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "").trim();
+    if (!apiKey) {
+      return res.status(200).json({
+        success: true,
+        answer: buildDeterministicFallback(question.trim(), activeEvent),
+        usedFallback: true,
+      });
+    }
+
+    const scoutingContext = buildScoutingContextForAI(activeEvent);
+    const recentChat = Array.isArray(history)
+      ? history.slice(-6).map((m: any) => `${m.role === "user" ? "Equipe" : "Estrategista IA"}: ${m.content}`).join("\n")
+      : "";
+
+    const fullPrompt = [
+      "Você é o Engenheiro Chefe de Estratégia e Árbitro Especialista da Equipe Bazinga! 73 (#21083) na FIRST Tech Challenge.",
+      "Responda SEMPRE em Português Brasileiro claro, direto, tático e objetivo (use listas e negrito para leitura rápida no pit).",
+      "Baseie-se RIGOROSAMENTE no Manual Oficial do BIOBUZZ™ 2026-2027 (abaixo) e nos dados REAIS de Scouting do torneio ativo.",
+      "NUNCA invente estatísticas de equipes que não estão no Scouting; se faltarem dados de alguma equipe, avise claramente.",
+      "Sempre destaque impactos em Ranking Points (Swarm RP, Pollinator 1 & 2 RPs), limites de posse (G407 = max 4) e risco de faltas quando relevante.",
+      "",
+      BIOBUZZ_SYSTEM_KNOWLEDGE_BASE,
+      "",
+      "=====================================================================" ,
+      "DADOS AO VIVO DO TORNEIO & SCOUTING DA EQUIPE",
+      "=====================================================================",
+      scoutingContext,
+      recentChat ? `\n[HISTÓRICO RECENTE DO CHAT]:\n${recentChat}` : "",
+      `\nPERGUNTA ATUAL DO USUÁRIO (${auth.user.username}):\n${question.trim()}`,
+    ].filter(Boolean).join("\n");
+
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: fullPrompt,
+      config: { temperature: 0.25 },
+    });
+
+    const answer = response.text?.trim() || buildDeterministicFallback(question.trim(), activeEvent);
+    return res.status(200).json({
+      success: true,
+      answer,
+      usedFallback: false,
+    });
+  } catch (err: any) {
+    console.error('[biobuzz-ai] Error:', err?.message || err);
+    const compData = await loadJson<CompetitionData | null>('levelup_competitions_data', null);
+    const activeEvent = compData?.events?.find(e => e.id === (eventId || compData.activeEventId)) || compData?.events?.[0] || null;
+    return res.status(200).json({
+      success: true,
+      answer: buildDeterministicFallback(question.trim(), activeEvent),
+      usedFallback: true,
+    });
+  }
+}
 // ─── HANDLER PRINCIPAL ───────────────────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  if (req.query?.mode === 'biobuzz_ai' || req.body?.mode === 'biobuzz_ai') {
+    return handleBioBuzzAI(req, res);
   }
 
   const { username, scope } = req.body;

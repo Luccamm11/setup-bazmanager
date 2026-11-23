@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Realm, SyncStatus, AppNotification } from '../types';
 import XpBar from './XpBar';
 import NotificationBell from './NotificationBell';
-import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer } from 'lucide-react';
+import { Settings, Flame, Heart, BrainCircuit, Zap, Sparkles, CheckCircle, Loader2, AlertTriangle, Globe, BookText, Users, Mic2, ClipboardList, Code, Hammer, WifiOff, Wifi, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
 const realmStatsConfig: { [key in Realm]?: { icon: React.ReactNode; color: string; bg: string } } = {
@@ -86,6 +87,132 @@ const LanguageToggle: React.FC = () => {
     );
 };
 
+type ConnectionIssue = 'offline' | 'slow';
+
+interface NetworkInformationLike extends EventTarget {
+    effectiveType?: string;
+    downlink?: number;
+    rtt?: number;
+    saveData?: boolean;
+}
+
+const SLOW_SYNC_THRESHOLD_MS = 4500;
+const SLOW_RTT_THRESHOLD_MS = 1000;
+const SLOW_DOWNLINK_THRESHOLD_MBPS = 0.5;
+
+const getNavigatorConnection = (): NetworkInformationLike | undefined => {
+    if (typeof navigator === 'undefined') return undefined;
+    return (navigator as Navigator & { connection?: NetworkInformationLike }).connection;
+};
+
+const isSlowConnection = (connection?: NetworkInformationLike): boolean => {
+    if (!connection) return false;
+    if (connection.saveData) return true;
+    if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') return true;
+    if (typeof connection.rtt === 'number' && connection.rtt >= SLOW_RTT_THRESHOLD_MS) return true;
+    if (typeof connection.downlink === 'number' && connection.downlink > 0 && connection.downlink < SLOW_DOWNLINK_THRESHOLD_MBPS) {
+        return true;
+    }
+    return false;
+};
+
+const ConnectionPopup: React.FC<{ syncStatus: SyncStatus }> = ({ syncStatus }) => {
+    const { t } = useTranslation();
+    const [isOnline, setIsOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+    const [isSlowNetwork, setIsSlowNetwork] = useState<boolean>(() => isSlowConnection(getNavigatorConnection()));
+    const [isSlowSync, setIsSlowSync] = useState<boolean>(false);
+    const [dismissedIssue, setDismissedIssue] = useState<ConnectionIssue | null>(null);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => {
+            setIsOnline(false);
+            setDismissedIssue(null);
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        const connection = getNavigatorConnection();
+        const handleConnectionChange = () => setIsSlowNetwork(isSlowConnection(connection));
+        connection?.addEventListener?.('change', handleConnectionChange);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            connection?.removeEventListener?.('change', handleConnectionChange);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (syncStatus !== 'syncing') {
+            setIsSlowSync(false);
+            return;
+        }
+        const timer = window.setTimeout(() => setIsSlowSync(true), SLOW_SYNC_THRESHOLD_MS);
+        return () => window.clearTimeout(timer);
+    }, [syncStatus]);
+
+    const activeIssue: ConnectionIssue | null = !isOnline
+        ? 'offline'
+        : isSlowNetwork || isSlowSync || syncStatus === 'error'
+            ? 'slow'
+            : null;
+
+    useEffect(() => {
+        if (activeIssue === null) {
+            setDismissedIssue(null);
+        }
+    }, [activeIssue]);
+
+    const visibleIssue = activeIssue && dismissedIssue !== activeIssue ? activeIssue : null;
+    const isOffline = visibleIssue === 'offline';
+
+    return (
+        <AnimatePresence>
+            {visibleIssue && (
+                <motion.div
+                    key={visibleIssue}
+                    role="status"
+                    aria-live="polite"
+                    initial={{ opacity: 0, scale: 0.92, x: -6 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, x: -6 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-xl border text-[11px] sm:text-xs font-bold backdrop-blur-md shadow-lg shrink-0 ${
+                        isOffline
+                            ? 'bg-red-950/90 border-red-500/50 text-red-100 shadow-[0_8px_24px_rgba(239,68,68,0.28)]'
+                            : 'bg-amber-950/90 border-amber-500/50 text-amber-100 shadow-[0_8px_24px_rgba(245,158,11,0.24)]'
+                    }`}
+                >
+                    <span
+                        aria-hidden="true"
+                        className={`hidden sm:block absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 border-l border-b ${
+                            isOffline ? 'bg-red-950/90 border-red-500/50' : 'bg-amber-950/90 border-amber-500/50'
+                        }`}
+                    />
+                    {isOffline ? (
+                        <WifiOff size={13} className="text-red-400 shrink-0 animate-pulse" />
+                    ) : (
+                        <Wifi size={13} className="text-amber-400 shrink-0 animate-pulse" />
+                    )}
+                    <span className="whitespace-nowrap">
+                        {isOffline ? t('states.offline_popup') : t('states.slow_internet_popup')}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setDismissedIssue(visibleIssue)}
+                        aria-label={t('buttons.close')}
+                        className="ml-0.5 p-0.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                    >
+                        <X size={12} />
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syncStatus, notifications, unreadCount, onMarkNotificationRead, onMarkAllNotificationsRead, onClearAllNotifications, onNotificationClick }) => {
     const { t } = useTranslation();
     const activeBuffNames = user.activeBuffs.map(b => b.itemName).join(', ');
@@ -135,6 +262,7 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">
                   <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight drop-shadow-md truncate">{user.name}</h1>
+                  <ConnectionPopup syncStatus={syncStatus} />
                    {user.activeBuffs.length > 0 && (
                       <div className="relative group shrink-0" title={`${t('store:active_buffs')}: ${activeBuffNames}`}>
                           <Zap size={20} className="text-accent-tertiary buff-pulse sm:w-[22px] sm:h-[22px]" />

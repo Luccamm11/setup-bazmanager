@@ -889,6 +889,128 @@ export interface MatchesChecklistHub {
   matches: MatchRecord[];
 }
 
+export type DrivetrainType = 'Mecanum' | 'Swerve' | 'Tank' | 'Omni/X-Drive' | 'Outro';
+
+export interface ScoutedTeamPit {
+  id: string;
+  teamNumber: number;
+  teamName: string;
+  cityState?: string;
+  source?: 'manual' | 'ftcscout';
+  ftcScoutOpr?: {
+    total?: number;
+    auto?: number;
+    teleop?: number;
+    endgame?: number;
+  };
+  drivetrain: DrivetrainType;
+  robotDimensionsOk: boolean;
+  usesAprilTags: boolean;
+  canScorePollen: boolean;
+  canScoreNectar: boolean;
+  canTipHive: boolean;
+  canScoreFlowers: boolean;
+  maxCapacity: number;
+  autoRoutineDescription: string;
+  autoConsistency: 1 | 2 | 3 | 4 | 5;
+  teleopRolePreference: 'scorer_hive' | 'flower_control' | 'pollen_feeder' | 'defense_hybrid';
+  endgameParkConsistent: boolean;
+  strengths: string;
+  weaknesses: string;
+  notes?: string;
+  scoutedBy: string;
+  updatedAt: string;
+}
+
+export interface MatchScoutEntry {
+  id: string;
+  teamNumber: number;
+  matchNumber: string;
+  allianceColor: 'red' | 'blue';
+  autoLeftZone: boolean;
+  autoPollenNectarScored: number;
+  autoHiveTips: number;
+  autoParked: boolean;
+  teleopHiveTips: number;
+  teleopCellsRemaining: number;
+  teleopFlowersBottomNectar: number;
+  teleopFlowersOwned: number;
+  teleopFlowerElementsCount: number;
+  endgameParked: boolean;
+  minorFouls: number;
+  majorFouls: number;
+  robotDisabledOrBroken: boolean;
+  driverSkillRating: 1 | 2 | 3 | 4 | 5;
+  defenseRating: 1 | 2 | 3 | 4 | 5;
+  calculatedContributionScore: number;
+  notes?: string;
+  scoutedBy: string;
+  timestamp: string;
+}
+
+export interface PickListItem {
+  teamNumber: number;
+  tier: 'S' | 'A' | 'B' | 'C' | 'Do Not Pick';
+  rankOrder: number;
+  synergyNotes?: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface TacticalToken {
+  id: string;
+  kind: 'robot_red_1' | 'robot_red_2' | 'robot_blue_1' | 'robot_blue_2' | 'pollen' | 'nectar_red' | 'nectar_blue' | 'marker';
+  label: string;
+  x: number;
+  y: number;
+}
+
+export interface TacticalPath {
+  id: string;
+  color: string;
+  width: number;
+  phase: 'auto' | 'teleop' | 'endgame';
+  points: Array<{ x: number; y: number }>;
+  label?: string;
+}
+
+export interface TacticalBoardPlay {
+  id: string;
+  title: string;
+  matchNumber?: string;
+  allianceSide: 'red' | 'blue';
+  phaseFilter: 'all' | 'auto' | 'teleop' | 'endgame';
+  tokens: TacticalToken[];
+  paths: TacticalPath[];
+  notes: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface BioBuzzAIChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  author?: string;
+}
+
+export interface BioBuzzAIUpdateNote {
+  id: string;
+  title: string;
+  content: string;
+  addedBy: string;
+  addedAt: string;
+}
+
+export interface StrategyScoutingHub {
+  teams: ScoutedTeamPit[];
+  matchScouts: MatchScoutEntry[];
+  pickList: PickListItem[];
+  tacticalPlays: TacticalBoardPlay[];
+  aiTeamUpdates?: BioBuzzAIUpdateNote[];
+  aiChatHistory?: BioBuzzAIChatMessage[];
+}
 export interface CompetitionEvent {
   id: string;
   name: string;
@@ -901,6 +1023,7 @@ export interface CompetitionEvent {
   matchesChecklist: MatchesChecklistHub;
   customChecklists?: CustomChecklistSection[];
   historyLogs?: ChecklistAuditLog[];
+  strategyScouting?: StrategyScoutingHub;
   createdAt: string;
   createdBy: string;
   updatedAt: string;

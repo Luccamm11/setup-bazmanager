@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import redis from './_lib/redis.js';
 import { authenticateRequest } from './_lib/auth.js';
-import type { CompetitionData, CompetitionEvent, MatchRecord } from '../types.js';
+import type { CompetitionData, CompetitionEvent, MatchRecord, ScoutedTeamPit, MatchScoutEntry, PickListItem, TacticalBoardPlay, BioBuzzAIUpdateNote, BioBuzzAIChatMessage, StrategyScoutingHub } from '../types.js';
 import { INITIAL_COMPETITIONS_DATA } from '../data/initialCompetitionsData.js';
 
 const KEYS = {
@@ -382,6 +382,91 @@ async function handleVerifyIntegrity(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+async function lookupFtcTeamFromFtcScout(teamNumber: number) {
+  let name: string | undefined;
+  let cityState: string | undefined;
+  let opr: { total?: number; auto?: number; teleop?: number; endgame?: number } | undefined;
+
+  // 1) Try GraphQL team metadata
+  try {
+    const gqlRes = await fetch('https://api.ftcscout.org/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query($n: Int!) { teamByNumber(number: $n) { number name city stateProv country } }`,
+        variables: { n: teamNumber },
+      }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (gqlRes.ok) {
+      const gqlJson: any = await gqlRes.json();
+      const t = gqlJson?.data?.teamByNumber;
+      if (t) {
+        name = t.name || undefined;
+        const locParts = [t.city, t.stateProv, t.country].filter(Boolean);
+        if (locParts.length > 0) cityState = locParts.join(', ');
+      }
+    }
+  } catch (err) {
+    console.warn('[ftcscout] GraphQL team lookup unavailable:', (err as any)?.message);
+  }
+
+  // 2) Try REST quick-stats (2026 then 2025 fallback)
+  for (const season of [2026, 2025]) {
+    try {
+      const restRes = await fetch(`https://api.ftcscout.org/rest/v1/teams/${teamNumber}/quick-stats?season=${season}`, {
+        signal: AbortSignal.timeout(3500),
+      });
+      if (restRes.ok) {
+        const statsJson: any = await restRes.json();
+        if (statsJson && (statsJson.tot || statsJson.auto || statsJson.dc || statsJson.eg)) {
+          opr = {
+            total: typeof statsJson.tot?.value === "number" ? Number(statsJson.tot.value.toFixed(1)) : undefined,
+            auto: typeof statsJson.auto?.value === "number" ? Number(statsJson.auto.value.toFixed(1)) : undefined,
+            teleop: typeof statsJson.dc?.value === "number" ? Number(statsJson.dc.value.toFixed(1)) : undefined,
+            endgame: typeof statsJson.eg?.value === "number" ? Number(statsJson.eg.value.toFixed(1)) : undefined,
+          };
+          break;
+        }
+      }
+    } catch {
+      // ignore timeout/network fallback
+    }
+  }
+
+  if (!name && !opr) {
+    return { found: false as const };
+  }
+  return {
+    found: true as const,
+    team: {
+      teamNumber,
+      teamName: name || `Equipe FTC #${teamNumber}`,
+      cityState: cityState || undefined,
+      opr,
+    },
+  };
+}
+
+function ensureStrategyHub(ev: CompetitionEvent): StrategyScoutingHub {
+  if (!ev.strategyScouting) {
+    ev.strategyScouting = {
+      teams: [],
+      matchScouts: [],
+      pickList: [],
+      tacticalPlays: [],
+      aiTeamUpdates: [],
+      aiChatHistory: [],
+    };
+  }
+  if (!Array.isArray(ev.strategyScouting.teams)) ev.strategyScouting.teams = [];
+  if (!Array.isArray(ev.strategyScouting.matchScouts)) ev.strategyScouting.matchScouts = [];
+  if (!Array.isArray(ev.strategyScouting.pickList)) ev.strategyScouting.pickList = [];
+  if (!Array.isArray(ev.strategyScouting.tacticalPlays)) ev.strategyScouting.tacticalPlays = [];
+  if (!Array.isArray(ev.strategyScouting.aiTeamUpdates)) ev.strategyScouting.aiTeamUpdates = [];
+  if (!Array.isArray(ev.strategyScouting.aiChatHistory)) ev.strategyScouting.aiChatHistory = [];
+  return ev.strategyScouting;
+}
 async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   const COMPETITIONS_KEY = 'levelup_competitions_data';
 
@@ -405,6 +490,22 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   };
 
   if (req.method === 'GET') {
+    const { lookupTeam } = req.query as { lookupTeam?: string };
+    if (lookupTeam) {
+      const num = parseInt(lookupTeam, 10);
+      if (isNaN(num) || num <= 0) {
+        return res.status(400).json({ success: false, fallbackManual: true, error: 'Número de equipe inválido.' });
+      }
+      try {
+        const lookupResult = await lookupFtcTeamFromFtcScout(num);
+        if (!lookupResult.found) {
+          return res.status(200).json({ success: false, fallbackManual: true, message: 'Equipe não localizada no FTCScout; prossiga com o cadastro manual.' });
+        }
+        return res.status(200).json({ success: true, team: lookupResult.team });
+      } catch {
+        return res.status(200).json({ success: false, fallbackManual: true, message: 'FTCScout indisponível no momento; prossiga com o cadastro manual.' });
+      }
+    }
     try {
       const data = await loadCompetitionsData();
       return res.status(200).json({ success: true, data });
@@ -581,6 +682,73 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
       } else if (action === 'delete_match') {
         const { matchId } = payload;
         targetEvent.matchesChecklist.matches = targetEvent.matchesChecklist.matches.filter(m => m.id !== matchId);
+      } else if (action === 'upsert_scout_team') {
+        const hub = ensureStrategyHub(targetEvent);
+        const team: ScoutedTeamPit = payload;
+        const idx = hub.teams.findIndex(t => t.teamNumber === team.teamNumber || t.id === team.id);
+        if (idx >= 0) {
+          hub.teams[idx] = { ...hub.teams[idx], ...team, updatedAt: new Date().toISOString(), scoutedBy: username };
+        } else {
+          hub.teams.push({ ...team, id: team.id || `team-${team.teamNumber}-${Date.now()}`, updatedAt: new Date().toISOString(), scoutedBy: username });
+        }
+      } else if (action === 'delete_scout_team') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem excluir equipes do scouting.' });
+        }
+        const hub = ensureStrategyHub(targetEvent);
+        const { teamNumber } = payload;
+        hub.teams = hub.teams.filter(t => t.teamNumber !== teamNumber);
+        hub.matchScouts = hub.matchScouts.filter(m => m.teamNumber !== teamNumber);
+        hub.pickList = hub.pickList.filter(p => p.teamNumber !== teamNumber);
+      } else if (action === 'add_match_scout') {
+        const hub = ensureStrategyHub(targetEvent);
+        const entry: MatchScoutEntry = payload;
+        const idx = hub.matchScouts.findIndex(m => m.id === entry.id);
+        if (idx >= 0) {
+          hub.matchScouts[idx] = { ...entry, scoutedBy: username, timestamp: new Date().toISOString() };
+        } else {
+          hub.matchScouts.unshift({ ...entry, id: entry.id || `mscout-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, scoutedBy: username, timestamp: new Date().toISOString() });
+        }
+      } else if (action === 'delete_match_scout') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem excluir registros de match scouting.' });
+        }
+        const hub = ensureStrategyHub(targetEvent);
+        const { scoutId } = payload;
+        hub.matchScouts = hub.matchScouts.filter(m => m.id !== scoutId);
+      } else if (action === 'save_pick_list') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem editar a Pick List Oficial.' });
+        }
+        const hub = ensureStrategyHub(targetEvent);
+        hub.pickList = Array.isArray(payload) ? (payload as PickListItem[]) : [];
+      } else if (action === 'upsert_tactical_play') {
+        const hub = ensureStrategyHub(targetEvent);
+        const play: TacticalBoardPlay = payload;
+        const idx = hub.tacticalPlays.findIndex(pl => pl.id === play.id);
+        if (idx >= 0) {
+          hub.tacticalPlays[idx] = { ...play, updatedBy: username, updatedAt: new Date().toISOString() };
+        } else {
+          hub.tacticalPlays.unshift({ ...play, id: play.id || `play-${Date.now()}`, updatedBy: username, updatedAt: new Date().toISOString() });
+        }
+      } else if (action === 'delete_tactical_play') {
+        const hub = ensureStrategyHub(targetEvent);
+        const { playId } = payload;
+        hub.tacticalPlays = hub.tacticalPlays.filter(pl => pl.id !== playId);
+      } else if (action === 'save_ai_team_updates') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem atualizar as regras/Team Updates da IA.' });
+        }
+        const hub = ensureStrategyHub(targetEvent);
+        hub.aiTeamUpdates = Array.isArray(payload) ? (payload as BioBuzzAIUpdateNote[]) : [];
+      } else if (action === 'save_ai_chat') {
+        const hub = ensureStrategyHub(targetEvent);
+        const msgs = Array.isArray(payload) ? (payload as BioBuzzAIChatMessage[]) : [];
+        hub.aiChatHistory = msgs.slice(-40);
       } else {
         return res.status(400).json({ success: false, error: `Ação desconhecida: ${action}` });
       }

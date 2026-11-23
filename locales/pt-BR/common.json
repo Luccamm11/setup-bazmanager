@@ -35,6 +35,8 @@
     "syncing": "Sincronizando...",
     "synced": "Sincronizado",
     "error": "Erro",
+    "offline_popup": "Você está offline",
+    "slow_internet_popup": "Sua internet está lenta",
     "idle": "Inativo",
     "active": "Ativo",
     "inactive": "Inativo",
