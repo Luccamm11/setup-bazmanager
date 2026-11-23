@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, ClipboardCheck, Users, BarChart3, Award, Calendar,
   MapPin, Plus, RefreshCw, ChevronRight, AlertCircle, ArrowLeft,
-  Sparkles, CheckCircle2, ShieldCheck, PlaneTakeoff, Info, Trash2, X
+  Sparkles, CheckCircle2, ShieldCheck, PlaneTakeoff, Info, Trash2, X, Bot
 } from 'lucide-react';
 import { CompetitionData, CompetitionEvent, UserRole } from '../../types';
 import { INITIAL_COMPETITIONS_DATA } from '../../data/initialCompetitionsData';
@@ -419,29 +419,53 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
       )}
 
       {/* Navegação entre Módulos da Aba Competições (Estilo Aba Mais) */}
-      <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+      <div className="flex items-center gap-2 sm:gap-3 border-b border-white/5 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveModule('checklists')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
             activeModule === 'checklists'
               ? 'bg-blue-600 text-white shadow-glow-primary'
               : 'text-text-secondary hover:text-white hover:bg-white/5'
           }`}
         >
           <ClipboardCheck size={16} />
-          <span>Checklists de Viagem & Partida</span>
+          <span>Checklists</span>
+        </button>
+
+        <button
+          onClick={() => setActiveModule('strategy')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+            activeModule === 'strategy'
+              ? 'bg-amber-500 text-black shadow-lg'
+              : 'text-text-secondary hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Users size={16} />
+          <span>Estratégia & Scouting</span>
+        </button>
+
+        <button
+          onClick={() => setActiveModule('ai')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+            activeModule === 'ai'
+              ? 'bg-cyan-600 text-white shadow-lg'
+              : 'text-text-secondary hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Bot size={16} />
+          <span>Agente IA BIOBUZZ™</span>
         </button>
 
         <button
           onClick={() => setActiveModule('hub')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
             activeModule === 'hub'
               ? 'bg-blue-600 text-white shadow-glow-primary'
               : 'text-text-secondary hover:text-white hover:bg-white/5'
           }`}
         >
           <Trophy size={16} />
-          <span>Módulos de Competição</span>
+          <span>Módulos</span>
         </button>
       </div>
 
@@ -454,6 +478,26 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           currentUser={currentUser}
           userRole={userRole}
           onUpdateEvent={handleUpdateEvent}
+        />
+      )}
+
+      {activeModule === 'strategy' && activeEvent && (
+        <StrategyScouting
+          event={activeEvent}
+          currentUser={currentUser}
+          userRole={userRole}
+          onServerSync={handleStrategySync}
+          onOpenFullAI={() => setActiveModule('ai')}
+        />
+      )}
+
+      {activeModule === 'ai' && activeEvent && (
+        <BioBuzzAIAgent
+          event={activeEvent}
+          currentUser={currentUser}
+          isTech={isTech}
+          onSaveTeamUpdates={updates => handleStrategySync('save_ai_team_updates', updates)}
+          onSaveChatHistory={msgs => handleStrategySync('save_ai_chat', msgs)}
         />
       )}
 
@@ -488,21 +532,47 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
               </div>
             </div>
 
-            {/* Card 2: Estratégia & Scouting (Próximo Módulo) */}
-            <div className="p-6 rounded-xl border border-white/5 bg-primary/40 opacity-70 hover:opacity-90 transition-all duration-300">
+            {/* Card 2: Estratégia & Scouting (Ativo) */}
+            <div
+              onClick={() => setActiveModule('strategy')}
+              className="p-6 rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-600/10 hover:border-amber-400 hover:from-amber-500/15 cursor-pointer transition-all duration-300 group"
+            >
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-xl bg-white/5 text-orange-400">
+                <div className="p-3 rounded-xl bg-amber-500/20 text-amber-400">
                   <Users className="w-8 h-8" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-white">Estratégia & Scouting</h3>
-                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/10 text-text-muted font-black uppercase tracking-wider">
-                      Em Breve
+                    <h3 className="text-xl font-bold text-white group-hover:text-amber-300 transition-colors">Estratégia & Scouting</h3>
+                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black uppercase tracking-wider">
+                      Ativo
                     </span>
                   </div>
                   <p className="text-sm text-text-secondary mt-1">
-                    Mapeamento de alianças, pontos fortes das outras equipes e planejamento tático da arena.
+                    Pit & Match Scouting, Pick List Oficial, Simulador BIOBUZZ™ e Quadro Tático Interativo.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Agente IA Estrategista BIOBUZZ (Ativo) */}
+            <div
+              onClick={() => setActiveModule('ai')}
+              className="p-6 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-emerald-600/10 hover:border-cyan-400 hover:from-cyan-500/15 cursor-pointer transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-xl bg-cyan-500/20 text-cyan-400">
+                  <Bot className="w-8 h-8" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-white group-hover:text-cyan-300 transition-colors">Agente IA BIOBUZZ™</h3>
+                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-black uppercase tracking-wider">
+                      Ativo
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-secondary mt-1">
+                    Copiloto treinado no Manual Oficial FIRST BIOBUZZ™ e conectado aos dados do Scouting.
                   </p>
                 </div>
               </div>
