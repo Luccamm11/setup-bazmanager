@@ -1071,6 +1071,9 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
           isTech={isTech}
           onSavePlay={(play: TacticalBoardPlay) => onServerSync('upsert_tactical_play', play)}
           onDeletePlay={(playId: string) => onServerSync('delete_tactical_play', { playId })}
+          scoutedTeams={hub.teams}
+          liveRankings={hub.liveSync?.rankings || []}
+          liveMatches={hub.liveSync?.matches || []}
         />
       )}
 

@@ -957,12 +957,16 @@ export interface PickListItem {
   updatedAt: string;
 }
 
+export type BioBuzzBallType = 'pollen' | 'nectar_red' | 'nectar_blue';
+
 export interface TacticalToken {
   id: string;
   kind: 'robot_red_1' | 'robot_red_2' | 'robot_blue_1' | 'robot_blue_2' | 'pollen' | 'nectar_red' | 'nectar_blue' | 'marker';
   label: string;
   x: number;
   y: number;
+  heading?: number;
+  cargo?: BioBuzzBallType[];
 }
 
 export interface TacticalPath {
@@ -982,6 +986,7 @@ export interface TacticalBoardPlay {
   phaseFilter: 'all' | 'auto' | 'teleop' | 'endgame';
   tokens: TacticalToken[];
   paths: TacticalPath[];
+  flowerStacks?: Record<string, BioBuzzBallType[]>;
   notes: string;
   updatedBy: string;
   updatedAt: string;
