@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import redis from './_lib/redis.js';
 import { authenticateRequest } from './_lib/auth.js';
-import type { CompetitionData, CompetitionEvent, MatchRecord, ScoutedTeamPit, MatchScoutEntry, PickListItem, TacticalBoardPlay, BioBuzzAIUpdateNote, BioBuzzAIChatMessage, StrategyScoutingHub } from '../types.js';
+import type { CompetitionData, CompetitionEvent, MatchRecord, ScoutedTeamPit, MatchScoutEntry, PickListItem, TacticalBoardPlay, BioBuzzAIUpdateNote, BioBuzzAIChatMessage, StrategyScoutingHub, FtcLiveEventSnapshot, FtcLiveTeamRanking, FtcLiveMatch } from '../types.js';
 import { INITIAL_COMPETITIONS_DATA } from '../data/initialCompetitionsData.js';
 
 const KEYS = {
@@ -393,7 +393,7 @@ async function lookupFtcTeamFromFtcScout(teamNumber: number) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: `query($n: Int!) { teamByNumber(number: $n) { number name city stateProv country } }`,
+        query: `query($n: Int!) { teamByNumber(number: $n) { number name location { city state country } } }`,
         variables: { n: teamNumber },
       }),
       signal: AbortSignal.timeout(4000),
@@ -403,7 +403,7 @@ async function lookupFtcTeamFromFtcScout(teamNumber: number) {
       const t = gqlJson?.data?.teamByNumber;
       if (t) {
         name = t.name || undefined;
-        const locParts = [t.city, t.stateProv, t.country].filter(Boolean);
+        const locParts = [t.location?.city, t.location?.state, t.location?.country].filter(Boolean);
         if (locParts.length > 0) cityState = locParts.join(', ');
       }
     }
@@ -445,6 +445,166 @@ async function lookupFtcTeamFromFtcScout(teamNumber: number) {
       cityState: cityState || undefined,
       opr,
     },
+  };
+}
+
+
+async function discoverTeamEventsFromFtcScout(teamNumber: number, season = 2026) {
+  const res = await fetch('https://api.ftcscout.org/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: `query($n: Int!, $s: Int!) {
+        teamByNumber(number: $n) {
+          number name
+          events(season: $s) {
+            eventCode
+            event {
+              code name start end ongoing started finished liveStreamURL
+              location { venue city state country }
+            }
+          }
+        }
+      }`,
+      variables: { n: teamNumber, s: season },
+    }),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) return [];
+  const json: any = await res.json();
+  const list = json?.data?.teamByNumber?.events || [];
+  return list
+    .filter((item: any) => item?.event)
+    .map((item: any) => {
+      const ev = item.event;
+      const loc = [ev.location?.venue, ev.location?.city, ev.location?.state].filter(Boolean).join(', ');
+      return {
+        code: ev.code,
+        name: ev.name,
+        start: ev.start,
+        end: ev.end,
+        ongoing: Boolean(ev.ongoing),
+        started: Boolean(ev.started),
+        finished: Boolean(ev.finished),
+        location: loc || undefined,
+        liveStreamURL: ev.liveStreamURL || undefined,
+      };
+    });
+}
+
+async function fetchLiveEventFromFtcScout(eventCode: string, season = 2026): Promise<FtcLiveEventSnapshot | null> {
+  const cleanCode = eventCode.trim().toUpperCase();
+  const res = await fetch('https://api.ftcscout.org/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: `query($s: Int!, $c: String!) {
+        eventByCode(season: $s, code: $c) {
+          code season name start end ongoing started finished liveStreamURL
+          location { venue city state country }
+          teams {
+            teamNumber
+            team { number name location { city state country } }
+            stats {
+              ... on TeamEventStats2026 {
+                rank wins losses ties rp tb1 qualMatchesPlayed
+                opr { totalPoints totalPointsNp autoPoints dcPoints tips }
+                avg { totalPoints }
+              }
+            }
+          }
+          matches {
+            id matchNum tournamentLevel description hasBeenPlayed scheduledStartTime actualStartTime
+            teams { alliance station teamNumber }
+            scores {
+              ... on MatchScores2026 {
+                red { totalPoints autoPoints tips swarmRp pollinator1Rp pollinator2Rp }
+                blue { totalPoints autoPoints tips swarmRp pollinator1Rp pollinator2Rp }
+              }
+            }
+          }
+        }
+      }`,
+      variables: { s: season, c: cleanCode },
+    }),
+    signal: AbortSignal.timeout(6500),
+  });
+  if (!res.ok) return null;
+  const json: any = await res.json();
+  const ev = json?.data?.eventByCode;
+  if (!ev) return null;
+
+  const rankings: FtcLiveTeamRanking[] = (ev.teams || []).map((tp: any) => {
+    const loc = [tp.team?.location?.city, tp.team?.location?.state].filter(Boolean).join(', ');
+    const st = tp.stats || null;
+    return {
+      teamNumber: tp.teamNumber,
+      teamName: tp.team?.name || `Equipe #${tp.teamNumber}`,
+      cityState: loc || undefined,
+      rank: typeof st?.rank === 'number' ? st.rank : undefined,
+      wins: typeof st?.wins === 'number' ? st.wins : undefined,
+      losses: typeof st?.losses === 'number' ? st.losses : undefined,
+      ties: typeof st?.ties === 'number' ? st.ties : undefined,
+      rp: typeof st?.rp === 'number' ? Number(st.rp.toFixed(2)) : undefined,
+      tb1: typeof st?.tb1 === 'number' ? Number(st.tb1.toFixed(1)) : undefined,
+      qualMatchesPlayed: typeof st?.qualMatchesPlayed === 'number' ? st.qualMatchesPlayed : undefined,
+      oprTotal: typeof st?.opr?.totalPoints === 'number' ? Number(st.opr.totalPoints.toFixed(1)) : undefined,
+      oprAuto: typeof st?.opr?.autoPoints === 'number' ? Number(st.opr.autoPoints.toFixed(1)) : undefined,
+      oprTeleop: typeof st?.opr?.dcPoints === 'number' ? Number(st.opr.dcPoints.toFixed(1)) : undefined,
+      oprTips: typeof st?.opr?.tips === 'number' ? Number(st.opr.tips.toFixed(2)) : undefined,
+      avgTotal: typeof st?.avg?.totalPoints === 'number' ? Number(st.avg.totalPoints.toFixed(1)) : undefined,
+    };
+  }).sort((a: FtcLiveTeamRanking, b: FtcLiveTeamRanking) => {
+    if (a.rank && b.rank) return a.rank - b.rank;
+    if (a.rank) return -1;
+    if (b.rank) return 1;
+    return a.teamNumber - b.teamNumber;
+  });
+
+  const matches: FtcLiveMatch[] = (ev.matches || []).map((m: any) => {
+    const redTeams = (m.teams || []).filter((t: any) => t.alliance === 'Red').map((t: any) => t.teamNumber);
+    const blueTeams = (m.teams || []).filter((t: any) => t.alliance === 'Blue').map((t: any) => t.teamNumber);
+    const sc = m.scores || null;
+    return {
+      id: m.id,
+      matchNum: m.matchNum,
+      tournamentLevel: m.tournamentLevel || 'Quals',
+      description: m.description || `M-${m.matchNum}`,
+      hasBeenPlayed: Boolean(m.hasBeenPlayed),
+      scheduledStartTime: m.scheduledStartTime || undefined,
+      actualStartTime: m.actualStartTime || undefined,
+      redTeams,
+      blueTeams,
+      redScore: typeof sc?.red?.totalPoints === 'number' ? sc.red.totalPoints : undefined,
+      blueScore: typeof sc?.blue?.totalPoints === 'number' ? sc.blue.totalPoints : undefined,
+      redAuto: typeof sc?.red?.autoPoints === 'number' ? sc.red.autoPoints : undefined,
+      blueAuto: typeof sc?.blue?.autoPoints === 'number' ? sc.blue.autoPoints : undefined,
+      redTips: typeof sc?.red?.tips === 'number' ? sc.red.tips : undefined,
+      blueTips: typeof sc?.blue?.tips === 'number' ? sc.blue.tips : undefined,
+      redSwarmRp: typeof sc?.red?.swarmRp === 'boolean' ? sc.red.swarmRp : undefined,
+      blueSwarmRp: typeof sc?.blue?.swarmRp === 'boolean' ? sc.blue.swarmRp : undefined,
+      redPollinator1Rp: typeof sc?.red?.pollinator1Rp === 'boolean' ? sc.red.pollinator1Rp : undefined,
+      bluePollinator1Rp: typeof sc?.blue?.pollinator1Rp === 'boolean' ? sc.blue.pollinator1Rp : undefined,
+      redPollinator2Rp: typeof sc?.red?.pollinator2Rp === 'boolean' ? sc.red.pollinator2Rp : undefined,
+      bluePollinator2Rp: typeof sc?.blue?.pollinator2Rp === 'boolean' ? sc.blue.pollinator2Rp : undefined,
+    };
+  }).sort((a: FtcLiveMatch, b: FtcLiveMatch) => a.id - b.id);
+
+  const locStr = [ev.location?.venue, ev.location?.city, ev.location?.state].filter(Boolean).join(', ');
+  return {
+    eventCode: ev.code,
+    season: ev.season || season,
+    eventName: ev.name,
+    location: locStr || undefined,
+    start: ev.start || undefined,
+    end: ev.end || undefined,
+    ongoing: Boolean(ev.ongoing),
+    started: Boolean(ev.started),
+    finished: Boolean(ev.finished),
+    liveStreamURL: ev.liveStreamURL || undefined,
+    rankings,
+    matches,
+    lastSyncedAt: new Date().toISOString(),
   };
 }
 
@@ -490,7 +650,35 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   };
 
   if (req.method === 'GET') {
-    const { lookupTeam } = req.query as { lookupTeam?: string };
+    const { lookupTeam, discoverTeam, syncLiveEvent, season } = req.query as {
+      lookupTeam?: string;
+      discoverTeam?: string;
+      syncLiveEvent?: string;
+      season?: string;
+    };
+    const seasonNum = parseInt(season || '2026', 10) || 2026;
+
+    if (discoverTeam) {
+      const teamNum = parseInt(discoverTeam, 10) || 21083;
+      try {
+        const events = await discoverTeamEventsFromFtcScout(teamNum, seasonNum);
+        return res.status(200).json({ success: true, teamNumber: teamNum, season: seasonNum, events });
+      } catch {
+        return res.status(200).json({ success: false, events: [], error: 'FTCScout indisponível.' });
+      }
+    }
+
+    if (syncLiveEvent) {
+      try {
+        const snapshot = await fetchLiveEventFromFtcScout(syncLiveEvent, seasonNum);
+        if (!snapshot) {
+          return res.status(200).json({ success: false, error: 'Evento não encontrado no FTCScout.' });
+        }
+        return res.status(200).json({ success: true, snapshot });
+      } catch {
+        return res.status(200).json({ success: false, error: 'Falha ao consultar FTCScout.' });
+      }
+    }
     if (lookupTeam) {
       const num = parseInt(lookupTeam, 10);
       if (isNaN(num) || num <= 0) {
@@ -749,6 +937,99 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
         const hub = ensureStrategyHub(targetEvent);
         const msgs = Array.isArray(payload) ? (payload as BioBuzzAIChatMessage[]) : [];
         hub.aiChatHistory = msgs.slice(-40);
+      } else if (action === 'set_live_config') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem alterar o código do evento oficial.' });
+        }
+        if (typeof payload?.ftcEventCode === 'string') {
+          targetEvent.ftcEventCode = payload.ftcEventCode.trim().toUpperCase() || undefined;
+        }
+        if (typeof payload?.ftcSeason === 'number') {
+          targetEvent.ftcSeason = payload.ftcSeason;
+        }
+        if (typeof payload?.autoSyncEnabled === 'boolean') {
+          targetEvent.autoSyncEnabled = payload.autoSyncEnabled;
+        }
+      } else if (action === 'sync_live_event') {
+        const hub = ensureStrategyHub(targetEvent);
+        let codeToSync = (payload?.eventCode || targetEvent.ftcEventCode || '').trim().toUpperCase();
+        const seasonToSync = Number(payload?.season || targetEvent.ftcSeason || 2026);
+
+        // Auto-descoberta do evento oficial da Bazinga! 73 (#21083) se nenhum código estiver vinculado
+        if (!codeToSync) {
+          const discovered = await discoverTeamEventsFromFtcScout(21083, seasonToSync);
+          const preferred = discovered.find((e: any) => e.ongoing) || discovered.find((e: any) => !e.finished) || discovered[0];
+          if (preferred?.code) {
+            codeToSync = preferred.code;
+            targetEvent.ftcEventCode = preferred.code;
+            targetEvent.ftcSeason = seasonToSync;
+          }
+        }
+
+        if (!codeToSync) {
+          return res.status(200).json({ success: false, data: current, message: 'Nenhum evento oficial localizado para #21083 ainda.' });
+        }
+
+        const snapshot = await fetchLiveEventFromFtcScout(codeToSync, seasonToSync);
+        if (!snapshot) {
+          return res.status(200).json({ success: false, data: current, message: `Evento ${codeToSync} indisponível no FTCScout no momento.` });
+        }
+
+        targetEvent.ftcEventCode = snapshot.eventCode;
+        targetEvent.ftcSeason = snapshot.season;
+        if (targetEvent.autoSyncEnabled === undefined) targetEvent.autoSyncEnabled = true;
+
+        // Atualiza status do evento automaticamente conforme status real da arena
+        if (snapshot.finished) targetEvent.status = 'completed';
+        else if (snapshot.ongoing || snapshot.started) targetEvent.status = 'ongoing';
+        else targetEvent.status = 'upcoming';
+
+        // Sincroniza equipes oficiais no Pit Scouting sem apagar anotações manuais dos scouts
+        snapshot.rankings.forEach(rk => {
+          const existingIdx = hub.teams.findIndex(t => t.teamNumber === rk.teamNumber);
+          const oprObj = rk.oprTotal !== undefined ? {
+            total: rk.oprTotal,
+            auto: rk.oprAuto,
+            teleop: rk.oprTeleop,
+          } : undefined;
+
+          if (existingIdx >= 0) {
+            hub.teams[existingIdx] = {
+              ...hub.teams[existingIdx],
+              teamName: rk.teamName || hub.teams[existingIdx].teamName,
+              cityState: rk.cityState || hub.teams[existingIdx].cityState,
+              ftcScoutOpr: oprObj || hub.teams[existingIdx].ftcScoutOpr,
+            };
+          } else {
+            hub.teams.push({
+              id: `team-${rk.teamNumber}-live`,
+              teamNumber: rk.teamNumber,
+              teamName: rk.teamName,
+              cityState: rk.cityState,
+              source: 'ftcscout',
+              ftcScoutOpr: oprObj,
+              drivetrain: 'Mecanum',
+              robotDimensionsOk: true,
+              usesAprilTags: false,
+              canScorePollen: true,
+              canScoreNectar: true,
+              canTipHive: false,
+              canScoreFlowers: false,
+              maxCapacity: 4,
+              autoRoutineDescription: '',
+              autoConsistency: 3,
+              teleopRolePreference: 'scorer_hive',
+              endgameParkConsistent: false,
+              strengths: '',
+              weaknesses: '',
+              scoutedBy: 'FTCScout Auto-Sync',
+              updatedAt: snapshot.lastSyncedAt,
+            });
+          }
+        });
+
+        hub.liveSync = snapshot;
       } else {
         return res.status(400).json({ success: false, error: `Ação desconhecida: ${action}` });
       }

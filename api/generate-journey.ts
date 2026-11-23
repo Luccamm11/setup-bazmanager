@@ -439,6 +439,34 @@ function buildScoutingContextForAI(ev: CompetitionEvent | null): string {
   const lines: string[] = [];
 
   lines.push(`TORNEIO ATIVO: ${ev.name} (${ev.location} | ${ev.startDate} a ${ev.endDate})`);
+  const live = hub?.liveSync;
+  if (live) {
+    const statusLabel = live.finished ? 'FINALIZADO' : live.ongoing || live.started ? 'AO VIVO' : 'AGUARDANDO INÍCIO';
+    lines.push(`\n[TELEMETRIA AO VIVO OFICIAL FTCSCOUT — ${live.eventCode} (${live.season}) | Status: ${statusLabel} | Última sincronização: ${live.lastSyncedAt}]:`);
+    const bazRank = live.rankings.find(r => r.teamNumber === 21083);
+    if (bazRank) {
+      lines.push(`- Bazinga! 73 (#21083): Rank #${bazRank.rank ?? '-'} | W-L-T: ${bazRank.wins ?? 0}-${bazRank.losses ?? 0}-${bazRank.ties ?? 0} | RP: ${bazRank.rp ?? '-'} | OPR: ${bazRank.oprTotal ?? '-'} (Auto: ${bazRank.oprAuto ?? '-'}, Tips: ${bazRank.oprTips ?? '-'})`);
+    }
+    const topRankings = live.rankings.slice(0, 12);
+    if (topRankings.length > 0) {
+      lines.push(`- Equipes Oficiais no Evento (${live.rankings.length} total):`);
+      topRankings.forEach(r => {
+        lines.push(`  #${r.rank ?? '-'} Equipe ${r.teamNumber} (${r.teamName}) | W-L-T: ${r.wins ?? 0}-${r.losses ?? 0}-${r.ties ?? 0} | RP: ${r.rp ?? '-'} | OPR: ${r.oprTotal ?? '-'} | Tips OPR: ${r.oprTips ?? '-'}`);
+      });
+    }
+    const bazMatches = live.matches.filter(m => m.redTeams.includes(21083) || m.blueTeams.includes(21083));
+    const nextMatch = bazMatches.find(m => !m.hasBeenPlayed);
+    if (nextMatch) {
+      lines.push(`- PRÓXIMA PARTIDA DA BAZINGA! 73: ${nextMatch.description} | Vermelha: [${nextMatch.redTeams.join(', ')}] vs Azul: [${nextMatch.blueTeams.join(', ')}] | Horário: ${nextMatch.scheduledStartTime || 'A definir'}`);
+    }
+    const recentPlayed = bazMatches.filter(m => m.hasBeenPlayed).slice(-5);
+    if (recentPlayed.length > 0) {
+      lines.push(`- Últimas partidas jogadas pela Bazinga! 73:`);
+      recentPlayed.forEach(m => {
+        lines.push(`  ${m.description}: Red [${m.redTeams.join(',')}] ${m.redScore ?? '-'} (Tips:${m.redTips ?? '-'}) x Blue [${m.blueTeams.join(',')}] ${m.blueScore ?? '-'} (Tips:${m.blueTips ?? '-'})`);
+      });
+    }
+  }
   if (updates.length > 0) {
     lines.push(`\n[ATUALIZAÇÕES E REGRAS EXTRAS DOS TÉCNICOS / TEAM UPDATES]:`);
     updates.forEach(u => lines.push(`- ${u.title} (por ${u.addedBy}): ${u.content}`));

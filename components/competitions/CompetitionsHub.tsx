@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, ClipboardCheck, Users, BarChart3, Award, Calendar,
   MapPin, Plus, RefreshCw, ChevronRight, AlertCircle, ArrowLeft,
-  Sparkles, CheckCircle2, ShieldCheck, PlaneTakeoff, Info, Trash2, X, Bot
+  Sparkles, CheckCircle2, ShieldCheck, PlaneTakeoff, Info, Trash2, X, Bot, Radio
 } from 'lucide-react';
 import { CompetitionData, CompetitionEvent, UserRole } from '../../types';
 import { INITIAL_COMPETITIONS_DATA } from '../../data/initialCompetitionsData';
@@ -27,6 +27,8 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
 
   // Vista ativa: 'hub' (estilo Aba Mais com os cards) ou 'checklist' (módulo de checklists)
   const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai'>('checklists');
+  const [isLiveSyncing, setIsLiveSyncing] = useState(false);
+  const [liveSyncError, setLiveSyncError] = useState<string | null>(null);
 
   // Modal Novo Evento
   const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
@@ -188,6 +190,82 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
       console.error('Strategy sync failed:', err);
     }
   };
+
+
+  // Sincronização Automática em Tempo Real com FTCScout / FIRST Live API
+  const handleSyncLiveEvent = useCallback(async (customCode?: string) => {
+    if (!activeEvent) return;
+    setIsLiveSyncing(true);
+    setLiveSyncError(null);
+    try {
+      const res = await fetch('/api/crud?type=competitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_live_event',
+          username: currentUser,
+          eventId: activeEvent.id,
+          payload: {
+            eventCode: customCode !== undefined ? customCode : activeEvent.ftcEventCode,
+            season: activeEvent.ftcSeason || 2026,
+          },
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setData(json.data);
+      } else if (json.message) {
+        setLiveSyncError(json.message);
+      }
+    } catch (err: any) {
+      console.error('Live sync error:', err);
+      setLiveSyncError('Não foi possível conectar ao FTCScout no momento. Nova tentativa automática em breve.');
+    } finally {
+      setIsLiveSyncing(false);
+    }
+  }, [activeEvent?.id, activeEvent?.ftcEventCode, activeEvent?.ftcSeason, currentUser]);
+
+  const handleUpdateLiveConfig = useCallback(async (cfg: { ftcEventCode?: string; ftcSeason?: number; autoSyncEnabled?: boolean }) => {
+    if (!activeEvent) return;
+    await handleStrategySync('set_live_config', cfg);
+  }, [activeEvent?.id]);
+
+  // Auto-polling em tempo real: 30s quando a competição está acontecendo; 2min aguardando início
+  useEffect(() => {
+    if (!activeEvent || loading) return;
+    if (activeEvent.autoSyncEnabled === false) return;
+
+    const live = activeEvent.strategyScouting?.liveSync;
+    const today = new Date().toISOString().split('T')[0];
+    const isCompetitionDay =
+      Boolean(activeEvent.startDate && activeEvent.endDate && today >= activeEvent.startDate && today <= activeEvent.endDate);
+    const isLiveNow = Boolean(live?.ongoing || (live?.started && !live?.finished) || isCompetitionDay);
+
+    // Primeira sincronização automática se ainda não sincronizou ou passou de 45s
+    const lastTs = live?.lastSyncedAt ? new Date(live.lastSyncedAt).getTime() : 0;
+    if (Date.now() - lastTs > 45_000) {
+      handleSyncLiveEvent();
+    }
+
+    const intervalMs = isLiveNow ? 30_000 : 120_000;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        handleSyncLiveEvent();
+      }
+    }, intervalMs);
+
+    return () => window.clearInterval(timer);
+  }, [
+    activeEvent?.id,
+    activeEvent?.autoSyncEnabled,
+    activeEvent?.ftcEventCode,
+    activeEvent?.startDate,
+    activeEvent?.endDate,
+    activeEvent?.strategyScouting?.liveSync?.ongoing,
+    activeEvent?.strategyScouting?.liveSync?.started,
+    activeEvent?.strategyScouting?.liveSync?.finished,
+    loading,
+  ]);
 
   // Mudar Evento Ativo
   const handleSelectEvent = async (eventId: string) => {
@@ -405,6 +483,21 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
               <span className="text-text-muted">Partidas: </span>
               <span className="font-bold text-orange-400">{activeStats.matchesCount}</span>
             </div>
+            <button
+              onClick={() => handleSyncLiveEvent()}
+              disabled={isLiveSyncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold transition-all"
+              title="Sincronizar dados oficiais do FTCScout agora"
+            >
+              <Radio size={12} className={isLiveSyncing ? 'animate-spin' : activeEvent.strategyScouting?.liveSync?.ongoing ? 'animate-pulse' : ''} />
+              <span>
+                {isLiveSyncing
+                  ? 'Sync API...'
+                  : activeEvent.strategyScouting?.liveSync?.ongoing
+                  ? `AO VIVO (${activeEvent.strategyScouting.liveSync.eventCode})`
+                  : `API ${activeEvent.ftcEventCode || activeEvent.strategyScouting?.liveSync?.eventCode || 'Auto'}`}
+              </span>
+            </button>
             {isTech && data.events.length > 1 && (
               <button
                 onClick={() => handleDeleteEvent(activeEvent.id)}
@@ -488,6 +581,10 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           userRole={userRole}
           onServerSync={handleStrategySync}
           onOpenFullAI={() => setActiveModule('ai')}
+          isLiveSyncing={isLiveSyncing}
+          liveSyncError={liveSyncError}
+          onSyncLiveEvent={handleSyncLiveEvent}
+          onUpdateLiveConfig={handleUpdateLiveConfig}
         />
       )}
 

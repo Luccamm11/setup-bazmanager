@@ -1003,6 +1003,63 @@ export interface BioBuzzAIUpdateNote {
   addedAt: string;
 }
 
+export interface FtcLiveTeamRanking {
+  teamNumber: number;
+  teamName: string;
+  cityState?: string;
+  rank?: number;
+  wins?: number;
+  losses?: number;
+  ties?: number;
+  rp?: number;
+  tb1?: number;
+  qualMatchesPlayed?: number;
+  oprTotal?: number;
+  oprAuto?: number;
+  oprTeleop?: number;
+  oprTips?: number;
+  avgTotal?: number;
+}
+
+export interface FtcLiveMatch {
+  id: number;
+  matchNum: number;
+  tournamentLevel: string;
+  description: string;
+  hasBeenPlayed: boolean;
+  scheduledStartTime?: string;
+  actualStartTime?: string;
+  redTeams: number[];
+  blueTeams: number[];
+  redScore?: number;
+  blueScore?: number;
+  redAuto?: number;
+  blueAuto?: number;
+  redTips?: number;
+  blueTips?: number;
+  redSwarmRp?: boolean;
+  blueSwarmRp?: boolean;
+  redPollinator1Rp?: boolean;
+  bluePollinator1Rp?: boolean;
+  redPollinator2Rp?: boolean;
+  bluePollinator2Rp?: boolean;
+}
+
+export interface FtcLiveEventSnapshot {
+  eventCode: string;
+  season: number;
+  eventName: string;
+  location?: string;
+  start?: string;
+  end?: string;
+  ongoing: boolean;
+  started: boolean;
+  finished: boolean;
+  liveStreamURL?: string;
+  rankings: FtcLiveTeamRanking[];
+  matches: FtcLiveMatch[];
+  lastSyncedAt: string;
+}
 export interface StrategyScoutingHub {
   teams: ScoutedTeamPit[];
   matchScouts: MatchScoutEntry[];
@@ -1010,6 +1067,7 @@ export interface StrategyScoutingHub {
   tacticalPlays: TacticalBoardPlay[];
   aiTeamUpdates?: BioBuzzAIUpdateNote[];
   aiChatHistory?: BioBuzzAIChatMessage[];
+  liveSync?: FtcLiveEventSnapshot;
 }
 export interface CompetitionEvent {
   id: string;
@@ -1024,6 +1082,9 @@ export interface CompetitionEvent {
   customChecklists?: CustomChecklistSection[];
   historyLogs?: ChecklistAuditLog[];
   strategyScouting?: StrategyScoutingHub;
+  ftcEventCode?: string;
+  ftcSeason?: number;
+  autoSyncEnabled?: boolean;
   createdAt: string;
   createdBy: string;
   updatedAt: string;

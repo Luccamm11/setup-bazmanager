@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Users, ClipboardList, Trophy, Calculator, Map, Plus, Search,
   Trash2, Edit3, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  Bot, X, Sparkles, Wifi, WifiOff, Star, BarChart2, Shield
+  Bot, X, Sparkles, Wifi, WifiOff, Star, BarChart2, Shield, Radio
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid
@@ -17,6 +17,7 @@ import type {
   TacticalBoardPlay,
   BioBuzzAIUpdateNote,
   BioBuzzAIChatMessage,
+  FtcLiveMatch,
   UserRole,
 } from '../../types';
 import {
@@ -26,6 +27,7 @@ import {
 } from '../../data/bioBuzzManual';
 import TacticalFieldBoard from './TacticalFieldBoard';
 import BioBuzzAIAgent from './BioBuzzAIAgent';
+import LiveArenaDashboard from './LiveArenaDashboard';
 
 interface StrategyScoutingProps {
   event: CompetitionEvent;
@@ -33,9 +35,13 @@ interface StrategyScoutingProps {
   userRole: UserRole;
   onServerSync: (action: string, payload: any) => Promise<void>;
   onOpenFullAI?: () => void;
+  isLiveSyncing?: boolean;
+  liveSyncError?: string | null;
+  onSyncLiveEvent?: (customCode?: string) => Promise<void>;
+  onUpdateLiveConfig?: (cfg: { ftcEventCode?: string; ftcSeason?: number; autoSyncEnabled?: boolean }) => Promise<void>;
 }
 
-type SubTab = 'pit' | 'match' | 'picklist' | 'simulator' | 'tactical';
+type SubTab = 'live' | 'pit' | 'match' | 'picklist' | 'simulator' | 'tactical';
 
 const DRIVETRAINS: DrivetrainType[] = ['Mecanum', 'Swerve', 'Tank', 'Omni/X-Drive', 'Outro'];
 
@@ -60,6 +66,10 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
   userRole,
   onServerSync,
   onOpenFullAI,
+  isLiveSyncing = false,
+  liveSyncError = null,
+  onSyncLiveEvent,
+  onUpdateLiveConfig,
 }) => {
   const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
   const hub = event.strategyScouting || {
@@ -71,7 +81,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
     aiChatHistory: [],
   };
 
-  const [subTab, setSubTab] = useState<SubTab>('pit');
+  const [subTab, setSubTab] = useState<SubTab>('live');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAIDrawer, setShowAIDrawer] = useState(false);
 
@@ -464,6 +474,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-primary/40 border border-white/10 p-3 rounded-2xl">
         <div className="flex items-center gap-1.5 flex-wrap">
           {[
+            { id: 'live', label: `Ao Vivo (${hub.liveSync?.eventCode || 'API'})`, icon: Radio },
             { id: 'pit', label: `Pit Scouting (${hub.teams.length})`, icon: Users },
             { id: 'match', label: `Match Scouting (${hub.matchScouts.length})`, icon: ClipboardList },
             { id: 'picklist', label: `Ranking & Pick List`, icon: Trophy },
@@ -516,6 +527,24 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
             compact
           />
         </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SUB-TAB 0: AO VIVO — PLACAR, RANKING & SYNC AUTOMÁTICO FTCSCOUT
+      ════════════════════════════════════════════════════════════════════════ */}
+      {subTab === 'live' && (
+        <LiveArenaDashboard
+          event={event}
+          isTech={isTech}
+          isSyncing={isLiveSyncing}
+          syncError={liveSyncError}
+          onSyncNow={code => (onSyncLiveEvent ? onSyncLiveEvent(code) : Promise.resolve())}
+          onUpdateLiveConfig={cfg => (onUpdateLiveConfig ? onUpdateLiveConfig(cfg) : Promise.resolve())}
+          onAskAIAboutMatch={(m: FtcLiveMatch) => {
+            if (onOpenFullAI) onOpenFullAI();
+            else setShowAIDrawer(true);
+          }}
+        />
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════

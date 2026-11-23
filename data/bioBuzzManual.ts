@@ -25,14 +25,21 @@ JOGO: BIOBUZZ™ presented by RTX (Temporada FIRST® CANOPY™)
 FONTE DE REFERÊNCIA: Competition Manual FIRST Inspires (Seções 9, 10 e 11)
 =====================================================================
 
-1. TEMÁTICA & VISÃO GERAL
-- Duas alianças (Vermelha e Azul), com 2 robôs por aliança, competem em um campo padrão FTC de 12ft x 12ft (grade de 6x6 placas de 2ft x 2ft).
+1. TEMÁTICA, ARENA & MEDIDAS OFICIAIS (SEÇÃO 9 — TOLERÂNCIA ±1" / ±2,5 cm)
+- Campo Oficial: 144" × 144" (365,75 cm × 365,75 cm) internos às paredes do perímetro, com 36 placas de EVA (grade 6×6: colunas A–F da esquerda para direita, linhas 1–6 da Plateia/Audience para a Mesa/Scoring). Cada placa mede 24" × 24" × 0,59" (60,95 cm × 60,95 cm × 1,50 cm).
+- Colunas A, B, C = Lado Aliança Vermelha | Colunas D, E, F = Lado Aliança Azul.
+- HIVE CENTRAL (Colmeia): Estrutura biestável única ancorada no CENTRO do campo (placas C3, C4, D3, D4). Base de 49,46" × 38,95" (125,65 cm × 98,95 cm), eixo de pivô a 43,95" (111,65 cm) de altura. Abriga a Red HIVE (2 células) e a Blue HIVE (2 células). Começa com 3 Nectar em cada célula ativa voltada para cima.
+- APRILTAGS (Família 36h11 — 3,25" × 3,25" / 8,25 cm): Organizados em clusters de 4 tags sob as células da Hive voltados para baixo:
+  * Red Cell (lado Scoring/oposto à plateia): IDs 0, 1, 2, 3
+  * Red Cell (lado Audience/plateia): IDs 4, 5, 6, 7
+  * Blue Cell (lado Audience/plateia): IDs 38, 39, 40, 41
+  * Blue Cell (lado Scoring/oposto à plateia): IDs 42, 43, 44, 45
+- 4 FLOWERS (Flores no Perímetro): Montadas nas 4 paredes do perímetro (1 por parede, a 2 placas do canto). Abertura superior Ø 4,0" (10,15 cm) a 21,5" (54,6 cm) de altura, backstop de 1,25", abertura inferior de coleta 3,55" × 3,57", anel de piso 0,4" com furo Ø 2,79". Cada Flower inicia com 4 Pollen empilhados.
+- LOADING ZONES (Zonas de Carga / Park): 23" × 11" (58,40 cm × 27,95 cm) — Red na placa A5 e Blue na placa F2.
+- GARDENS (Jardins): 23" × 2" (58,40 cm × 5,10 cm) — Red Garden na borda da placa A1 (4 Pollen iniciais) e Blue Garden na borda da placa F6 (4 Pollen iniciais).
 - Elementos de Pontuação (Scoring Elements):
-  * POLLEN: Esferas amarelas (~3 polegadas / ~7,6 cm). Recurso compartilhado que pode ser coletado do chão ou das Flowers por QUALQUER aliança.
-  * NECTAR: Esferas específicas por cor da aliança (Vermelha ou Azul). Inicialmente travadas, são desbloqueadas ao tombar (Tip) a Hive da aliança e usadas para pontuação e domínio (Ownership) de Flowers.
-- Estruturas da Arena:
-  * HIVE (Colmeia): Estrutura biestável por aliança com células voltadas para cima e AprilTags integrados para alinhamento por visão computacional (ex.: Limelight). Lançar/pontuar elementos suficientes faz a Hive tombar (Hive Tip).
-  * FLOWERS (Flores): 4 estruturas distribuídas no campo. Começam contendo Pollen e tornam-se o foco principal de disputa nos últimos 60 segundos do TeleOp (Endgame).
+  * POLLEN: Esferas amarelas Gopher ResisDent™ Ø ~2,8" (7,1 cm). Recurso compartilhado (8 nos Gardens + 16 nas Flowers).
+  * NECTAR: Esferas vermelhas/azuis Ø ~3,6" (9,1 cm). Exclusivas de cada aliança; 3 iniciais por Hive ativa e mais liberadas a cada Hive Tip.
 
 2. ESTRUTURA DA PARTIDA (2m38s totais)
 - PERÍODO AUTÔNOMO (30 segundos): Robôs operam apenas com código pré-programado, sensores e leitura de AprilTags nas Hives. Foco em Leave (sair da zona inicial), coleta inicial de Pollen, lançamentos na Hive, Hive Tip e Park.
