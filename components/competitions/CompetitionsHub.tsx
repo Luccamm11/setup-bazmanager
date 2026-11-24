@@ -11,6 +11,7 @@ import CompetitionChecklists from './CompetitionChecklists';
 import StrategyScouting from './StrategyScouting';
 import BioBuzzAIAgent from './BioBuzzAIAgent';
 import AwardsEvaluations from './AwardsEvaluations';
+import FieldPerformance from './FieldPerformance';
 import { createDefaultAwardsEvaluationsHub } from '../../data/initialAwardsEvaluationsData';
 
 interface CompetitionsHubProps {
@@ -28,7 +29,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Vista ativa: 'hub' (estilo Aba Mais com os cards) ou submódulos
-  const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai' | 'awards'>('checklists');
+  const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai' | 'awards' | 'performance'>('checklists');
   const [isLiveSyncing, setIsLiveSyncing] = useState(false);
   const [liveSyncError, setLiveSyncError] = useState<string | null>(null);
 
@@ -622,6 +623,18 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveModule('performance')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+            activeModule === 'performance'
+              ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-black shadow-lg shadow-emerald-500/20'
+              : 'text-text-secondary hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <BarChart3 size={16} />
+          <span>Desempenho em Pista</span>
+        </button>
+
+        <button
           onClick={() => setActiveModule('hub')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
             activeModule === 'hub'
@@ -676,6 +689,18 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           currentUser={currentUser}
           userRole={userRole}
           onServerSync={handleAwardsSync}
+        />
+      )}
+
+      {activeModule === 'performance' && activeEvent && (
+        <FieldPerformance
+          event={activeEvent}
+          currentUser={currentUser}
+          userRole={userRole}
+          isLiveSyncing={isLiveSyncing}
+          liveSyncError={liveSyncError}
+          onSyncLiveEvent={handleSyncLiveEvent}
+          onNavigateToModule={setActiveModule}
         />
       )}
 
@@ -781,21 +806,26 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
               </div>
             </div>
 
-            {/* Card 4: Desempenho & Estatísticas de Pista */}
-            <div className="p-6 rounded-xl border border-white/5 bg-primary/40 opacity-70 hover:opacity-90 transition-all duration-300">
+            {/* Card 4: Desempenho & Estatísticas de Pista (Ativo) */}
+            <div
+              onClick={() => setActiveModule('performance')}
+              className="p-6 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-cyan-600/10 hover:border-emerald-400 hover:from-emerald-500/15 cursor-pointer transition-all duration-300 group"
+            >
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-xl bg-white/5 text-cyan-400">
+                <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
                   <BarChart3 className="w-8 h-8" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-white">Desempenho em Pista</h3>
-                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/10 text-text-muted font-black uppercase tracking-wider">
-                      Em Breve
+                    <h3 className="text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">
+                      Desempenho em Pista
+                    </h3>
+                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black uppercase tracking-wider">
+                      Ativo
                     </span>
                   </div>
                   <p className="text-sm text-text-secondary mt-1">
-                    Médias de pontuação no autônomo, teleoperado, ranking oficial e histórico de matches.
+                    Médias de pontuação no autônomo, teleoperado, ranking oficial, telemetria de baterias e integridade física pós-match.
                   </p>
                 </div>
               </div>
