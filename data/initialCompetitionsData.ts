@@ -1,5 +1,5 @@
-import { CompetitionData } from '../types';
-import { createDefaultAwardsEvaluationsHub } from './initialAwardsEvaluationsData';
+import type { CompetitionData } from '../types.js';
+import { createDefaultAwardsEvaluationsHub } from './initialAwardsEvaluationsData.js';
 
 export const INITIAL_COMPETITIONS_DATA: CompetitionData = {
   activeEventId: 'event-regional-2026',

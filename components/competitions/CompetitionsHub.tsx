@@ -117,11 +117,15 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
         }),
       });
       const json = await res.json();
-      if (json.success && json.data) {
+      if (res.ok && json.success && json.data) {
         setData(json.data);
+      } else {
+        throw new Error(json.error || `Erro HTTP ${res.status} ao salvar evento.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to sync event update to backend:', err);
+      setError(`Falha ao salvar alteração no servidor: ${err.message || 'Erro de conexão'}. Recarregando dados...`);
+      fetchCompetitions();
     }
   };
 
@@ -186,11 +190,14 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
         }),
       });
       const json = await res.json();
-      if (json.success && json.data) {
+      if (res.ok && json.success && json.data) {
         setData(json.data);
+      } else {
+        throw new Error(json.error || `Erro HTTP ${res.status} ao sincronizar estratégia.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Strategy sync failed:', err);
+      setError(`Falha ao sincronizar dados de estratégia: ${err.message || 'Erro de conexão'}`);
     }
   };
 
@@ -244,11 +251,14 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
         }),
       });
       const json = await res.json();
-      if (json.success && json.data) {
+      if (res.ok && json.success && json.data) {
         setData(json.data);
+      } else {
+        throw new Error(json.error || `Erro HTTP ${res.status} ao sincronizar prêmios.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Awards sync failed:', err);
+      setError(`Falha ao sincronizar dados de prêmios: ${err.message || 'Erro de conexão'}`);
     }
   };
 

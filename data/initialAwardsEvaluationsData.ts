@@ -1,5 +1,5 @@
 // data/initialAwardsEvaluationsData.ts
-import { AwardsEvaluationsHub, CompetitionAwardItem, JudgeRubricScore, PitchTopicItem } from '../types';
+import type { AwardsEvaluationsHub, CompetitionAwardItem, JudgeRubricScore, PitchTopicItem } from '../types.js';
 
 export const CANONICAL_FTC_AWARDS: CompetitionAwardItem[] = [
   {
