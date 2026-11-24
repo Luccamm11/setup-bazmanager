@@ -2,8 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 import redis from './_lib/redis.js';
 import { authenticateRequest } from './_lib/auth.js';
-import type { CompetitionData, CompetitionEvent, MatchRecord, ScoutedTeamPit, MatchScoutEntry, PickListItem, TacticalBoardPlay, BioBuzzAIUpdateNote, BioBuzzAIChatMessage, StrategyScoutingHub, FtcLiveEventSnapshot, FtcLiveTeamRanking, FtcLiveMatch } from '../types.js';
+import { awardCompetitionXpToMembers } from './_lib/evaluationHelper.js';
+import type { CompetitionData, CompetitionEvent, MatchRecord, ScoutedTeamPit, MatchScoutEntry, PickListItem, TacticalBoardPlay, BioBuzzAIUpdateNote, BioBuzzAIChatMessage, StrategyScoutingHub, FtcLiveEventSnapshot, FtcLiveTeamRanking, FtcLiveMatch, AwardsEvaluationsHub, CompetitionAwardItem, PitchPracticeSession, FormalJudgingSession, PitInterviewLog } from '../types.js';
 import { INITIAL_COMPETITIONS_DATA } from '../data/initialCompetitionsData.js';
+import { createDefaultAwardsEvaluationsHub } from '../data/initialAwardsEvaluationsData.js';
 
 const KEYS = {
   attendance: 'levelup_attendance_records',
@@ -627,6 +629,36 @@ function ensureStrategyHub(ev: CompetitionEvent): StrategyScoutingHub {
   if (!Array.isArray(ev.strategyScouting.aiChatHistory)) ev.strategyScouting.aiChatHistory = [];
   return ev.strategyScouting;
 }
+
+function ensureAwardsHub(ev: CompetitionEvent): AwardsEvaluationsHub {
+  if (!ev.awardsEvaluations) {
+    ev.awardsEvaluations = createDefaultAwardsEvaluationsHub();
+  }
+  if (!Array.isArray(ev.awardsEvaluations.awards)) ev.awardsEvaluations.awards = [];
+  if (!ev.awardsEvaluations.pitchPractice) {
+    ev.awardsEvaluations.pitchPractice = {
+      topics: [],
+      pitchDurationSeconds: 300,
+      qaDurationSeconds: 300,
+      rehearsalsHistory: [],
+    };
+  }
+  if (!Array.isArray(ev.awardsEvaluations.pitchPractice.topics)) ev.awardsEvaluations.pitchPractice.topics = [];
+  if (!ev.awardsEvaluations.formalJudging) {
+    ev.awardsEvaluations.formalJudging = {
+      rubrics: [],
+      questionsReceived: [],
+      strongPoints: '',
+      improvementPoints: '',
+      immediateActionItems: [],
+    };
+  }
+  if (!Array.isArray(ev.awardsEvaluations.formalJudging.rubrics)) ev.awardsEvaluations.formalJudging.rubrics = [];
+  if (!Array.isArray(ev.awardsEvaluations.formalJudging.questionsReceived)) ev.awardsEvaluations.formalJudging.questionsReceived = [];
+  if (!Array.isArray(ev.awardsEvaluations.formalJudging.immediateActionItems)) ev.awardsEvaluations.formalJudging.immediateActionItems = [];
+  if (!Array.isArray(ev.awardsEvaluations.pitInterviews)) ev.awardsEvaluations.pitInterviews = [];
+  return ev.awardsEvaluations;
+}
 async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
   const COMPETITIONS_KEY = 'levelup_competitions_data';
 
@@ -1030,6 +1062,77 @@ async function handleCompetitions(req: VercelRequest, res: VercelResponse) {
         });
 
         hub.liveSync = snapshot;
+      } else if (action === 'upsert_award') {
+        const hub = ensureAwardsHub(targetEvent);
+        const award: CompetitionAwardItem = payload;
+        const idx = hub.awards.findIndex(a => a.id === award.id);
+        if (idx >= 0) {
+          hub.awards[idx] = { ...hub.awards[idx], ...award, updatedAt: new Date().toISOString(), updatedBy: username };
+        } else {
+          hub.awards.push({ ...award, id: award.id || `award-${Date.now()}`, updatedAt: new Date().toISOString(), updatedBy: username });
+        }
+      } else if (action === 'delete_award') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem excluir prêmios do sistema.' });
+        }
+        const hub = ensureAwardsHub(targetEvent);
+        const { awardId } = payload;
+        hub.awards = hub.awards.filter(a => a.id !== awardId);
+      } else if (action === 'award_competition_xp') {
+        const isTech = auth.user.role === 'technician' || ['Jonas', 'Ramon'].includes(auth.user.username) || ['Jonas', 'Ramon'].includes(username);
+        if (!isTech) {
+          return res.status(403).json({ success: false, error: 'Apenas técnicos podem conceder XP oficial de premiações.' });
+        }
+        const hub = ensureAwardsHub(targetEvent);
+        const { awardId, recipients, xpAmount } = payload;
+        const award = hub.awards.find(a => a.id === awardId);
+        if (!award) {
+          return res.status(404).json({ success: false, error: 'Prêmio não encontrado.' });
+        }
+        const finalXp = typeof xpAmount === 'number' && xpAmount > 0 ? xpAmount : (award.xpValue || 100);
+        const finalRecipients = Array.isArray(recipients) && recipients.length > 0 
+          ? recipients 
+          : (Array.isArray(award.awardedTo) && award.awardedTo.length > 0 ? award.awardedTo : FALLBACK_MEMBERS);
+
+        await awardCompetitionXpToMembers({
+          recipients: finalRecipients,
+          xpAmount: finalXp,
+          awardName: award.name,
+          technicianUsername: username,
+          eventName: targetEvent.name,
+        });
+
+        award.xpAwarded = true;
+        award.xpAwardedBy = username;
+        award.xpAwardedAt = new Date().toISOString();
+        award.xpValue = finalXp;
+        award.awardedTo = finalRecipients;
+        award.updatedAt = new Date().toISOString();
+        award.updatedBy = username;
+      } else if (action === 'save_pitch_practice') {
+        const hub = ensureAwardsHub(targetEvent);
+        hub.pitchPractice = payload as PitchPracticeSession;
+      } else if (action === 'save_formal_judging') {
+        const hub = ensureAwardsHub(targetEvent);
+        hub.formalJudging = {
+          ...payload,
+          updatedAt: new Date().toISOString(),
+          updatedBy: username,
+        } as FormalJudgingSession;
+      } else if (action === 'add_pit_interview') {
+        const hub = ensureAwardsHub(targetEvent);
+        const interview: PitInterviewLog = {
+          ...payload,
+          id: payload.id || `pit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp: payload.timestamp || new Date().toISOString(),
+          loggedBy: username,
+        };
+        hub.pitInterviews.unshift(interview);
+      } else if (action === 'delete_pit_interview') {
+        const hub = ensureAwardsHub(targetEvent);
+        const { interviewId } = payload;
+        hub.pitInterviews = hub.pitInterviews.filter(i => i.id !== interviewId);
       } else {
         return res.status(400).json({ success: false, error: `Ação desconhecida: ${action}` });
       }

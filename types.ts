@@ -1074,6 +1074,118 @@ export interface StrategyScoutingHub {
   aiChatHistory?: BioBuzzAIChatMessage[];
   liveSync?: FtcLiveEventSnapshot;
 }
+
+// ─── Prêmios & Avaliações (Awards & Judge Evaluations) ──────────────────────
+
+export type CompetitionAwardStatus = 
+  | 'winner'        // 1º Lugar / Conquistado
+  | 'finalist_2nd'  // 2º Lugar / Finalista
+  | 'finalist_3rd'  // 3º Lugar
+  | 'nominated'     // Indicado / Finalista de Sala
+  | 'in_contention' // Em Disputa / Alvo da Equipe
+  | 'not_targeted'; // Não Concorrido
+
+export type CompetitionAwardCategory =
+  | 'inspire'
+  | 'think'
+  | 'connect'
+  | 'innovate'
+  | 'control'
+  | 'motivate'
+  | 'design'
+  | 'deans_list'
+  | 'compass'
+  | 'promote'
+  | 'judges_choice'
+  | 'alliance'
+  | 'custom';
+
+export interface CompetitionAwardItem {
+  id: string;
+  name: string;
+  category: CompetitionAwardCategory;
+  description: string;
+  officialFtc: boolean;
+  status: CompetitionAwardStatus;
+  awardedTo?: string[]; // Membros destacados ou equipe inteira
+  notes?: string;
+  xpValue?: number;
+  xpAwarded?: boolean;
+  xpAwardedBy?: string;
+  xpAwardedAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface PitchTopicItem {
+  id: string;
+  title: string;
+  speaker?: string; // Membro orador responsável
+  targetDurationSeconds: number; // Duração estimada (ex: 60s)
+  completed: boolean; // Ticado durante a fala
+  notes?: string;
+  order: number;
+}
+
+export interface PitchPracticeSession {
+  topics: PitchTopicItem[];
+  pitchDurationSeconds: number; // Padrão: 300 (5 min)
+  qaDurationSeconds: number;    // Padrão: 300 (5 min)
+  notes?: string;
+  lastRehearsalAt?: string;
+  rehearsalsHistory?: {
+    id: string;
+    date: string;
+    durationSeconds: number;
+    completedTopicsCount: number;
+    totalTopicsCount: number;
+    conductedBy: string;
+    notes?: string;
+  }[];
+}
+
+export interface JudgeRubricScore {
+  category: 'portfolio' | 'connect' | 'innovate_design' | 'control' | 'gracious_professionalism';
+  label: string;
+  score: number; // 1 a 5
+  level: 'beginning' | 'developing' | 'accomplished' | 'exemplary';
+  notes?: string;
+}
+
+export interface FormalJudgingSession {
+  scheduledTime?: string;
+  roomNumber?: string;
+  judgesNames?: string;
+  rubrics: JudgeRubricScore[];
+  questionsReceived: string[]; // Perguntas feitas pelos juízes
+  strongPoints: string;        // Pontos elogiados pela banca
+  improvementPoints: string;   // Dúvidas e sugestões de melhoria
+  immediateActionItems: string[]; // Ações prioritárias para a bancada do Pit
+  generalNotes?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface PitInterviewLog {
+  id: string;
+  timestamp: string;
+  judgeArea: 'engineering' | 'control' | 'connect' | 'motivate' | 'general';
+  judgeNames?: string;
+  teamResponders: string[];    // Membros que apresentaram aos juízes
+  questionsAsked: string;
+  feedbackGiven: string;
+  impressionRating: 1 | 2 | 3 | 4 | 5; // Nível de entusiasmo dos juízes
+  followUpRequired?: string;
+  loggedBy: string;
+}
+
+export interface AwardsEvaluationsHub {
+  awards: CompetitionAwardItem[];
+  pitchPractice: PitchPracticeSession;
+  formalJudging: FormalJudgingSession;
+  pitInterviews: PitInterviewLog[];
+}
+
 export interface CompetitionEvent {
   id: string;
   name: string;
@@ -1087,6 +1199,7 @@ export interface CompetitionEvent {
   customChecklists?: CustomChecklistSection[];
   historyLogs?: ChecklistAuditLog[];
   strategyScouting?: StrategyScoutingHub;
+  awardsEvaluations?: AwardsEvaluationsHub;
   ftcEventCode?: string;
   ftcSeason?: number;
   autoSyncEnabled?: boolean;

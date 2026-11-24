@@ -1,4 +1,5 @@
 import { CompetitionData } from '../types';
+import { createDefaultAwardsEvaluationsHub } from './initialAwardsEvaluationsData';
 
 export const INITIAL_COMPETITIONS_DATA: CompetitionData = {
   activeEventId: 'event-regional-2026',
@@ -33,6 +34,7 @@ export const INITIAL_COMPETITIONS_DATA: CompetitionData = {
       },
       customChecklists: [],
       historyLogs: [],
+      awardsEvaluations: createDefaultAwardsEvaluationsHub(),
     },
   ],
 };

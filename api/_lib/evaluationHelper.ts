@@ -135,3 +135,57 @@ export async function applyActivityEvaluation(params: {
     }
   }
 }
+
+export async function awardCompetitionXpToMembers(params: {
+  recipients: string[];
+  xpAmount: number;
+  awardName: string;
+  technicianUsername: string;
+  eventName: string;
+}) {
+  const { recipients, xpAmount, awardName, technicianUsername, eventName } = params;
+  if (!recipients || recipients.length === 0 || xpAmount <= 0) return;
+
+  for (const username of recipients) {
+    try {
+      const userKey = `levelup_user_${username}`;
+      const raw = await redis.get(userKey);
+      if (!raw) continue;
+
+      const saveData = JSON.parse(raw);
+      const user = saveData.user;
+      if (!user) continue;
+
+      let newXpTotal = (user.xp_total || 0) + xpAmount;
+      let newLevel = user.level_overall || 1;
+      let xpForNext = user.xpToNextLevel || getXpThresholdForLevel(newLevel);
+      let newRank = user.rank || 'e_rank';
+
+      while (newXpTotal >= xpForNext) {
+        newXpTotal -= xpForNext;
+        newLevel++;
+        xpForNext = getXpThresholdForLevel(newLevel);
+        newRank = getRankForLevel(newLevel);
+      }
+
+      saveData.user = {
+        ...user,
+        xp_total: Math.max(0, newXpTotal),
+        level_overall: newLevel,
+        rank: newRank,
+        xpToNextLevel: xpForNext,
+      };
+
+      await redis.set(userKey, JSON.stringify(saveData));
+
+      await addNotificationToUser(username, {
+        type: 'system',
+        title: '🏆 Prêmio de Competição Conquistado!',
+        message: `Parabéns! Você recebeu +${xpAmount} XP pela conquista do prêmio "${awardName}" no ${eventName}, oficializado pelo técnico ${technicianUsername}.`,
+      });
+    } catch (err: any) {
+      console.error(`Error awarding competition XP to ${username}:`, err.message);
+    }
+  }
+}
+

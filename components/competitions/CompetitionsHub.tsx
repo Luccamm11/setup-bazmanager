@@ -10,6 +10,8 @@ import { INITIAL_COMPETITIONS_DATA } from '../../data/initialCompetitionsData';
 import CompetitionChecklists from './CompetitionChecklists';
 import StrategyScouting from './StrategyScouting';
 import BioBuzzAIAgent from './BioBuzzAIAgent';
+import AwardsEvaluations from './AwardsEvaluations';
+import { createDefaultAwardsEvaluationsHub } from '../../data/initialAwardsEvaluationsData';
 
 interface CompetitionsHubProps {
   currentUser: string;
@@ -25,8 +27,8 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Vista ativa: 'hub' (estilo Aba Mais com os cards) ou 'checklist' (módulo de checklists)
-  const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai'>('checklists');
+  // Vista ativa: 'hub' (estilo Aba Mais com os cards) ou submódulos
+  const [activeModule, setActiveModule] = useState<'hub' | 'checklists' | 'strategy' | 'ai' | 'awards'>('checklists');
   const [isLiveSyncing, setIsLiveSyncing] = useState(false);
   const [liveSyncError, setLiveSyncError] = useState<string | null>(null);
 
@@ -188,6 +190,64 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
       }
     } catch (err) {
       console.error('Strategy sync failed:', err);
+    }
+  };
+
+  // Sincronização de Prêmios & Avaliações
+  const handleAwardsSync = async (action: string, payload: any) => {
+    if (!activeEvent) return;
+
+    // Atualização otimista local
+    setData(prev => {
+      const nextEvents = prev.events.map(ev => {
+        if (ev.id !== activeEvent.id) return ev;
+        const currentAwards = ev.awardsEvaluations || createDefaultAwardsEvaluationsHub();
+        const hub = {
+          ...currentAwards,
+          awards: [...(currentAwards.awards || [])],
+          pitchPractice: { ...(currentAwards.pitchPractice || { topics: [], pitchDurationSeconds: 300, qaDurationSeconds: 300, rehearsalsHistory: [] }) },
+          formalJudging: { ...(currentAwards.formalJudging || { rubrics: [], questionsReceived: [], strongPoints: '', improvementPoints: '', immediateActionItems: [] }) },
+          pitInterviews: [...(currentAwards.pitInterviews || [])],
+        };
+
+        if (action === 'upsert_award') {
+          const idx = hub.awards.findIndex(a => a.id === payload.id);
+          if (idx >= 0) hub.awards[idx] = { ...hub.awards[idx], ...payload };
+          else hub.awards.push(payload);
+        } else if (action === 'delete_award') {
+          hub.awards = hub.awards.filter(a => a.id !== payload.awardId);
+        } else if (action === 'save_pitch_practice') {
+          hub.pitchPractice = payload;
+        } else if (action === 'save_formal_judging') {
+          hub.formalJudging = payload;
+        } else if (action === 'add_pit_interview') {
+          hub.pitInterviews.unshift({ ...payload, id: payload.id || `pit-${Date.now()}` });
+        } else if (action === 'delete_pit_interview') {
+          hub.pitInterviews = hub.pitInterviews.filter(i => i.id !== payload.interviewId);
+        }
+
+        return { ...ev, awardsEvaluations: hub };
+      });
+      return { ...prev, events: nextEvents };
+    });
+
+    try {
+      const res = await fetch('/api/crud?type=competitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          username: currentUser,
+          eventId: activeEvent.id,
+          payload,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setData(json.data);
+      }
+    } catch (err) {
+      console.error('Awards sync failed:', err);
     }
   };
 
@@ -550,6 +610,18 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveModule('awards')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+            activeModule === 'awards'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'text-text-secondary hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Award size={16} />
+          <span>Prêmios & Avaliações</span>
+        </button>
+
+        <button
           onClick={() => setActiveModule('hub')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
             activeModule === 'hub'
@@ -595,6 +667,15 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           isTech={isTech}
           onSaveTeamUpdates={updates => handleStrategySync('save_ai_team_updates', updates)}
           onSaveChatHistory={msgs => handleStrategySync('save_ai_chat', msgs)}
+        />
+      )}
+
+      {activeModule === 'awards' && activeEvent && (
+        <AwardsEvaluations
+          event={activeEvent}
+          currentUser={currentUser}
+          userRole={userRole}
+          onServerSync={handleAwardsSync}
         />
       )}
 
@@ -675,21 +756,26 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
               </div>
             </div>
 
-            {/* Card 3: Histórico de Prêmios & B-Leed */}
-            <div className="p-6 rounded-xl border border-white/5 bg-primary/40 opacity-70 hover:opacity-90 transition-all duration-300">
+            {/* Card 3: Histórico de Prêmios & Avaliações (Ativo) */}
+            <div
+              onClick={() => setActiveModule('awards')}
+              className="p-6 rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-600/10 hover:border-amber-400 hover:from-amber-500/15 cursor-pointer transition-all duration-300 group"
+            >
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-xl bg-white/5 text-amber-400">
+                <div className="p-3 rounded-xl bg-amber-500/20 text-amber-400">
                   <Award className="w-8 h-8" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-white">Prêmios & Avaliações</h3>
-                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/10 text-text-muted font-black uppercase tracking-wider">
-                      Em Breve
+                    <h3 className="text-xl font-bold text-white group-hover:text-amber-300 transition-colors">
+                      Prêmios & Avaliações
+                    </h3>
+                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black uppercase tracking-wider">
+                      Ativo
                     </span>
                   </div>
                   <p className="text-sm text-text-secondary mt-1">
-                    Feedback dos juízes, apresentações de sala e registro de troféus e premiações da equipe.
+                    Feedback dos juízes, apresentações de sala, simulador & checklist de pitch e registro de troféus e premiações da equipe.
                   </p>
                 </div>
               </div>
