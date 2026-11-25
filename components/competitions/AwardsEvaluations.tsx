@@ -851,21 +851,25 @@ export const AwardsEvaluations: React.FC<AwardsEvaluationsProps> = ({
                   </div>
 
                   {/* Ações do Tópico */}
-                  <div className="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                     <button
+                      type="button"
                       onClick={() => {
                         setEditingTopic(topic);
                         setIsNewTopicModalOpen(true);
                       }}
-                      className="p-1 rounded text-text-muted hover:text-white"
+                      className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
                       title="Editar tópico"
+                      aria-label="Editar tópico"
                     >
                       <Edit3 size={13} />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDeleteTopic(topic.id)}
-                      className="p-1 rounded text-text-muted hover:text-red-400"
+                      className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Excluir tópico"
+                      aria-label="Excluir tópico"
                     >
                       <Trash2 size={13} />
                     </button>

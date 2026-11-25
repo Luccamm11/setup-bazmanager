@@ -107,8 +107,8 @@ export const INITIAL_GOALS_BOARD_DATA: GoalsBoardData = {
       title: 'Comunicação e presença digital',
       icon: 'smartphone',
       color: 'blue',
-      macroTargetText: '+200.000 👤',
-      macroTargetValue: 200000,
+      macroTargetText: '+2k 👤',
+      macroTargetValue: 2000,
       columns: [
         {
           id: 'seguidores',

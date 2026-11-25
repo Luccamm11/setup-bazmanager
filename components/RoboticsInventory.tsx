@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wrench, Package, Search, Filter, Cpu, HardHat,
-  Plus, X, CheckCircle2, Circle, MapPin, ChevronDown,
+  Plus, Minus, X, CheckCircle2, MapPin, ChevronDown,
   FlaskConical, AlertCircle, Save, Pencil, History, ArrowUpRight, ArrowDownLeft, Trash2
 } from 'lucide-react';
 import baseInventoryData from '../data/robotics_inventory.json';
@@ -34,11 +34,43 @@ export interface HistoryEntry {
 }
 
 interface ItemStatus {
-  inUse: boolean;
+  inUseCount: number;
   location: string;
 }
 
+interface LegacyItemStatus {
+  inUse?: boolean;
+  inUseCount?: number;
+  location?: string;
+}
+
 type StatusMap = Record<string, ItemStatus>;
+
+const clampInUseCount = (value: number, maxQuantity: number): number => {
+  if (!Number.isFinite(value) || maxQuantity <= 0) return 0;
+  return Math.max(0, Math.min(maxQuantity, Math.floor(value)));
+};
+
+const getItemInUseCount = (status: ItemStatus | undefined, maxQuantity: number): number => {
+  if (!status || maxQuantity <= 0) return 0;
+  return clampInUseCount(status.inUseCount, maxQuantity);
+};
+
+const normalizeStatusMap = (raw: Record<string, LegacyItemStatus>): StatusMap =>
+  Object.fromEntries(
+    Object.entries(raw).map(([id, entry]) => [
+      id,
+      {
+        inUseCount:
+          typeof entry?.inUseCount === 'number'
+            ? Math.max(0, Math.floor(entry.inUseCount))
+            : entry?.inUse
+              ? 1
+              : 0,
+        location: typeof entry?.location === 'string' ? entry.location : '',
+      },
+    ])
+  );
 
 const STORAGE_KEY = 'robotics_inventory_status';
 const CUSTOM_ITEMS_KEY = 'robotics_inventory_custom_items';
@@ -297,6 +329,106 @@ const LocationPopover: React.FC<LocationPopoverProps> = ({ location, onSave, onC
   );
 };
 
+// ─── In-Use Quantity Stepper ──────────────────────────────────────────────────
+
+interface InUseStepperProps {
+  itemName: string;
+  inUseCount: number;
+  maxQuantity: number;
+  onChange: (nextCount: number) => void;
+}
+
+const InUseStepper: React.FC<InUseStepperProps> = ({ itemName, inUseCount, maxQuantity, onChange }) => {
+  const [draft, setDraft] = useState<string>(String(inUseCount));
+
+  useEffect(() => {
+    setDraft(String(inUseCount));
+  }, [inUseCount]);
+
+  if (maxQuantity <= 0) {
+    return <span className="text-xs font-mono text-text-muted/40">0 / 0</span>;
+  }
+
+  const isInUse = inUseCount > 0;
+  const available = maxQuantity - inUseCount;
+
+  const commitDraft = () => {
+    const trimmed = draft.trim();
+    const next = trimmed === '' ? 0 : clampInUseCount(Number(trimmed), maxQuantity);
+    setDraft(String(next));
+    onChange(next);
+  };
+
+  return (
+    <div className="inline-flex flex-col items-center gap-1" onClick={e => e.stopPropagation()}>
+      <div
+        className={`inline-flex items-center rounded-xl border transition-colors ${
+          isInUse
+            ? 'border-amber-500/30 bg-amber-500/10 shadow-[0_0_12px_rgba(251,191,36,0.12)]'
+            : 'border-white/10 bg-black/25'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => onChange(inUseCount - 1)}
+          disabled={inUseCount <= 0}
+          aria-label={`Diminuir peças em uso de ${itemName}`}
+          title="Diminuir em uso"
+          className="p-1.5 text-text-secondary hover:text-white disabled:opacity-25 disabled:pointer-events-none transition-colors rounded-l-xl hover:bg-white/5"
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="flex items-center px-1">
+          <input
+            type="number"
+            min={0}
+            max={maxQuantity}
+            value={draft}
+            aria-label={`Quantidade em uso de ${itemName}`}
+            onFocus={e => e.currentTarget.select()}
+            onChange={e => {
+              const val = e.target.value;
+              setDraft(val);
+              if (val.trim() !== '') {
+                const parsed = Number(val);
+                if (Number.isFinite(parsed)) {
+                  onChange(clampInUseCount(parsed, maxQuantity));
+                }
+              }
+            }}
+            onBlur={commitDraft}
+            onKeyDown={e => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+            }}
+            className={`w-9 bg-transparent text-center text-xs font-black font-mono tabular-nums focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              isInUse ? 'text-amber-300' : 'text-white/70'
+            }`}
+          />
+          <span className="text-[11px] font-mono text-text-muted/60 pr-1 select-none">/{maxQuantity}</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onChange(inUseCount + 1)}
+          disabled={inUseCount >= maxQuantity}
+          aria-label={`Aumentar peças em uso de ${itemName}`}
+          title="Aumentar em uso"
+          className="p-1.5 text-text-secondary hover:text-white disabled:opacity-25 disabled:pointer-events-none transition-colors rounded-r-xl hover:bg-white/5"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {isInUse && maxQuantity > 1 && (
+        <span className="text-[10px] font-semibold text-amber-300/75 tabular-nums">
+          {available} {available === 1 ? 'disponível' : 'disponíveis'}
+        </span>
+      )}
+    </div>
+  );
+};
+
 // ─── Edit Quantity Modal ──────────────────────────────────────────────────────
 
 interface EditQtyModalProps {
@@ -452,7 +584,7 @@ const RoboticsInventory: React.FC = () => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setStatusMap(JSON.parse(saved));
+      if (saved) setStatusMap(normalizeStatusMap(JSON.parse(saved)));
       const savedCustom = localStorage.getItem(CUSTOM_ITEMS_KEY);
       if (savedCustom) setCustomItems(JSON.parse(savedCustom));
       const savedOverrides = localStorage.getItem(QTY_OVERRIDES_KEY);
@@ -494,16 +626,27 @@ const RoboticsInventory: React.FC = () => {
   });
 
   // ── Handlers ──
-  const toggleInUse = (id: string) => {
-    const current = statusMap[id] ?? { inUse: false, location: '' };
-    const next = { ...current, inUse: !current.inUse };
-    if (!next.inUse) next.location = '';
-    saveStatus({ ...statusMap, [id]: next });
-    if (next.inUse) setOpenPopoverId(id);
+  const updateInUseCount = (id: string, nextCount: number, maxQuantity: number) => {
+    const current = statusMap[id] ?? { inUseCount: 0, location: '' };
+    const prevCount = getItemInUseCount(current, maxQuantity);
+    const clamped = clampInUseCount(nextCount, maxQuantity);
+    if (clamped === prevCount && current.inUseCount === clamped) return;
+
+    const nextStatus: ItemStatus = {
+      inUseCount: clamped,
+      location: clamped > 0 ? current.location : '',
+    };
+    saveStatus({ ...statusMap, [id]: nextStatus });
+
+    if (prevCount === 0 && clamped > 0) {
+      setOpenPopoverId(id);
+    } else if (clamped === 0 && openPopoverId === id) {
+      setOpenPopoverId(null);
+    }
   };
 
   const setLocation = (id: string, location: string) => {
-    const current = statusMap[id] ?? { inUse: true, location: '' };
+    const current = statusMap[id] ?? { inUseCount: 1, location: '' };
     saveStatus({ ...statusMap, [id]: { ...current, location } });
   };
 
@@ -526,6 +669,21 @@ const RoboticsInventory: React.FC = () => {
     const nextOverrides = { ...qtyOverrides, [itemId]: newQuantity };
     setQtyOverrides(nextOverrides);
     localStorage.setItem(QTY_OVERRIDES_KEY, JSON.stringify(nextOverrides));
+
+    // Clamp in-use count if total quantity was reduced below current in-use count
+    const currentStatus = statusMap[itemId];
+    if (currentStatus) {
+      const clamped = clampInUseCount(currentStatus.inUseCount, newQuantity);
+      if (clamped !== currentStatus.inUseCount) {
+        saveStatus({
+          ...statusMap,
+          [itemId]: {
+            inUseCount: clamped,
+            location: clamped > 0 ? currentStatus.location : '',
+          },
+        });
+      }
+    }
 
     // Save history entry
     const newEntry: HistoryEntry = {
@@ -552,7 +710,10 @@ const RoboticsInventory: React.FC = () => {
     setSelectedCategory('All');
   };
 
-  const inUseCount = (Object.values(statusMap) as ItemStatus[]).filter(s => s.inUse).length;
+  const totalInUsePieces = allItems.reduce(
+    (sum, item) => sum + getItemInUseCount(statusMap[item.id], item.quantity),
+    0
+  );
 
   return (
     <div className="space-y-6" onClick={() => setOpenPopoverId(null)}>
@@ -566,14 +727,14 @@ const RoboticsInventory: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {inUseCount > 0 && (
+          {totalInUsePieces > 0 && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black px-3 py-1.5 rounded-full flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              {inUseCount} em uso
+              {totalInUsePieces} {totalInUsePieces === 1 ? 'peça em uso' : 'peças em uso'}
             </motion.div>
           )}
           <button
@@ -661,7 +822,9 @@ const RoboticsInventory: React.FC = () => {
                 <tbody className="divide-y divide-white/[0.04]">
                   <AnimatePresence initial={false}>
                     {filteredItems.map(item => {
-                      const status = statusMap[item.id] ?? { inUse: false, location: '' };
+                      const status = statusMap[item.id] ?? { inUseCount: 0, location: '' };
+                      const inUseCount = getItemInUseCount(status, item.quantity);
+                      const isInUse = inUseCount > 0;
                       const catBadge = CATEGORY_BADGE[item.category] ?? 'bg-white/5 text-text-muted border-white/10';
 
                       return (
@@ -672,12 +835,12 @@ const RoboticsInventory: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
                           transition={{ duration: 0.2 }}
-                          className={`group transition-colors ${status.inUse ? 'bg-amber-500/[0.04]' : 'hover:bg-white/[0.03]'}`}
+                          className={`group transition-colors ${isInUse ? 'bg-amber-500/[0.04]' : 'hover:bg-white/[0.03]'}`}
                         >
                           {/* Name */}
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg border shrink-0 ${status.inUse ? 'border-amber-500/30 bg-amber-500/10' : 'border-white/5 bg-white/[0.03] group-hover:border-white/10'} transition-colors`}>
+                              <div className={`p-1.5 rounded-lg border shrink-0 ${isInUse ? 'border-amber-500/30 bg-amber-500/10' : 'border-white/5 bg-white/[0.03] group-hover:border-white/10'} transition-colors`}>
                                 {CATEGORY_ICONS[item.category] ?? <Package className="w-4 h-4 text-text-muted" />}
                               </div>
                               <span className="font-semibold text-sm text-text-primary leading-snug">{item.name.trim()}</span>
@@ -713,25 +876,20 @@ const RoboticsInventory: React.FC = () => {
                             </div>
                           </td>
 
-                          {/* In-Use Toggle */}
+                          {/* In-Use Quantity Selector */}
                           <td className="px-5 py-3.5 text-center">
-                            <button
-                              onClick={e => { e.stopPropagation(); toggleInUse(item.id); }}
-                              title={status.inUse ? 'Marcar como disponível' : 'Marcar como em uso'}
-                              className="group/btn flex items-center justify-center mx-auto"
-                            >
-                              {status.inUse ? (
-                                <CheckCircle2 className="w-5 h-5 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]" />
-                              ) : (
-                                <Circle className="w-5 h-5 text-text-muted/40 group-hover/btn:text-text-muted transition-colors" />
-                              )}
-                            </button>
+                            <InUseStepper
+                              itemName={item.name.trim()}
+                              inUseCount={inUseCount}
+                              maxQuantity={item.quantity}
+                              onChange={nextCount => updateInUseCount(item.id, nextCount, item.quantity)}
+                            />
                           </td>
 
                           {/* Location */}
                           <td className="px-5 py-3.5 hidden lg:table-cell">
                             <div className="relative">
-                              {status.inUse ? (
+                              {isInUse ? (
                                 <button
                                   onClick={e => { e.stopPropagation(); setOpenPopoverId(openPopoverId === item.id ? null : item.id); }}
                                   className="flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-400 transition-colors group/loc"

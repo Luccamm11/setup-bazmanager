@@ -467,8 +467,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
       {/* 2. Main Chat Thread Panel */}
       <div 
         className={`${
-          mobileView === 'chat' ? 'flex flex-1' : 'hidden'
-        } sm:flex flex-col bg-transparent`}
+          mobileView === 'chat' ? 'flex' : 'hidden'
+        } sm:flex flex-1 min-w-0 flex-col bg-transparent`}
       >
         
         {/* Header bar */}
@@ -563,7 +563,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
                   <div className={`flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                     <div className={`flex items-end space-x-2 max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
                       
-                      <div className="space-y-0.5 max-w-full">
+                      <div className="space-y-0.5 max-w-full min-w-0">
                         
                         {showSenderName && (
                           <div className="text-[10px] font-bold text-accent-primary pl-2 uppercase tracking-wide">
@@ -617,7 +617,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ currentUser }) => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             disabled={isSending}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs sm:text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all duration-300"
+            className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs sm:text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all duration-300"
           />
           
           <button
