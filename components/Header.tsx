@@ -253,7 +253,7 @@ const Header: React.FC<HeaderProps> = ({ user, userPicture, onSettingsClick, syn
               <div className="relative group cursor-pointer shrink-0">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-accent-primary to-accent-tertiary rounded-full opacity-60 group-hover:opacity-100 blur-[2px] transition duration-500"></div>
                 <img 
-                  src={userPicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`} 
+                  src={userPicture || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`} 
                   alt="User profile"
                   className="relative w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-primary border-2 border-background object-cover"
                 />

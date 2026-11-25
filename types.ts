@@ -191,6 +191,7 @@ export interface User {
   entryDate?: string;    // Data de entrada na equipe
   birthDate?: string;    // Data de nascimento
   bio?: string;          // Breve descrição / Quem sou eu
+  avatar?: string;       // Foto de perfil individual (dataURL comprimida)
   awardFocus?: string | null;
   rank: string;
   level_overall: number;

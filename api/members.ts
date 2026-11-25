@@ -186,6 +186,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // ─── Sub-Rota: UPDATE AVATAR ───────────────────────────────────────────────
+  if (targetAction === 'avatar') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const auth = authenticateRequest(req);
+    if (!auth.valid || !auth.user) {
+      return res.status(401).json({ success: false, error: 'Acesso não autorizado. Token inválido ou expirado.' });
+    }
+
+    const { username, avatar } = req.body || {};
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ success: false, error: 'username é obrigatório.' });
+    }
+
+    const isTech = auth.user.role === 'technician' || TECHNICIANS.includes(auth.user.username);
+    if (auth.user.username !== username && !isTech) {
+      return res.status(403).json({ success: false, error: 'Sem permissão para alterar a foto de outro membro.' });
+    }
+
+    if (avatar !== undefined && avatar !== null && typeof avatar !== 'string') {
+      return res.status(400).json({ success: false, error: 'Formato de imagem inválido.' });
+    }
+
+    const normalizedAvatar = typeof avatar === 'string' ? avatar : '';
+    if (normalizedAvatar.length > 300000) {
+      return res.status(400).json({ success: false, error: 'Imagem muito grande. Comprima a foto antes de enviar.' });
+    }
+
+    try {
+      const userKey = `levelup_user_${username}`;
+      const rawData = await redis.get(userKey);
+      const saveData = rawData ? JSON.parse(rawData) : {};
+      saveData.user = {
+        ...(saveData.user || { name: username }),
+        avatar: normalizedAvatar,
+      };
+      await redis.set(userKey, JSON.stringify(saveData));
+
+      return res.status(200).json({
+        success: true,
+        username,
+        avatar: normalizedAvatar,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   // ─── Sub-Rota: LEGACY MEMBERS ──────────────────────────────────────────────
   if (targetAction === 'legacy') {
     if (req.method === 'GET') {
@@ -372,7 +422,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ─── Rota Principal: MEMBERS REGISTRY ──────────────────────────────────────
   // GET — list all members (active + inactive based on query)
   if (req.method === 'GET') {
-    const { requester, includeInactive } = req.query;
+    const { requester, includeInactive, includeAvatars } = req.query;
 
     if (!requester || typeof requester !== 'string') {
       return res.status(400).json({ error: 'requester é obrigatório.' });
@@ -400,7 +450,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         active: true
       }));
 
-      const mergedList = [...techniciansList, ...list];
+      let mergedList: any[] = [...techniciansList, ...list];
+
+      if (includeAvatars === 'true') {
+        mergedList = await Promise.all(
+          mergedList.map(async (m: any) => {
+            try {
+              const rawUser = await redis.get(`levelup_user_${m.username}`);
+              if (rawUser) {
+                const parsed = JSON.parse(rawUser);
+                return { ...m, avatar: parsed?.user?.avatar || '' };
+              }
+            } catch {
+              // Ignore malformed individual user record
+            }
+            return { ...m, avatar: '' };
+          })
+        );
+      }
+
       return res.status(200).json({ success: true, members: mergedList });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

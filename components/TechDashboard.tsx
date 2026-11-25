@@ -10,6 +10,7 @@ const RESET_XP_PASSWORD = '021083';
 interface MemberProgress {
   username: string;
   name: string;
+  avatar?: string;
   level: number;
   rank: string;
   xpTotal: number;
@@ -513,9 +514,17 @@ const TechDashboard: React.FC<TechDashboardProps> = ({
                     >
                       <div className="flex items-start gap-4">
                         {/* Avatar */}
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${RANK_COLORS[member.rank] || RANK_COLORS.e_rank} flex items-center justify-center shadow-lg font-black text-white text-lg shrink-0`}>
-                          {member.name[0]}
-                        </div>
+                        {member.avatar ? (
+                          <img
+                            src={member.avatar}
+                            alt={member.name}
+                            className="w-12 h-12 rounded-xl object-cover border border-white/10 shadow-lg shrink-0"
+                          />
+                        ) : (
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${RANK_COLORS[member.rank] || RANK_COLORS.e_rank} flex items-center justify-center shadow-lg font-black text-white text-lg shrink-0`}>
+                            {member.name[0]}
+                          </div>
+                        )}
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">

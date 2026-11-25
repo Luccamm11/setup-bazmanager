@@ -71,7 +71,7 @@ type View = 'home' | 'dashboard' | 'skill_tree' | 'chatbot' | 'inventory' | 'mor
 
 const SAVE_DATA_PREFIX = 'levelUpAwakeningSaveData_';
 const PROFILE_PIC_PREFIX = 'levelUpAwakeningProfilePic_';
-const LOCAL_USER_ID = 'local_user';
+const getProfilePicKey = (username: string) => `${PROFILE_PIC_PREFIX}${username}`;
 
 
 const migrateLoadedState = (loadedState: any): any => {
@@ -235,8 +235,9 @@ const App: React.FC = () => {
   const [isCreateMissionModalOpen, setIsCreateMissionModalOpen] = useState(false);
   const [missionToEdit, setMissionToEdit] = useState<TeamMission | null>(null);
 
-  // User picture is kept in local state for now, but could be migrated
-  const [userPicture, setUserPicture] = useState<string | null>(() => localStorage.getItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`) || null);
+  const [userPicture, setUserPicture] = useState<string | null>(() =>
+    initialSession.username ? localStorage.getItem(getProfilePicKey(initialSession.username)) || null : null
+  );
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const saveTimeoutRef = useRef<number | null>(null);
   const [apiKey, setApiKey] = useState<string>(() => import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('googleAiApiKey') || '');
@@ -535,25 +536,55 @@ const App: React.FC = () => {
 
   const loadUserData = useCallback((username: string) => {
     setIsInitialLoading(true);
+    setUserPicture(localStorage.getItem(getProfilePicKey(username)) || null);
     return Promise.all([
       fetch(`/api/persistence?username=${encodeURIComponent(username)}`).then(res => res.json()),
       fetch(`/api/team-missions?member=${encodeURIComponent(username)}`).then(res => res.json()),
     ])
       .then(([userData, missionsData]) => {
+        const cachedPic = localStorage.getItem(getProfilePicKey(username));
         if (userData.success && userData.data) {
-          const migratedData = migrateLoadedState(userData.data);
+          const isStubOnly = !userData.data.quests && !userData.data.user?.skill_tree;
+          let migratedData: any;
+          if (isStubOnly) {
+            const member = getMemberByUsername(username);
+            const baseData: any = member ? getInitialUserData(member) : { user: { ...INITIAL_USER, name: username } };
+            baseData.user = { ...baseData.user, ...(userData.data.user || {}) };
+            migratedData = migrateLoadedState(baseData);
+          } else {
+            migratedData = migrateLoadedState(userData.data);
+          }
+
           if (!migratedData.user.name || migratedData.user.name === "Awakened") {
             migratedData.user.name = username;
           }
+
+          if (typeof migratedData.user.avatar === 'string') {
+            if (migratedData.user.avatar.length > 0) {
+              localStorage.setItem(getProfilePicKey(username), migratedData.user.avatar);
+              setUserPicture(migratedData.user.avatar);
+            } else {
+              localStorage.removeItem(getProfilePicKey(username));
+              setUserPicture(null);
+            }
+          } else if (cachedPic) {
+            migratedData.user.avatar = cachedPic;
+            setUserPicture(cachedPic);
+          } else {
+            setUserPicture(null);
+          }
+
           setStateFromData(migratedData);
         } else {
           const member = getMemberByUsername(username);
           if (member) {
             const initialData = getInitialUserData(member);
+            (initialData.user as any).avatar = cachedPic || '';
             setStateFromData(initialData);
           } else {
-            setUser(prev => ({ ...prev, name: username }));
+            setUser(prev => ({ ...prev, name: username, avatar: cachedPic || '' }));
           }
+          setUserPicture(cachedPic || null);
         }
         if (missionsData.success) {
           setTeamMissions(missionsData.missions);
@@ -561,13 +592,16 @@ const App: React.FC = () => {
       })
       .catch(err => {
         console.error('Failed to load user state from server:', err);
+        const cachedPic = localStorage.getItem(getProfilePicKey(username));
         const member = getMemberByUsername(username);
         if (member) {
           const initialData = getInitialUserData(member);
+          (initialData.user as any).avatar = cachedPic || '';
           setStateFromData(initialData);
         } else {
-          setUser(prev => ({ ...prev, name: username }));
+          setUser(prev => ({ ...prev, name: username, avatar: cachedPic || '' }));
         }
+        setUserPicture(cachedPic || null);
       })
       .finally(() => setIsInitialLoading(false));
   }, [setStateFromData]);
@@ -576,6 +610,8 @@ const App: React.FC = () => {
     clearSession();
     setCurrentUser(null);
     setUserRole('member');
+    setUserPicture(null);
+    _setUser(INITIAL_USER);
     setView('home');
   }, []);
 
@@ -603,14 +639,40 @@ const App: React.FC = () => {
   }, []);
 
   const handleProfilePictureChange = useCallback((dataUrl: string | null) => {
-    if (dataUrl) {
-      localStorage.setItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`, dataUrl);
-    } else {
-      localStorage.removeItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`);
+    const normalizedAvatar = dataUrl || '';
+    if (currentUser) {
+      if (normalizedAvatar) {
+        localStorage.setItem(getProfilePicKey(currentUser), normalizedAvatar);
+      } else {
+        localStorage.removeItem(getProfilePicKey(currentUser));
+      }
+      fetch('/api/members?action=avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, avatar: normalizedAvatar }),
+      }).catch(err => console.error('Failed to sync profile picture to server:', err));
     }
     setUserPicture(dataUrl);
+    _setUser(prev => ({ ...prev, avatar: normalizedAvatar }));
     setSystemMessages(prev => [{ id: `pfp-update-${Date.now()}`, text: `Profile picture ${dataUrl ? 'updated' : 'reset to default'}.`, timestamp: 'Just now', type: 'system' }, ...prev]);
-  }, [setSystemMessages]);
+  }, [currentUser, setSystemMessages]);
+
+  useEffect(() => {
+    const handleExternalAvatarUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ username?: string; avatar?: string }>).detail;
+      if (!detail || !currentUser || detail.username !== currentUser) return;
+      const nextAvatar = detail.avatar || '';
+      if (nextAvatar) {
+        localStorage.setItem(getProfilePicKey(currentUser), nextAvatar);
+      } else {
+        localStorage.removeItem(getProfilePicKey(currentUser));
+      }
+      setUserPicture(nextAvatar || null);
+      _setUser(prev => ({ ...prev, avatar: nextAvatar }));
+    };
+    window.addEventListener('bazmanager_member_avatar_updated', handleExternalAvatarUpdate);
+    return () => window.removeEventListener('bazmanager_member_avatar_updated', handleExternalAvatarUpdate);
+  }, [currentUser]);
 
   // Autosave to Vercel KV on state change
   useEffect(() => {
@@ -680,12 +742,14 @@ const App: React.FC = () => {
   
   const handleResetData = useCallback(() => {
     if (window.confirm(t('common:confirm_reset'))) {
-      localStorage.removeItem(`${SAVE_DATA_PREFIX}${LOCAL_USER_ID}`);
-      localStorage.removeItem(`${PROFILE_PIC_PREFIX}${LOCAL_USER_ID}`);
+      if (currentUser) {
+        localStorage.removeItem(`${SAVE_DATA_PREFIX}${currentUser}`);
+        localStorage.removeItem(getProfilePicKey(currentUser));
+      }
       localStorage.removeItem('googleAiApiKey');
       window.location.reload();
     }
-  }, [t]);
+  }, [currentUser, t]);
 
   const getCurrentDate = useCallback(() => {
     const date = new Date();
@@ -2144,7 +2208,9 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
             saveSession(token, username, role, awardFocus);
           }
           const member = getMemberByUsername(username);
-          _setUser(prev => ({ ...prev, name: member?.displayName || username }));
+          const cachedPic = localStorage.getItem(getProfilePicKey(username));
+          _setUser(prev => ({ ...prev, name: member?.displayName || username, avatar: cachedPic || '' }));
+          setUserPicture(cachedPic || null);
           setCurrentUser(username);
           setUserRole(role);
           loadUserData(username);
@@ -2189,7 +2255,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 h-full min-w-0">
           <main className="flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
-            <Header user={user} userPicture={userPicture} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} notifications={appNotifications} unreadCount={unreadCount} onMarkNotificationRead={handleMarkNotificationRead} onMarkAllNotificationsRead={handleMarkAllNotificationsRead} onClearAllNotifications={handleClearAllNotifications} onNotificationClick={handleNotificationClick} />
+            <Header user={user} userPicture={userPicture || user.avatar || null} onSettingsClick={() => setIsSettingsOpen(true)} syncStatus={syncStatus} notifications={appNotifications} unreadCount={unreadCount} onMarkNotificationRead={handleMarkNotificationRead} onMarkAllNotificationsRead={handleMarkAllNotificationsRead} onClearAllNotifications={handleClearAllNotifications} onNotificationClick={handleNotificationClick} />
             <div className="flex-1 w-full relative">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -2222,7 +2288,7 @@ const handleUpdateTopicDifficulty = useCallback((topicId: string, newDifficulty:
         </nav>
       </footer>
 
-      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} userName={user.name} userPicture={userPicture} onProfilePictureChange={handleProfilePictureChange} apiKey={apiKey} onSaveApiKey={handleSaveApiKey} />}
+      {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} integrations={integrations} onIntegrationToggle={handleIntegrationToggle} allArcs={allArcs} activeArcId={activeArcId} onSetActiveArc={handleSetActiveArc} onDeleteArc={handleDeleteArc} onOpenArcModal={() => setIsArcModalOpen(true)} userState={user.state} onUpdateUserState={handleUpdateUserState} onDownloadBackup={handleDownloadBackup} onUploadBackup={handleUploadBackup} onResetData={handleResetData} userName={user.name} userPicture={userPicture || user.avatar || null} onProfilePictureChange={handleProfilePictureChange} apiKey={apiKey} onSaveApiKey={handleSaveApiKey} />}
       {isAddQuestModalOpen && <AddQuestModal isOpen={isAddQuestModalOpen} onClose={() => setIsAddQuestModalOpen(false)} onAddQuest={handleAddPersonalQuest} apiKey={apiKey} />}
       {isSkillModalOpen && <AddEditSkillModal isOpen={isSkillModalOpen} onClose={() => { setIsSkillModalOpen(false); setEditingSkill(null); }} onSave={handleSaveSkill} skillToEdit={editingSkill} apiKey={apiKey} />}
       {isTopicModalOpen && <AddEditTopicModal isOpen={isTopicModalOpen} onClose={() => { setIsTopicModalOpen(false); setEditingTopic(null); setDefaultSkillForTopic(undefined); }} onSave={handleSaveTopic} topicToEdit={editingTopic} skills={Object.values(user.skill_tree)} defaultSkillId={defaultSkillForTopic} apiKey={apiKey} />}

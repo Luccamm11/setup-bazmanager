@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, Upload, RefreshCcw } from 'lucide-react';
+import { X, Key, Link, Shield, PlusCircle, Trash2, Zap, User as UserIcon, Download, Upload, RefreshCcw, Loader2 } from 'lucide-react';
 import { Integration, Arc, UserState } from '../types';
 import MyState from './MyState';
 import { useTranslation } from 'react-i18next';
+import { compressImageToMax100KB } from '../utils/imageCompressor';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -29,21 +30,32 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrations, onIntegrationToggle, allArcs, activeArcId, onSetActiveArc, onDeleteArc, onOpenArcModal, userState, onUpdateUserState, onDownloadBackup, onUploadBackup, onResetData, userName, userPicture, onProfilePictureChange, apiKey, onSaveApiKey }) => {
   const { t } = useTranslation('settings');
   const [localApiKey, setLocalApiKey] = useState(apiKey);
+  const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   if (!isOpen) return null;
   
   const handleProfilePicClick = () => {
-    fileInputRef.current?.click();
+    if (!isCompressingPhoto) {
+      fileInputRef.current?.click();
+    }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onProfilePictureChange(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    event.target.value = '';
+    if (!file) return;
+
+    setIsCompressingPhoto(true);
+    setPhotoError(null);
+    try {
+      const compressed = await compressImageToMax100KB(file);
+      onProfilePictureChange(compressed.dataUrl);
+    } catch (err) {
+      console.error('Erro ao processar foto de perfil:', err);
+      setPhotoError('Não foi possível processar a imagem selecionada.');
+    } finally {
+      setIsCompressingPhoto(false);
     }
   };
 
@@ -71,21 +83,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, integrat
                         className="w-16 h-16 rounded-full object-cover cursor-pointer"
                         onClick={handleProfilePicClick}
                     />
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-xs font-bold">{t('change_picture')}</p>
+                    <div
+                      onClick={handleProfilePicClick}
+                      className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      {isCompressingPhoto ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <p className="text-white text-xs font-bold">{t('change_picture')}</p>}
                     </div>
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleFileChange} />
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/webp, image/gif" onChange={handleFileChange} />
                   </div>
                   <div>
                     <p className="font-semibold text-text-primary">{t('username')}: <span className="text-accent-primary">{userName || 'Adventurer'}</span></p>
                     <div className="flex items-center space-x-4 mt-2">
-                        <button onClick={handleProfilePicClick} className="text-xs text-accent-primary hover:underline flex items-center gap-1">
-                            <Upload size={12}/><span>{t('change_picture')}</span>
+                        <button onClick={handleProfilePicClick} disabled={isCompressingPhoto} className="text-xs text-accent-primary hover:underline flex items-center gap-1 disabled:opacity-50">
+                            {isCompressingPhoto ? <Loader2 size={12} className="animate-spin"/> : <Upload size={12}/>}
+                            <span>{isCompressingPhoto ? 'Processando...' : t('change_picture')}</span>
                         </button>
-                        <button onClick={() => onProfilePictureChange(null)} className="text-xs text-accent-red hover:underline flex items-center gap-1">
+                        <button onClick={() => onProfilePictureChange(null)} disabled={isCompressingPhoto} className="text-xs text-accent-red hover:underline flex items-center gap-1 disabled:opacity-50">
                             <RefreshCcw size={12}/> {t('reset_picture')}
                         </button>
                     </div>
+                    {photoError && <p className="text-xs text-accent-red mt-1">{photoError}</p>}
                   </div>
               </div>
           </div>

@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPlus, UserX, Edit3, Check, X, RefreshCw,
-  Users, AlertTriangle, ChevronDown, Award, Search, KeyRound, Lock,
+  Users, AlertTriangle, ChevronDown, Award, Search, KeyRound, Lock, Camera, Trash2,
 } from 'lucide-react';
+import { compressImageToMax100KB } from '../../utils/imageCompressor';
 
 interface MemberEntry {
   username: string;
   displayName: string;
   awardFocus: string | null;
   active: boolean;
+  avatar?: string;
 }
 
 interface MemberManagementProps {
@@ -96,18 +98,38 @@ const AwardSelect: React.FC<AwardSelectProps> = ({ value, onChange }) => {
 interface EditFormProps {
   member: MemberEntry;
   onSave: (data: Partial<MemberEntry>) => Promise<void>;
+  onAvatarChange: (avatar: string) => Promise<void>;
   onCancel: () => void;
 }
 
-const EditForm: React.FC<EditFormProps> = ({ member, onSave, onCancel }) => {
+const EditForm: React.FC<EditFormProps> = ({ member, onSave, onAvatarChange, onCancel }) => {
   const [displayName, setDisplayName] = useState(member.displayName);
   const [awardFocus, setAwardFocus] = useState(member.awardFocus || '');
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
+  const editFileRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async () => {
     setSaving(true);
     await onSave({ displayName, awardFocus: awardFocus || null });
     setSaving(false);
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingPhoto(true);
+    setPhotoErr(null);
+    try {
+      const compressed = await compressImageToMax100KB(file);
+      await onAvatarChange(compressed.dataUrl);
+    } catch (err: any) {
+      setPhotoErr(err?.message || 'Erro ao enviar foto.');
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   return (
@@ -117,6 +139,46 @@ const EditForm: React.FC<EditFormProps> = ({ member, onSave, onCancel }) => {
       exit={{ opacity: 0, height: 0 }}
       className="mt-3 pt-3 border-t border-white/10 space-y-3"
     >
+      <div>
+        <label className="text-xs text-text-secondary mb-1 block">Foto do membro</label>
+        <div className="flex items-center gap-3">
+          {member.avatar ? (
+            <img src={member.avatar} alt={member.displayName} className="w-10 h-10 rounded-full object-cover border border-white/15 shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary/30 to-accent-tertiary/30 flex items-center justify-center shrink-0 text-white font-bold text-sm border border-white/10">
+              {member.displayName.charAt(0)}
+            </div>
+          )}
+          <input
+            ref={editFileRef}
+            type="file"
+            accept="image/png, image/jpeg, image/webp, image/gif"
+            className="hidden"
+            onChange={handlePhotoSelect}
+          />
+          <button
+            type="button"
+            disabled={uploadingPhoto}
+            onClick={() => editFileRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary/15 border border-accent-primary/30 text-accent-primary text-xs font-bold hover:bg-accent-primary/25 transition-all disabled:opacity-50"
+          >
+            {uploadingPhoto ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+            {uploadingPhoto ? 'Enviando...' : member.avatar ? 'Alterar foto' : 'Adicionar foto'}
+          </button>
+          {member.avatar && (
+            <button
+              type="button"
+              disabled={uploadingPhoto}
+              onClick={() => onAvatarChange('')}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-all disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Remover
+            </button>
+          )}
+        </div>
+        {photoErr && <p className="text-xs text-red-400 mt-1">{photoErr}</p>}
+      </div>
       <div>
         <label className="text-xs text-text-secondary mb-1 block">Nome de exibição</label>
         <input
@@ -235,14 +297,32 @@ interface MemberCardProps {
   member: MemberEntry;
   currentUser: string;
   onEdit: (data: Partial<MemberEntry>) => Promise<void>;
+  onAvatarChange: (avatar: string) => Promise<void>;
   onToggleActive: (active: boolean) => Promise<void>;
   onPasswordSuccess?: (msg: string) => void;
 }
 
-const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, onToggleActive, onPasswordSuccess }) => {
+const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, onAvatarChange, onToggleActive, onPasswordSuccess }) => {
   const [editing, setEditing] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQuickAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const compressed = await compressImageToMax100KB(file);
+      await onAvatarChange(compressed.dataUrl);
+    } catch (err) {
+      console.error('Erro ao comprimir foto do membro:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   return (
     <motion.div
@@ -263,9 +343,27 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, on
       )}
 
       <div className="flex items-start gap-3">
-        {/* Avatar placeholder */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary/30 to-accent-tertiary/30 flex items-center justify-center shrink-0 text-white font-bold text-sm border border-white/10">
-          {member.displayName.charAt(0)}
+        {/* Avatar with click-to-upload */}
+        <div
+          onClick={() => !uploadingAvatar && avatarInputRef.current?.click()}
+          title="Alterar foto do membro"
+          className="relative w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary/30 to-accent-tertiary/30 flex items-center justify-center shrink-0 text-white font-bold text-sm border border-white/10 overflow-hidden cursor-pointer group"
+        >
+          {member.avatar ? (
+            <img src={member.avatar} alt={member.displayName} className="w-full h-full object-cover" />
+          ) : (
+            member.displayName.charAt(0)
+          )}
+          <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {uploadingAvatar ? <RefreshCw className="w-3.5 h-3.5 text-white animate-spin" /> : <Camera className="w-3.5 h-3.5 text-white" />}
+          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/png, image/jpeg, image/webp, image/gif"
+            className="hidden"
+            onChange={handleQuickAvatarChange}
+          />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -345,6 +443,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, currentUser, onEdit, on
           <EditForm
             member={member}
             onSave={async data => { await onEdit(data); setEditing(false); }}
+            onAvatarChange={onAvatarChange}
             onCancel={() => setEditing(false)}
           />
         )}
@@ -487,7 +586,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/members?requester=${encodeURIComponent(currentUser)}&includeInactive=true`);
+      const res = await fetch(`/api/members?requester=${encodeURIComponent(currentUser)}&includeInactive=true&includeAvatars=true`);
       const data = await res.json();
       if (data.success) setMembers(data.members);
     } finally {
@@ -504,6 +603,22 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
       body: JSON.stringify({ requester: currentUser, username, ...data }),
     });
     await fetchMembers();
+  };
+
+  const handleAvatarChange = async (username: string, avatar: string) => {
+    const res = await fetch('/api/members?action=avatar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, avatar }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Falha ao salvar foto do membro.');
+    }
+    setMembers(prev => prev.map(m => m.username === username ? { ...m, avatar } : m));
+    window.dispatchEvent(new CustomEvent('bazmanager_member_avatar_updated', { detail: { username, avatar } }));
+    setFeedbackMsg(avatar ? `Foto de ${username} atualizada com sucesso!` : `Foto de ${username} removida.`);
+    setTimeout(() => setFeedbackMsg(null), 4000);
   };
 
   const handleToggleActive = async (username: string, active: boolean) => {
@@ -617,6 +732,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ currentUser }) => {
                 member={member}
                 currentUser={currentUser}
                 onEdit={data => handleEdit(member.username, data)}
+                onAvatarChange={avatar => handleAvatarChange(member.username, avatar)}
                 onToggleActive={active => handleToggleActive(member.username, active)}
                 onPasswordSuccess={msg => {
                   setFeedbackMsg(msg);
