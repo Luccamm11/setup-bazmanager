@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X, Check, AlertTriangle, Minus, Plus, ArrowRight,
   Save, Sparkles, CheckCircle2, RefreshCw
@@ -116,8 +116,8 @@ function entryToDraft(entry: MatchScoutEntry): QuickScoutDraft {
   };
 }
 
-function normalizeMatchKey(val: string): string {
-  return val.trim().toLowerCase();
+function normalizeMatchKey(val?: string): string {
+  return (val || '').trim().toLowerCase();
 }
 
 function StepCounter({
@@ -364,7 +364,7 @@ export const QuickMatchScoutModal: React.FC<QuickMatchScoutModalProps> = ({
       notes: d.notes,
     });
 
-  const activeScore = useMemo(() => computeScore(activeDraft), [activeDraft, matchNumber]);
+  const activeScore = computeScore(activeDraft);
 
   const saveCurrentSlot = async (): Promise<boolean> => {
     const num = parseInt(activeDraft.teamNumber.trim(), 10);
@@ -507,7 +507,7 @@ export const QuickMatchScoutModal: React.FC<QuickMatchScoutModalProps> = ({
                     <option value="">Selecionar partida oficial...</option>
                     {liveMatches.map(lm => (
                       <option key={lm.id} value={String(lm.id)} className="bg-[#0f172a]">
-                        {lm.description} — Vermelha [{lm.redTeams.join(', ')}] vs Azul [{lm.blueTeams.join(', ')}]
+                        {lm.description || `Qualif ${lm.matchNum}`} — Vermelha [{(lm.redTeams || []).join(', ')}] vs Azul [{(lm.blueTeams || []).join(', ')}]
                       </option>
                     ))}
                   </select>

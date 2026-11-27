@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Users, ClipboardList, Trophy, Calculator, Map, Plus, Search,
+  Users, ClipboardList, Trophy, Calculator, Map as MapIcon, Plus, Search,
   Trash2, Edit3, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
   Bot, X, Sparkles, Wifi, WifiOff, Star, BarChart2, Shield, Radio,
   Calendar
@@ -101,13 +101,15 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
   onClearInitialMatchToScout,
 }) => {
   const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
-  const hub = event.strategyScouting || {
-    teams: [],
-    matchScouts: [],
-    pickList: [],
-    tacticalPlays: [],
-    aiTeamUpdates: [],
-    aiChatHistory: [],
+  const rawHub = event.strategyScouting;
+  const hub = {
+    teams: Array.isArray(rawHub?.teams) ? rawHub.teams : [],
+    matchScouts: Array.isArray(rawHub?.matchScouts) ? rawHub.matchScouts : [],
+    pickList: Array.isArray(rawHub?.pickList) ? rawHub.pickList : [],
+    tacticalPlays: Array.isArray(rawHub?.tacticalPlays) ? rawHub.tacticalPlays : [],
+    aiTeamUpdates: Array.isArray(rawHub?.aiTeamUpdates) ? rawHub.aiTeamUpdates : [],
+    aiChatHistory: Array.isArray(rawHub?.aiChatHistory) ? rawHub.aiChatHistory : [],
+    liveSync: rawHub?.liveSync,
   };
 
   const [subTab, setSubTab] = useState<SubTab>('match');
@@ -172,14 +174,20 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
   // ─── Known Teams for Quick Picker ─────────────────────────────────────────
   const knownTeamsList = useMemo(() => {
-    const map = new Map<number, string>();
-    (hub.liveSync?.rankings || []).forEach(r => map.set(r.teamNumber, r.teamName));
-    hub.teams.forEach(t => map.set(t.teamNumber, t.teamName));
-    hub.matchScouts.forEach(m => {
-      if (!map.has(m.teamNumber)) map.set(m.teamNumber, `Equipe #${m.teamNumber}`);
+    const teamsByNum: Record<number, string> = {};
+    (hub.liveSync?.rankings || []).forEach(r => {
+      if (r && typeof r.teamNumber === 'number') teamsByNum[r.teamNumber] = r.teamName || `Equipe #${r.teamNumber}`;
     });
-    return Array.from(map.entries())
-      .map(([teamNumber, teamName]) => ({ teamNumber, teamName }))
+    hub.teams.forEach(t => {
+      if (t && typeof t.teamNumber === 'number') teamsByNum[t.teamNumber] = t.teamName || `Equipe #${t.teamNumber}`;
+    });
+    hub.matchScouts.forEach(m => {
+      if (m && typeof m.teamNumber === 'number' && !teamsByNum[m.teamNumber]) {
+        teamsByNum[m.teamNumber] = `Equipe #${m.teamNumber}`;
+      }
+    });
+    return Object.keys(teamsByNum)
+      .map(k => ({ teamNumber: Number(k), teamName: teamsByNum[Number(k)] }))
       .sort((a, b) => a.teamNumber - b.teamNumber);
   }, [hub.teams, hub.matchScouts, hub.liveSync?.rankings]);
 
@@ -250,22 +258,22 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       if (!g) {
         const liveMatch = liveList.find(
           lm =>
-            lm.description.trim().toLowerCase() === key ||
+            (lm.description || '').trim().toLowerCase() === key ||
             `q-${lm.matchNum}` === key ||
             String(lm.matchNum) === key
         );
         g = {
           key,
           matchNumber: mLabel,
-          latestTs: entry.timestamp,
+          latestTs: entry.timestamp || '',
           entries: [],
           liveMatch,
         };
         groupsByKey[key] = g;
       }
       g.entries.push(entry);
-      if (entry.timestamp > g.latestTs) {
-        g.latestTs = entry.timestamp;
+      if ((entry.timestamp || '') > (g.latestTs || '')) {
+        g.latestTs = entry.timestamp || '';
       }
     });
 
@@ -546,7 +554,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
             { id: 'pit', label: `Equipes nos Pits (${hub.teams.length})`, icon: Users },
             { id: 'picklist', label: `Ranking & Escolha (Pick List)`, icon: Trophy },
             { id: 'simulator', label: `Simulador de Pontos`, icon: Calculator },
-            { id: 'tactical', label: `Quadro Tático`, icon: Map },
+            { id: 'tactical', label: `Quadro Tático`, icon: MapIcon },
           ].map(tab => {
             const Icon = tab.icon;
             const active = subTab === tab.id;
@@ -629,12 +637,14 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                 <span className="text-[10px] text-text-muted">Preenche as 4 equipes automaticamente</span>
               </div>
               <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {hub.liveSync!.matches.slice(0, 14).map(lm => {
+                {(hub.liveSync?.matches || []).slice(0, 14).map(lm => {
                   const mKey = (lm.description || `Qualif ${lm.matchNum}`).trim().toLowerCase();
                   const countSaved = hub.matchScouts.filter(
-                    s => s.matchNumber.trim().toLowerCase() === mKey
+                    s => (s.matchNumber || '').trim().toLowerCase() === mKey
                   ).length;
-                  const hasBazinga = lm.redTeams.includes(21083) || lm.blueTeams.includes(21083);
+                  const redList = lm.redTeams || [];
+                  const blueList = lm.blueTeams || [];
+                  const hasBazinga = redList.includes(21083) || blueList.includes(21083);
 
                   return (
                     <button
@@ -653,9 +663,9 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                         </span>
                       </div>
                       <div className="text-[10px] text-text-secondary mt-0.5">
-                        <span className="text-red-300">{lm.redTeams.join(', ')}</span>
+                        <span className="text-red-300">{redList.join(', ')}</span>
                         {' vs '}
-                        <span className="text-blue-300">{lm.blueTeams.join(', ')}</span>
+                        <span className="text-blue-300">{blueList.join(', ')}</span>
                       </div>
                     </button>
                   );
