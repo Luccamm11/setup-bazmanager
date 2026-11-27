@@ -1,33 +1,34 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users, ClipboardList, Trophy, Calculator, Map, Plus, Search,
   Trash2, Edit3, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  Bot, X, Sparkles, Wifi, WifiOff, Star, BarChart2, Shield, Radio
+  Bot, X, Sparkles, Wifi, WifiOff, Star, BarChart2, Shield, Radio,
+  Calendar
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts';
 import type {
-  CompetitionData,
   CompetitionEvent,
   DrivetrainType,
   MatchScoutEntry,
   PickListItem,
   ScoutedTeamPit,
   TacticalBoardPlay,
-  BioBuzzAIUpdateNote,
-  BioBuzzAIChatMessage,
   FtcLiveMatch,
   UserRole,
 } from '../../types';
 import {
   BIOBUZZ_SCORING,
-  calculateScoutEntryScore,
   simulateBioBuzzAllianceScore,
 } from '../../data/bioBuzzManual';
 import TacticalFieldBoard from './TacticalFieldBoard';
 import BioBuzzAIAgent from './BioBuzzAIAgent';
 import LiveArenaDashboard from './LiveArenaDashboard';
+import QuickMatchScoutModal, {
+  type MatchSlotKey,
+  type QuickMatchInitialContext,
+} from './QuickMatchScoutModal';
 
 interface StrategyScoutingProps {
   event: CompetitionEvent;
@@ -39,17 +40,27 @@ interface StrategyScoutingProps {
   liveSyncError?: string | null;
   onSyncLiveEvent?: (customCode?: string) => Promise<void>;
   onUpdateLiveConfig?: (cfg: { ftcEventCode?: string; ftcSeason?: number; autoSyncEnabled?: boolean }) => Promise<void>;
+  initialMatchToScout?: FtcLiveMatch | null;
+  onClearInitialMatchToScout?: () => void;
 }
 
-type SubTab = 'live' | 'pit' | 'match' | 'picklist' | 'simulator' | 'tactical';
+type SubTab = 'live' | 'match' | 'pit' | 'picklist' | 'simulator' | 'tactical';
 
 const DRIVETRAINS: DrivetrainType[] = ['Mecanum', 'Swerve', 'Tank', 'Omni/X-Drive', 'Outro'];
 
 const ROLE_LABELS: Record<ScoutedTeamPit['teleopRolePreference'], string> = {
-  scorer_hive: 'Ciclos na Hive (Tips)',
-  flower_control: 'Controle de Flowers',
-  pollen_feeder: 'Coleta / Alimentação Pollen',
-  defense_hybrid: 'Defesa / Híbrido',
+  scorer_hive: 'Pontuador na Colmeia (Hive Tips)',
+  flower_control: 'Controle de Flores (Flowers)',
+  pollen_feeder: 'Coleta e Entrega de Pollen',
+  defense_hybrid: 'Defesa / Misto (Híbrido)',
+};
+
+const TIER_LABELS: Record<PickListItem['tier'], string> = {
+  S: 'Nível S (Prioridade)',
+  A: 'Nível A (Muito Forte)',
+  B: 'Nível B (Boa Opção)',
+  C: 'Nível C (Reserva)',
+  'Do Not Pick': 'Evitar',
 };
 
 const TIER_STYLES: Record<PickListItem['tier'], string> = {
@@ -59,6 +70,22 @@ const TIER_STYLES: Record<PickListItem['tier'], string> = {
   C: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
   'Do Not Pick': 'bg-red-500/20 text-red-300 border-red-500/40',
 };
+
+function buildInitialContextFromLiveMatch(
+  m: FtcLiveMatch,
+  activeSlot: MatchSlotKey = 'red1'
+): QuickMatchInitialContext {
+  return {
+    matchNumber: m.description || `Qualif ${m.matchNum}`,
+    activeSlot,
+    slots: {
+      red1: m.redTeams?.[0],
+      red2: m.redTeams?.[1],
+      blue1: m.blueTeams?.[0],
+      blue2: m.blueTeams?.[1],
+    },
+  };
+}
 
 export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
   event,
@@ -70,6 +97,8 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
   liveSyncError = null,
   onSyncLiveEvent,
   onUpdateLiveConfig,
+  initialMatchToScout = null,
+  onClearInitialMatchToScout,
 }) => {
   const isTech = userRole === 'technician' || ['Jonas', 'Ramon'].includes(currentUser);
   const hub = event.strategyScouting || {
@@ -81,8 +110,9 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
     aiChatHistory: [],
   };
 
-  const [subTab, setSubTab] = useState<SubTab>('live');
+  const [subTab, setSubTab] = useState<SubTab>('match');
   const [searchTerm, setSearchTerm] = useState('');
+  const [matchSearchTerm, setMatchSearchTerm] = useState('');
   const [showAIDrawer, setShowAIDrawer] = useState(false);
 
   // ─── Pit Scouting Modal State ─────────────────────────────────────────────
@@ -111,27 +141,18 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
   const [pitWeaknesses, setPitWeaknesses] = useState('');
   const [editingPitId, setEditingPitId] = useState<string | null>(null);
 
-  // ─── Match Scouting Modal State ───────────────────────────────────────────
+  // ─── Quick Match Scouting Modal State ─────────────────────────────────────
   const [isMatchModalOpen, setIsMatchModalOpen] = useState(false);
-  const [msTeamNumber, setMsTeamNumber] = useState('');
-  const [msMatchNumber, setMsMatchNumber] = useState('');
-  const [msAlliance, setMsAlliance] = useState<'red' | 'blue'>('red');
-  const [msAutoLeave, setMsAutoLeave] = useState(true);
-  const [msAutoScored, setMsAutoScored] = useState(0);
-  const [msAutoTips, setMsAutoTips] = useState(0);
-  const [msAutoPark, setMsAutoPark] = useState(false);
-  const [msTeleopTips, setMsTeleopTips] = useState(1);
-  const [msCellsRem, setMsCellsRem] = useState(0);
-  const [msBottomNectar, setMsBottomNectar] = useState(0);
-  const [msOwnedFlowers, setMsOwnedFlowers] = useState(0);
-  const [msOwnedElements, setMsOwnedElements] = useState(0);
-  const [msEndgamePark, setMsEndgamePark] = useState(true);
-  const [msMinorFouls, setMsMinorFouls] = useState(0);
-  const [msMajorFouls, setMsMajorFouls] = useState(0);
-  const [msBroken, setMsBroken] = useState(false);
-  const [msDriverSkill, setMsDriverSkill] = useState<1 | 2 | 3 | 4 | 5>(4);
-  const [msDefense, setMsDefense] = useState<1 | 2 | 3 | 4 | 5>(3);
-  const [msNotes, setMsNotes] = useState('');
+  const [matchModalCtx, setMatchModalCtx] = useState<QuickMatchInitialContext | null>(null);
+
+  useEffect(() => {
+    if (initialMatchToScout) {
+      setSubTab('match');
+      setMatchModalCtx(buildInitialContextFromLiveMatch(initialMatchToScout));
+      setIsMatchModalOpen(true);
+      onClearInitialMatchToScout?.();
+    }
+  }, [initialMatchToScout, onClearInitialMatchToScout]);
 
   // ─── Simulador State ──────────────────────────────────────────────────────
   const [simTeamA, setSimTeamA] = useState<string>('');
@@ -148,6 +169,19 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
     opponentMinorFouls: 0,
     opponentMajorFouls: 0,
   });
+
+  // ─── Known Teams for Quick Picker ─────────────────────────────────────────
+  const knownTeamsList = useMemo(() => {
+    const map = new Map<number, string>();
+    (hub.liveSync?.rankings || []).forEach(r => map.set(r.teamNumber, r.teamName));
+    hub.teams.forEach(t => map.set(t.teamNumber, t.teamName));
+    hub.matchScouts.forEach(m => {
+      if (!map.has(m.teamNumber)) map.set(m.teamNumber, `Equipe #${m.teamNumber}`);
+    });
+    return Array.from(map.entries())
+      .map(([teamNumber, teamName]) => ({ teamNumber, teamName }))
+      .sort((a, b) => a.teamNumber - b.teamNumber);
+  }, [hub.teams, hub.matchScouts, hub.liveSync?.rankings]);
 
   // ─── Computed Analytics & Team Ranking ────────────────────────────────────
   const teamSummaries = useMemo(() => {
@@ -195,6 +229,56 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       };
     }).sort((a, b) => b.avgScore - a.avgScore || (b.pit?.autoConsistency || 0) - (a.pit?.autoConsistency || 0));
   }, [hub.teams, hub.matchScouts, hub.pickList]);
+
+  // ─── Match Groups (Agrupamento por Partida) ───────────────────────────────
+  const matchGroups = useMemo(() => {
+    interface MatchGroup {
+      key: string;
+      matchNumber: string;
+      latestTs: string;
+      entries: MatchScoutEntry[];
+      liveMatch?: FtcLiveMatch;
+    }
+
+    const groupsByKey: Record<string, MatchGroup> = {};
+    const liveList = hub.liveSync?.matches || [];
+
+    hub.matchScouts.forEach(entry => {
+      const mLabel = (entry.matchNumber || 'Sem nº').trim();
+      const key = mLabel.toLowerCase();
+      let g = groupsByKey[key];
+      if (!g) {
+        const liveMatch = liveList.find(
+          lm =>
+            lm.description.trim().toLowerCase() === key ||
+            `q-${lm.matchNum}` === key ||
+            String(lm.matchNum) === key
+        );
+        g = {
+          key,
+          matchNumber: mLabel,
+          latestTs: entry.timestamp,
+          entries: [],
+          liveMatch,
+        };
+        groupsByKey[key] = g;
+      }
+      g.entries.push(entry);
+      if (entry.timestamp > g.latestTs) {
+        g.latestTs = entry.timestamp;
+      }
+    });
+
+    const q = matchSearchTerm.trim().toLowerCase();
+    const list: MatchGroup[] = Object.keys(groupsByKey).map(k => groupsByKey[k]);
+    return list
+      .filter(g => {
+        if (!q) return true;
+        if (g.matchNumber.toLowerCase().includes(q)) return true;
+        return g.entries.some(e => String(e.teamNumber).includes(q));
+      })
+      .sort((a, b) => b.latestTs.localeCompare(a.latestTs));
+  }, [hub.matchScouts, hub.liveSync?.matches, matchSearchTerm]);
 
   const filteredPitTeams = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -276,13 +360,13 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
         setPitSource('ftcscout');
         setLookupMsg({
           type: 'ok',
-          text: `Dados encontrados no FTCScout!${json.team.opr?.total ? ` OPR: ${json.team.opr.total}` : ''}`,
+          text: `Dados encontrados no FTCScout!${json.team.opr?.total ? ` Força (OPR): ${json.team.opr.total}` : ''}`,
         });
       } else {
         setPitSource('manual');
         setLookupMsg({
           type: 'fallback',
-          text: json.message || 'Não encontrado no FTCScout ou offline — preencha os dados manualmente abaixo.',
+          text: json.message || 'Não encontrado no FTCScout ou sem internet — preencha os dados manualmente abaixo.',
         });
       }
     } catch {
@@ -330,70 +414,48 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
     setIsPitModalOpen(false);
   };
 
-  // ─── Match Scout Save ─────────────────────────────────────────────────────
-  const previewMatchScore = useMemo(() => {
-    return calculateScoutEntryScore({
-      teamNumber: parseInt(msTeamNumber || '0', 10),
-      matchNumber: msMatchNumber,
-      allianceColor: msAlliance,
-      autoLeftZone: msAutoLeave,
-      autoPollenNectarScored: msAutoScored,
-      autoHiveTips: msAutoTips,
-      autoParked: msAutoPark,
-      teleopHiveTips: msTeleopTips,
-      teleopCellsRemaining: msCellsRem,
-      teleopFlowersBottomNectar: msBottomNectar,
-      teleopFlowersOwned: msOwnedFlowers,
-      teleopFlowerElementsCount: msOwnedElements,
-      endgameParked: msEndgamePark,
-      minorFouls: msMinorFouls,
-      majorFouls: msMajorFouls,
-      robotDisabledOrBroken: msBroken,
-      driverSkillRating: msDriverSkill,
-      defenseRating: msDefense,
-      notes: msNotes,
+  // ─── Quick Match Scouting Openers & Save ──────────────────────────────────
+  const openNewMatchScout = (teamNumber?: number) => {
+    setMatchModalCtx({
+      matchNumber: '',
+      activeSlot: 'red1',
+      slots: teamNumber ? { red1: teamNumber } : undefined,
     });
-  }, [
-    msTeamNumber, msMatchNumber, msAlliance, msAutoLeave, msAutoScored, msAutoTips,
-    msAutoPark, msTeleopTips, msCellsRem, msBottomNectar, msOwnedFlowers,
-    msOwnedElements, msEndgamePark, msMinorFouls, msMajorFouls, msBroken,
-    msDriverSkill, msDefense, msNotes,
-  ]);
+    setIsMatchModalOpen(true);
+  };
 
-  const handleSaveMatchScout = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const num = parseInt(msTeamNumber.trim(), 10);
-    if (isNaN(num) || num <= 0 || !msMatchNumber.trim()) return;
+  const openMatchForLiveSchedule = (m: FtcLiveMatch, slot: MatchSlotKey = 'red1') => {
+    setMatchModalCtx(buildInitialContextFromLiveMatch(m, slot));
+    setIsMatchModalOpen(true);
+  };
 
-    const entry: MatchScoutEntry = {
-      id: `mscout-${Date.now()}`,
-      teamNumber: num,
-      matchNumber: msMatchNumber.trim(),
-      allianceColor: msAlliance,
-      autoLeftZone: msAutoLeave,
-      autoPollenNectarScored: msAutoScored,
-      autoHiveTips: msAutoTips,
-      autoParked: msAutoPark,
-      teleopHiveTips: msTeleopTips,
-      teleopCellsRemaining: msCellsRem,
-      teleopFlowersBottomNectar: msBottomNectar,
-      teleopFlowersOwned: msOwnedFlowers,
-      teleopFlowerElementsCount: msOwnedElements,
-      endgameParked: msEndgamePark,
-      minorFouls: msMinorFouls,
-      majorFouls: msMajorFouls,
-      robotDisabledOrBroken: msBroken,
-      driverSkillRating: msDriverSkill,
-      defenseRating: msDefense,
-      calculatedContributionScore: previewMatchScore,
-      notes: msNotes.trim() || undefined,
+  const openMatchForGroup = (
+    matchNumber: string,
+    slot: MatchSlotKey,
+    liveMatch?: FtcLiveMatch,
+    editEntry?: MatchScoutEntry
+  ) => {
+    setMatchModalCtx({
+      matchNumber,
+      activeSlot: slot,
+      slots: liveMatch
+        ? {
+            red1: liveMatch.redTeams?.[0],
+            red2: liveMatch.redTeams?.[1],
+            blue1: liveMatch.blueTeams?.[0],
+            blue2: liveMatch.blueTeams?.[1],
+          }
+        : undefined,
+      editEntry,
+    });
+    setIsMatchModalOpen(true);
+  };
+
+  const handleSaveQuickMatchEntry = async (entry: MatchScoutEntry) => {
+    await onServerSync('add_match_scout', {
+      ...entry,
       scoutedBy: currentUser,
-      timestamp: new Date().toISOString(),
-    };
-
-    await onServerSync('add_match_scout', entry);
-    setIsMatchModalOpen(false);
-    setMsNotes('');
+    });
   };
 
   // ─── Pick List Curation (Tech Only) ───────────────────────────────────────
@@ -468,17 +530,22 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
   const simResult = useMemo(() => simulateBioBuzzAllianceScore(simInput), [simInput]);
 
+  const getTeamLabel = (num: number) => {
+    const found = knownTeamsList.find(t => t.teamNumber === num);
+    return found ? found.teamName : '';
+  };
+
   return (
     <div className="space-y-5">
-      {/* Sub-navegação & Acesso Rápido IA */}
+      {/* Sub-navegação em Português & Acesso Rápido IA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-primary/40 border border-white/10 p-3 rounded-2xl">
         <div className="flex items-center gap-1.5 flex-wrap">
           {[
-            { id: 'live', label: `Ao Vivo (${hub.liveSync?.eventCode || 'API'})`, icon: Radio },
-            { id: 'pit', label: `Pit Scouting (${hub.teams.length})`, icon: Users },
-            { id: 'match', label: `Match Scouting (${hub.matchScouts.length})`, icon: ClipboardList },
-            { id: 'picklist', label: `Ranking & Pick List`, icon: Trophy },
-            { id: 'simulator', label: `Simulador BIOBUZZ™`, icon: Calculator },
+            { id: 'match', label: `Avaliar Partidas (${matchGroups.length})`, icon: ClipboardList },
+            { id: 'live', label: `Ao Vivo (${hub.liveSync?.eventCode || 'Torneio'})`, icon: Radio },
+            { id: 'pit', label: `Equipes nos Pits (${hub.teams.length})`, icon: Users },
+            { id: 'picklist', label: `Ranking & Escolha (Pick List)`, icon: Trophy },
+            { id: 'simulator', label: `Simulador de Pontos`, icon: Calculator },
             { id: 'tactical', label: `Quadro Tático`, icon: Map },
           ].map(tab => {
             const Icon = tab.icon;
@@ -505,11 +572,11 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
           className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shrink-0"
         >
           <Bot size={15} />
-          <span>Consultar IA Estrategista BIOBUZZ™</span>
+          <span>Consultar IA Estrategista</span>
         </button>
       </div>
 
-      {/* Drawer Opcional da IA dentro de Strategy */}
+      {/* Drawer Opcional da IA */}
       {showAIDrawer && (
         <div className="bg-primary/90 border border-cyan-500/30 rounded-2xl p-4 relative">
           <button
@@ -530,7 +597,343 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 0: AO VIVO — PLACAR, RANKING & SYNC AUTOMÁTICO FTCSCOUT
+          SUB-TAB 1: AVALIAR PARTIDAS (SCOUTING POR PARTIDA)
+      ════════════════════════════════════════════════════════════════════════ */}
+      {subTab === 'match' && (
+        <div className="space-y-4">
+          {/* Topo + Busca + Botão Principal */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-black text-white">Avaliação por Partida (Scouting de Arena)</h3>
+              <p className="text-xs text-text-secondary">
+                Avalie os robôs direto durante a partida e alterne rapidamente entre as 4 equipes em campo.
+              </p>
+            </div>
+            <button
+              onClick={() => openNewMatchScout()}
+              className="min-h-[44px] flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider shrink-0 shadow-lg"
+            >
+              <Plus size={16} />
+              <span>Avaliar Nova Partida</span>
+            </button>
+          </div>
+
+          {/* Atalho Rápido de Partidas Sincronizadas do Torneio */}
+          {(hub.liveSync?.matches?.length || 0) > 0 && (
+            <div className="bg-primary/40 border border-cyan-500/25 rounded-2xl p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-black text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar size={13} />
+                  Partidas do Torneio (toque para avaliar na hora)
+                </span>
+                <span className="text-[10px] text-text-muted">Preenche as 4 equipes automaticamente</span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {hub.liveSync!.matches.slice(0, 14).map(lm => {
+                  const mKey = (lm.description || `Qualif ${lm.matchNum}`).trim().toLowerCase();
+                  const countSaved = hub.matchScouts.filter(
+                    s => s.matchNumber.trim().toLowerCase() === mKey
+                  ).length;
+                  const hasBazinga = lm.redTeams.includes(21083) || lm.blueTeams.includes(21083);
+
+                  return (
+                    <button
+                      key={lm.id}
+                      onClick={() => openMatchForLiveSchedule(lm)}
+                      className={`shrink-0 px-3 py-2 rounded-xl border text-left transition-all ${
+                        hasBazinga
+                          ? 'bg-amber-500/15 border-amber-500/40 hover:bg-amber-500/25'
+                          : 'bg-black/40 border-white/10 hover:border-cyan-400/40'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 text-xs font-black text-white">
+                        <span>{lm.description || `Q-${lm.matchNum}`}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded ${countSaved > 0 ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/10 text-text-muted'}`}>
+                          {countSaved}/4
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-text-secondary mt-0.5">
+                        <span className="text-red-300">{lm.redTeams.join(', ')}</span>
+                        {' vs '}
+                        <span className="text-blue-300">{lm.blueTeams.join(', ')}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Filtro por Partida ou Equipe */}
+          {hub.matchScouts.length > 0 && (
+            <div className="relative max-w-md">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                value={matchSearchTerm}
+                onChange={e => setMatchSearchTerm(e.target.value)}
+                placeholder="Filtrar por partida (ex: Q-12) ou nº da equipe..."
+                className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
+              />
+            </div>
+          )}
+
+          {/* Lista Agrupada por Partida */}
+          {matchGroups.length === 0 ? (
+            <div className="bg-primary/40 border border-white/10 rounded-2xl p-10 text-center space-y-3">
+              <ClipboardList size={36} className="mx-auto text-amber-400 opacity-80" />
+              <h4 className="text-base font-black text-white">
+                {hub.matchScouts.length === 0
+                  ? 'Nenhuma partida avaliada ainda'
+                  : 'Nenhuma partida encontrada para esse filtro'}
+              </h4>
+              <p className="text-xs text-text-secondary max-w-md mx-auto">
+                Clique em <strong className="text-amber-300">Avaliar Nova Partida</strong> para marcar rapidamente o desempenho de qualquer equipe durante o jogo.
+              </p>
+              {hub.matchScouts.length === 0 && (
+                <button
+                  onClick={() => openNewMatchScout()}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 text-black font-black text-xs uppercase"
+                >
+                  <Plus size={14} />
+                  Avaliar Primeira Partida
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {matchGroups.map(group => {
+                const redEntries = group.entries.filter(e => e.allianceColor === 'red');
+                const blueEntries = group.entries.filter(e => e.allianceColor === 'blue');
+
+                const renderTeamEntryCard = (m: MatchScoutEntry) => {
+                  const tName = getTeamLabel(m.teamNumber);
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() =>
+                        openMatchForGroup(
+                          group.matchNumber,
+                          m.allianceColor === 'red' ? 'red1' : 'blue1',
+                          group.liveMatch,
+                          m
+                        )
+                      }
+                      className={`rounded-xl p-3 border cursor-pointer transition-all space-y-2 ${
+                        m.allianceColor === 'red'
+                          ? 'bg-red-500/10 border-red-500/25 hover:border-red-400/60'
+                          : 'bg-blue-500/10 border-blue-500/25 hover:border-blue-400/60'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-black text-white">#{m.teamNumber}</span>
+                            {tName && <span className="text-xs text-text-secondary truncate">{tName}</span>}
+                            {m.robotDisabledOrBroken && (
+                              <span className="px-2 py-0.5 rounded bg-red-600/30 text-red-200 border border-red-500/40 text-[10px] font-black">
+                                QUEBROU / PAROU
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-black text-amber-300 text-sm">
+                            {m.calculatedContributionScore} pts
+                          </span>
+                          {isTech && (
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (confirm(`Excluir avaliação da equipe #${m.teamNumber} na partida ${group.matchNumber}?`)) {
+                                  onServerSync('delete_match_scout', { scoutId: m.id });
+                                }
+                              }}
+                              className="p-1 text-text-muted hover:text-red-400"
+                              title="Excluir avaliação (apenas técnicos)"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[11px] bg-black/35 rounded-lg p-2">
+                        <div>
+                          <span className="text-text-muted block">Autônomo</span>
+                          <strong className="text-cyan-300">
+                            {m.autoLeftZone ? 'Saiu ✓' : 'Não saiu'} • {m.autoHiveTips} tomb.
+                          </strong>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">Colmeia (TeleOp)</span>
+                          <strong className="text-amber-300">
+                            {m.teleopHiveTips} tomb. • {m.teleopCellsRemaining} bolas
+                          </strong>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">Flores</span>
+                          <strong className="text-emerald-300">
+                            {m.teleopFlowersOwned} ({m.teleopFlowerElementsCount} bolas)
+                          </strong>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">Faltas / Piloto</span>
+                          <strong className={m.minorFouls + m.majorFouls > 0 ? 'text-red-300' : 'text-white'}>
+                            {m.minorFouls}L/{m.majorFouls}G • ★{m.driverSkillRating}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {m.notes && (
+                        <p className="text-[11px] text-text-secondary italic">"{m.notes}"</p>
+                      )}
+                      <div className="flex items-center justify-between text-[10px] text-text-muted">
+                        <span>Avaliado por: {m.scoutedBy || currentUser}</span>
+                        <span className="text-cyan-300 font-bold">Toque para editar</span>
+                      </div>
+                    </div>
+                  );
+                };
+
+                return (
+                  <div
+                    key={group.key}
+                    className="bg-primary/40 border border-white/10 rounded-2xl p-4 space-y-3"
+                  >
+                    {/* Cabeçalho da Partida */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/35 font-black text-sm">
+                          Partida {group.matchNumber}
+                        </span>
+                        <span className="text-xs font-bold text-text-secondary">
+                          {group.entries.length} {group.entries.length === 1 ? 'equipe avaliada' : 'equipes avaliadas'}
+                        </span>
+                        {group.liveMatch?.hasBeenPlayed && (
+                          <span className="text-[11px] px-2 py-0.5 rounded-lg bg-black/40 text-text-muted font-bold">
+                            Placar Oficial: <strong className="text-red-300">{group.liveMatch.redScore ?? '-'}</strong> × <strong className="text-blue-300">{group.liveMatch.blueScore ?? '-'}</strong>
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => openMatchForGroup(group.matchNumber, 'red1', group.liveMatch, group.entries[0])}
+                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-200 hover:text-black border border-cyan-500/35 font-black text-xs transition-all shrink-0"
+                      >
+                        Avaliar / Trocar Equipe nesta Partida
+                      </button>
+                    </div>
+
+                    {/* Colunas Vermelha x Azul */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      {/* Aliança Vermelha */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black text-red-300 uppercase tracking-wider">
+                            Aliança Vermelha ({redEntries.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openMatchForGroup(
+                                group.matchNumber,
+                                redEntries.length === 0 ? 'red1' : 'red2',
+                                group.liveMatch
+                              )
+                            }
+                            className="text-[11px] font-bold text-red-300 hover:text-red-200"
+                          >
+                            + Avaliar Vermelha
+                          </button>
+                        </div>
+                        {redEntries.length === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => openMatchForGroup(group.matchNumber, 'red1', group.liveMatch)}
+                            className="w-full py-5 rounded-xl border border-dashed border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-xs font-bold text-red-300/80 transition-all"
+                          >
+                            + Avaliar equipe da Aliança Vermelha
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            {redEntries.map(renderTeamEntryCard)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Aliança Azul */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black text-blue-300 uppercase tracking-wider">
+                            Aliança Azul ({blueEntries.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openMatchForGroup(
+                                group.matchNumber,
+                                blueEntries.length === 0 ? 'blue1' : 'blue2',
+                                group.liveMatch
+                              )
+                            }
+                            className="text-[11px] font-bold text-blue-300 hover:text-blue-200"
+                          >
+                            + Avaliar Azul
+                          </button>
+                        </div>
+                        {blueEntries.length === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => openMatchForGroup(group.matchNumber, 'blue1', group.liveMatch)}
+                            className="w-full py-5 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 text-xs font-bold text-blue-300/80 transition-all"
+                          >
+                            + Avaliar equipe da Aliança Azul
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            {blueEntries.map(renderTeamEntryCard)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Gráfico Resumo por Equipe (abaixo das partidas) */}
+          {teamSummaries.some(t => t.matchesCount > 0) && (
+            <div className="bg-primary/40 border border-white/10 rounded-2xl p-4 space-y-2">
+              <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                <BarChart2 size={14} />
+                Média de Pontos por Equipe nas Partidas Avaliadas
+              </h4>
+              <div className="h-52 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={teamSummaries.filter(t => t.matchesCount > 0).slice(0, 12)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="teamNumber" stroke="#94a3b8" fontSize={11} tickFormatter={v => `#${v}`} />
+                    <YAxis stroke="#94a3b8" fontSize={11} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                    />
+                    <Bar dataKey="avgScore" name="Média Total (pts)" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="avgAuto" name="Média Autônomo" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SUB-TAB 2: AO VIVO — PLACAR, RANKING & SINCRONIZAÇÃO FTCSCOUT
       ════════════════════════════════════════════════════════════════════════ */}
       {subTab === 'live' && (
         <LiveArenaDashboard
@@ -540,15 +943,19 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
           syncError={liveSyncError}
           onSyncNow={code => (onSyncLiveEvent ? onSyncLiveEvent(code) : Promise.resolve())}
           onUpdateLiveConfig={cfg => (onUpdateLiveConfig ? onUpdateLiveConfig(cfg) : Promise.resolve())}
-          onAskAIAboutMatch={(m: FtcLiveMatch) => {
+          onAskAIAboutMatch={() => {
             if (onOpenFullAI) onOpenFullAI();
             else setShowAIDrawer(true);
+          }}
+          onScoutMatch={m => {
+            setSubTab('match');
+            openMatchForLiveSchedule(m);
           }}
         />
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 1: PIT SCOUTING & EQUIPES
+          SUB-TAB 3: EQUIPES NOS PITS (OFICINA)
       ════════════════════════════════════════════════════════════════════════ */}
       {subTab === 'pit' && (
         <div className="space-y-4">
@@ -569,16 +976,16 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
               className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider transition-all shrink-0"
             >
               <Plus size={15} />
-              <span>Adicionar Equipe (Pit)</span>
+              <span>Cadastrar Equipe (Pit)</span>
             </button>
           </div>
 
           {filteredPitTeams.length === 0 ? (
             <div className="bg-primary/40 border border-white/10 rounded-2xl p-10 text-center space-y-3">
               <Users size={36} className="mx-auto text-amber-400 opacity-80" />
-              <h4 className="text-base font-black text-white">Nenhuma equipe mapeada no Pit Scouting ainda</h4>
+              <h4 className="text-base font-black text-white">Nenhuma equipe cadastrada nos Pits ainda</h4>
               <p className="text-xs text-text-secondary max-w-md mx-auto">
-                Cadastre as equipes do torneio tentando a busca automática no FTCScout ou manualmente em segundos para liberar recomendações da IA e montagem de Pick List.
+                Cadastre as equipes do torneio usando a busca automática ou manualmente em segundos para ajudar na escolha de alianças e análise da IA.
               </p>
               <button
                 onClick={openNewPitModal}
@@ -633,25 +1040,24 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                     </div>
                   </div>
 
-                  {/* Badges de Capacidade BIOBUZZ */}
                   <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
                     {team.usesAprilTags && (
-                      <span className="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">AprilTags ✓</span>
+                      <span className="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">Lê AprilTags ✓</span>
                     )}
                     {team.canTipHive && (
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25">Hive Tip ✓</span>
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25">Tomba Colmeia (Hive) ✓</span>
                     )}
                     {team.canScoreFlowers && (
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">Flowers ✓</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">Pontua Flores ✓</span>
                     )}
                     {team.ftcScoutOpr?.total !== undefined && (
                       <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/25">
-                        OPR {team.ftcScoutOpr.total}
+                        Força (OPR) {team.ftcScoutOpr.total}
                       </span>
                     )}
                     {team.maxCapacity > BIOBUZZ_SCORING.POSSESSION_LIMIT && (
                       <span className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1">
-                        <AlertTriangle size={10} /> Cap {team.maxCapacity} (&gt; G407!)
+                        <AlertTriangle size={10} /> Cap. {team.maxCapacity} (&gt; G407!)
                       </span>
                     )}
                   </div>
@@ -673,7 +1079,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                   {(team.strengths || team.weaknesses) && (
                     <div className="grid grid-cols-2 gap-2 text-[11px]">
                       <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-lg p-2">
-                        <span className="text-emerald-400 font-bold block">Fortes</span>
+                        <span className="text-emerald-400 font-bold block">Pontos Fortes</span>
                         <p className="text-text-secondary line-clamp-2">{team.strengths || '-'}</p>
                       </div>
                       <div className="bg-orange-500/5 border border-orange-500/15 rounded-lg p-2">
@@ -684,15 +1090,15 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                   )}
 
                   <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-text-muted">
-                    <span>Scout: {team.scoutedBy}</span>
+                    <span>Avaliado por: {team.scoutedBy}</span>
                     <button
                       onClick={() => {
-                        setMsTeamNumber(String(team.teamNumber));
-                        setIsMatchModalOpen(true);
+                        setSubTab('match');
+                        openNewMatchScout(team.teamNumber);
                       }}
                       className="text-cyan-400 hover:text-cyan-300 font-bold"
                     >
-                      + Registrar Partida
+                      + Avaliar em Partida
                     </button>
                   </div>
                 </div>
@@ -703,120 +1109,14 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 2: MATCH SCOUTING (ARENA)
-      ════════════════════════════════════════════════════════════════════════ */}
-      {subTab === 'match' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-black text-white">Avaliação de Partidas na Arena (BIOBUZZ™)</h3>
-              <p className="text-xs text-text-secondary">
-                Registre ações reais em Auto, TeleOp, Hive Tips, Flowers e faltas para calcular a contribuição real de cada robô.
-              </p>
-            </div>
-            <button
-              onClick={() => setIsMatchModalOpen(true)}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs uppercase tracking-wider shrink-0"
-            >
-              <Plus size={15} />
-              <span>Registrar Match Scout</span>
-            </button>
-          </div>
-
-          {teamSummaries.length > 0 && (
-            <div className="bg-primary/40 border border-white/10 rounded-2xl p-4 space-y-2">
-              <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                <BarChart2 size={14} />
-                Média de Pontos Contribuídos por Equipe
-              </h4>
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={teamSummaries.slice(0, 12)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="teamNumber" stroke="#94a3b8" fontSize={11} tickFormatter={v => `#${v}`} />
-                    <YAxis stroke="#94a3b8" fontSize={11} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
-                    />
-                    <Bar dataKey="avgScore" name="Média Pts" fill="#f59e0b" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="avgAuto" name="Média Auto" fill="#06b6d4" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {hub.matchScouts.length === 0 ? (
-            <div className="bg-primary/40 border border-white/10 rounded-2xl p-8 text-center text-xs text-text-secondary">
-              Nenhuma partida avaliada ainda. Clique em <strong className="text-cyan-300">Registrar Match Scout</strong> direto da arquibancada!
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {hub.matchScouts.map(m => (
-                <div key={m.id} className="bg-primary/40 border border-white/10 rounded-xl p-3.5 space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded font-black text-[11px] ${m.allianceColor === 'red' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
-                        #{m.teamNumber} • {m.matchNumber}
-                      </span>
-                      {m.robotDisabledOrBroken && (
-                        <span className="px-2 py-0.5 rounded bg-red-600/25 text-red-300 text-[10px] font-bold">
-                          Quebrou/Parou
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-amber-300 text-sm">{m.calculatedContributionScore} pts</span>
-                      {isTech && (
-                        <button
-                          onClick={() => onServerSync('delete_match_scout', { scoutId: m.id })}
-                          className="p-1 text-text-muted hover:text-red-400"
-                          title="Excluir registro (técnicos)"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5 text-[11px] text-center bg-black/30 rounded-lg p-2">
-                    <div>
-                      <span className="text-text-muted block">Auto Tip</span>
-                      <strong className="text-cyan-300">{m.autoHiveTips}</strong>
-                    </div>
-                    <div>
-                      <span className="text-text-muted block">Tele Tip</span>
-                      <strong className="text-amber-300">{m.teleopHiveTips}</strong>
-                    </div>
-                    <div>
-                      <span className="text-text-muted block">Flowers</span>
-                      <strong className="text-emerald-300">{m.teleopFlowersOwned} ({m.teleopFlowerElementsCount} el.)</strong>
-                    </div>
-                    <div>
-                      <span className="text-text-muted block">Faltas</span>
-                      <strong className={m.minorFouls + m.majorFouls > 0 ? 'text-red-400' : 'text-white'}>
-                        {m.minorFouls}m / {m.majorFouls}M
-                      </strong>
-                    </div>
-                  </div>
-                  {m.notes && <p className="text-text-secondary italic">"{m.notes}"</p>}
-                  <p className="text-[10px] text-text-muted">Scout: {m.scoutedBy} • Driver: {m.driverSkillRating}/5</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 3: RANKING & PICK LIST OFICIAL
+          SUB-TAB 4: RANKING & LISTA DE ESCOLHA (PICK LIST)
       ════════════════════════════════════════════════════════════════════════ */}
       {subTab === 'picklist' && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-          {/* Ranking Automático de Dados */}
           <div className="xl:col-span-7 bg-primary/40 border border-white/10 rounded-2xl p-4 space-y-3">
-            <h3 className="text-sm font-black text-white uppercase tracking-wider">Ranking Geral do Scouting</h3>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider">Ranking Geral das Equipes</h3>
             {teamSummaries.length === 0 ? (
-              <p className="text-xs text-text-muted py-6 text-center">Adicione equipes no Pit ou Match Scouting para gerar o ranking.</p>
+              <p className="text-xs text-text-muted py-6 text-center">Avalie partidas ou cadastre equipes nos Pits para gerar o ranking.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
@@ -824,10 +1124,10 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                     <tr className="border-b border-white/10 text-text-muted uppercase text-[10px]">
                       <th className="py-2 pr-2">Equipe</th>
                       <th className="py-2 px-2">Média Pts</th>
-                      <th className="py-2 px-2">Hive Tips</th>
-                      <th className="py-2 px-2">Confiab.</th>
+                      <th className="py-2 px-2">Tombadas (Tips)</th>
+                      <th className="py-2 px-2">Confiabilidade</th>
                       <th className="py-2 px-2">Faltas</th>
-                      {isTech && <th className="py-2 pl-2 text-right">Pick List</th>}
+                      {isTech && <th className="py-2 pl-2 text-right">Lista de Escolha</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -856,10 +1156,10 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                               className="bg-black/50 border border-white/15 rounded-lg px-2 py-1 text-[11px] font-bold text-white"
                             >
                               <option value="">+ Adicionar</option>
-                              <option value="S">Tier S</option>
-                              <option value="A">Tier A</option>
-                              <option value="B">Tier B</option>
-                              <option value="C">Tier C</option>
+                              <option value="S">Nível S (Prioridade)</option>
+                              <option value="A">Nível A (Muito Forte)</option>
+                              <option value="B">Nível B (Boa Opção)</option>
+                              <option value="C">Nível C (Reserva)</option>
                               <option value="Do Not Pick">Evitar</option>
                             </select>
                           </td>
@@ -872,12 +1172,11 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
             )}
           </div>
 
-          {/* Pick List Oficial Curada por Técnicos */}
           <div className="xl:col-span-5 bg-primary/40 border border-amber-500/25 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Shield size={15} />
-                Pick List Oficial (Alliance Selection)
+                Lista de Escolha Oficial (Pick List)
               </h3>
               {!isTech && <span className="text-[10px] text-text-muted">Curadoria dos Técnicos</span>}
             </div>
@@ -885,8 +1184,8 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
             {hub.pickList.length === 0 ? (
               <p className="text-xs text-text-secondary py-8 text-center">
                 {isTech
-                  ? 'Use o seletor na tabela ao lado para promover equipes para a Pick List Oficial.'
-                  : 'Os técnicos ainda estão montando a Pick List Oficial deste torneio.'}
+                  ? 'Use o seletor na tabela ao lado para montar a Lista de Escolha Oficial para as alianças.'
+                  : 'Os técnicos ainda estão montando a Lista de Escolha Oficial deste torneio.'}
               </p>
             ) : (
               <div className="space-y-2">
@@ -898,8 +1197,8 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                       <div key={p.teamNumber} className="flex items-center justify-between gap-2 bg-black/35 border border-white/10 rounded-xl p-2.5 text-xs">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <span className="font-black text-text-muted w-5">#{idx + 1}</span>
-                          <span className={`px-2 py-0.5 rounded-md border font-black text-[10px] ${TIER_STYLES[p.tier]}`}>
-                            {p.tier}
+                          <span className={`px-2 py-0.5 rounded-md border font-black text-[10px] shrink-0 ${TIER_STYLES[p.tier]}`}>
+                            {TIER_LABELS[p.tier]}
                           </span>
                           <div className="truncate">
                             <span className="font-bold text-white">#{p.teamNumber}</span>{' '}
@@ -941,13 +1240,13 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 4: SIMULADOR 2v2 BIOBUZZ™
+          SUB-TAB 5: SIMULADOR DE PONTOS 2v2 BIOBUZZ™
       ════════════════════════════════════════════════════════════════════════ */}
       {subTab === 'simulator' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-7 bg-primary/40 border border-white/10 rounded-2xl p-4 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">Simulador de Aliança 2v2 (Tabela 10-2 & 10-3)</h3>
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">Simulador de Aliança (2 contra 2)</h3>
               {teamSummaries.length > 0 && (
                 <div className="flex items-center gap-2 text-xs">
                   <select
@@ -977,16 +1276,16 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {[
-                { key: 'autoLeaveCount', label: 'Auto Leave (3 pts cada)', max: 2 },
-                { key: 'autoParkCount', label: 'Auto Park (5 pts cada)', max: 2 },
-                { key: 'autoHiveTips', label: 'Auto Hive Tips (20 pts)', max: 4 },
-                { key: 'teleopHiveTips', label: 'TeleOp Hive Tips (20 pts)', max: 12 },
-                { key: 'cellsRemaining', label: 'Restante na Cell ao Fim (2 pts)', max: 20 },
-                { key: 'flowersBottomNectar', label: 'Flower Bottom Nectar (5 pts)', max: 4 },
-                { key: 'ownedFlowersElements', label: 'Elementos em Flowers Próprias (2 pts)', max: 30 },
-                { key: 'endgameParkCount', label: 'Endgame Park (5 pts cada)', max: 2 },
-                { key: 'opponentMinorFouls', label: 'Minor Fouls do Adversário (+5 pts)', max: 10 },
-                { key: 'opponentMajorFouls', label: 'Major Fouls do Adversário (+20 pts)', max: 5 },
+                { key: 'autoLeaveCount', label: 'Saída no Autônomo (Leave • 3 pts)', max: 2 },
+                { key: 'autoParkCount', label: 'Estacionou no Autônomo (Park • 5 pts)', max: 2 },
+                { key: 'autoHiveTips', label: 'Tombadas no Autônomo (Hive Tips • 20 pts)', max: 4 },
+                { key: 'teleopHiveTips', label: 'Tombadas no TeleOp (Hive Tips • 20 pts)', max: 12 },
+                { key: 'cellsRemaining', label: 'Bolas na Célula ao Fim (Cells • 2 pts)', max: 20 },
+                { key: 'flowersBottomNectar', label: 'Nectar na Base da Flor (Bottom • 5 pts)', max: 4 },
+                { key: 'ownedFlowersElements', label: 'Bolas em Flores Dominadas (2 pts)', max: 30 },
+                { key: 'endgameParkCount', label: 'Estacionou no Final (Park • 5 pts)', max: 2 },
+                { key: 'opponentMinorFouls', label: 'Faltas Leves do Adversário (+5 pts)', max: 10 },
+                { key: 'opponentMajorFouls', label: 'Faltas Graves do Adversário (+20 pts)', max: 5 },
               ].map(field => (
                 <div key={field.key} className="bg-black/35 border border-white/5 rounded-xl p-3 space-y-1.5">
                   <div className="flex justify-between font-bold">
@@ -1006,7 +1305,6 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
             </div>
           </div>
 
-          {/* Resultado Simulação & Ranking Points */}
           <div className="lg:col-span-5 bg-gradient-to-br from-amber-500/10 via-primary/60 to-cyan-500/10 border border-amber-500/25 rounded-2xl p-5 space-y-4">
             <div className="text-center border-b border-white/10 pb-4">
               <span className="text-[11px] font-black uppercase tracking-widest text-amber-300">Pontuação Projetada da Aliança</span>
@@ -1015,11 +1313,11 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div className="bg-black/35 rounded-xl p-2.5 border border-white/5">
-                <span className="text-text-muted block">Auto</span>
+                <span className="text-text-muted block">Autônomo</span>
                 <strong className="text-cyan-300 text-base">{simResult.autoTotal}</strong>
               </div>
               <div className="bg-black/35 rounded-xl p-2.5 border border-white/5">
-                <span className="text-text-muted block">TeleOp</span>
+                <span className="text-text-muted block">TeleOperado</span>
                 <strong className="text-amber-300 text-base">{simResult.teleopTotal}</strong>
               </div>
               <div className="bg-black/35 rounded-xl p-2.5 border border-white/5">
@@ -1030,29 +1328,29 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="space-y-2 pt-2">
               <h4 className="text-xs font-black text-white uppercase tracking-wider">
-                Ranking Points Bônus ({simResult.bonusRps}/3 garantidos)
+                Pontos Bônus de Ranking — RPs ({simResult.bonusRps}/3 garantidos)
               </h4>
 
               <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${simResult.swarmRp ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300' : 'bg-black/30 border-white/10 text-text-muted'}`}>
                 <div>
-                  <strong className="block">SWARM RP (+1 RP)</strong>
-                  <span className="text-[11px]">Leave + Park: {simResult.swarmPoints} / 16 pts necessários</span>
+                  <strong className="block">Bônus Enxame (Swarm RP • +1 RP)</strong>
+                  <span className="text-[11px]">Saída + Estacionar: {simResult.swarmPoints} / 16 pts necessários</span>
                 </div>
                 {simResult.swarmRp ? <CheckCircle2 size={18} /> : <span>—</span>}
               </div>
 
               <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${simResult.pollinator1Rp ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300' : 'bg-black/30 border-white/10 text-text-muted'}`}>
                 <div>
-                  <strong className="block">POLLINATOR 1 RP (+1 RP)</strong>
-                  <span className="text-[11px]">Hive Tips: {simResult.totalHiveTips} / 4 tips necessários</span>
+                  <strong className="block">Bônus Polinizador 1 (Pollinator 1 • +1 RP)</strong>
+                  <span className="text-[11px]">Tombadas na Colmeia: {simResult.totalHiveTips} / 4 necessárias</span>
                 </div>
                 {simResult.pollinator1Rp ? <CheckCircle2 size={18} /> : <span>—</span>}
               </div>
 
               <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${simResult.pollinator2Rp ? 'bg-amber-500/15 border-amber-500/35 text-amber-300' : 'bg-black/30 border-white/10 text-text-muted'}`}>
                 <div>
-                  <strong className="block">POLLINATOR 2 RP (+1 RP)</strong>
-                  <span className="text-[11px]">Hive Tips: {simResult.totalHiveTips} / 7 tips necessários</span>
+                  <strong className="block">Bônus Polinizador 2 (Pollinator 2 • +1 RP)</strong>
+                  <span className="text-[11px]">Tombadas na Colmeia: {simResult.totalHiveTips} / 7 necessárias</span>
                 </div>
                 {simResult.pollinator2Rp ? <CheckCircle2 size={18} /> : <span>—</span>}
               </div>
@@ -1062,7 +1360,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SUB-TAB 5: QUADRO TÁTICO (WHITEBOARD)
+          SUB-TAB 6: QUADRO TÁTICO
       ════════════════════════════════════════════════════════════════════════ */}
       {subTab === 'tactical' && (
         <TacticalFieldBoard
@@ -1078,7 +1376,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL: ADICIONAR / EDITAR EQUIPE NO PIT SCOUTING (COM FTCSCOUT FALLBACK)
+          MODAL: CADASTRAR / EDITAR EQUIPE NOS PITS
       ════════════════════════════════════════════════════════════════════════ */}
       {isPitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -1088,14 +1386,13 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-base font-black text-white">
-                {editingPitId ? `Editar Equipe #${pitTeamNumber}` : 'Cadastrar Equipe — Pit Scouting BIOBUZZ™'}
+                {editingPitId ? `Editar Equipe #${pitTeamNumber}` : 'Cadastrar Equipe nos Pits (Oficina)'}
               </h3>
               <button type="button" onClick={() => setIsPitModalOpen(false)} className="text-text-muted hover:text-white">
                 <X size={18} />
               </button>
             </div>
 
-            {/* Busca FTCScout + Fallback Manual */}
             <div className="bg-black/40 border border-white/10 rounded-xl p-3 space-y-2">
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -1113,7 +1410,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                   className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs disabled:opacity-50"
                 >
                   {lookupLoading ? <Sparkles size={14} className="animate-spin" /> : <Wifi size={14} />}
-                  <span>{lookupLoading ? 'Buscando FTCScout...' : 'Buscar no FTCScout (Auto)'}</span>
+                  <span>{lookupLoading ? 'Buscando...' : 'Buscar Dados Online (FTCScout)'}</span>
                 </button>
               </div>
               {lookupMsg && (
@@ -1147,7 +1444,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Drivetrain</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Tipo de Tração (Drivetrain)</label>
                 <select
                   value={pitDrivetrain}
                   onChange={e => setPitDrivetrain(e.target.value as DrivetrainType)}
@@ -1157,7 +1454,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Papel Principal no TeleOp</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Função Principal no Jogo (TeleOp)</label>
                 <select
                   value={pitRolePref}
                   onChange={e => setPitRolePref(e.target.value as ScoutedTeamPit['teleopRolePreference'])}
@@ -1172,12 +1469,12 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               {[
-                { label: 'Lê AprilTags (Hive)', val: pitAprilTags, set: setPitAprilTags },
-                { label: 'Pontua Pollen', val: pitPollen, set: setPitPollen },
-                { label: 'Pontua Nectar', val: pitNectar, set: setPitNectar },
-                { label: 'Faz Hive Tip', val: pitHiveTip, set: setPitHiveTip },
-                { label: 'Domina Flowers (60s)', val: pitFlowers, set: setPitFlowers },
-                { label: 'Park Endgame Estável', val: pitEndgamePark, set: setPitEndgamePark },
+                { label: 'Lê AprilTags (Câmera)', val: pitAprilTags, set: setPitAprilTags },
+                { label: 'Pontua Pollen (Amarela)', val: pitPollen, set: setPitPollen },
+                { label: 'Pontua Nectar (Cor)', val: pitNectar, set: setPitNectar },
+                { label: 'Tomba Colmeia (Hive Tip)', val: pitHiveTip, set: setPitHiveTip },
+                { label: 'Pontua nas Flores (Flowers)', val: pitFlowers, set: setPitFlowers },
+                { label: 'Estaciona no Final (Park)', val: pitEndgamePark, set: setPitEndgamePark },
               ].map(cb => (
                 <label key={cb.label} className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg p-2 cursor-pointer">
                   <input type="checkbox" checked={cb.val} onChange={e => cb.set(e.target.checked)} className="accent-amber-500" />
@@ -1188,7 +1485,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Capacidade Max (Regra G407 = 4)</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Capacidade Máx. de Bolas (Limite G407 = 4)</label>
                 <input
                   type="number"
                   min={1}
@@ -1199,7 +1496,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Consistência do Autônomo (1-5)</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Confiança no Autônomo (1 a 5)</label>
                 <select
                   value={pitAutoCons}
                   onChange={e => setPitAutoCons(Number(e.target.value) as 1 | 2 | 3 | 4 | 5)}
@@ -1212,12 +1509,12 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
 
             <div className="space-y-2 text-xs">
               <div>
-                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Descrição da Rotina Autônoma (30s)</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">O que faz no Autônomo (30s)</label>
                 <input
                   type="text"
                   value={pitAutoDesc}
                   onChange={e => setPitAutoDesc(e.target.value)}
-                  placeholder="Ex: Sai do Park, lança 3 Pollen na Hive (1 Tip) + estaciona..."
+                  placeholder="Ex: Sai da zona, lança 3 Pollen na Colmeia (1 Tombada) e estaciona..."
                   className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white"
                 />
               </div>
@@ -1227,7 +1524,7 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
                   <textarea rows={2} value={pitStrengths} onChange={e => setPitStrengths(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-white resize-none" />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-orange-400 uppercase block mb-1">Fraquezas / Riscos</label>
+                  <label className="text-[11px] font-bold text-orange-400 uppercase block mb-1">Pontos Fracos / Riscos</label>
                   <textarea rows={2} value={pitWeaknesses} onChange={e => setPitWeaknesses(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-white resize-none" />
                 </div>
               </div>
@@ -1242,132 +1539,17 @@ export const StrategyScouting: React.FC<StrategyScoutingProps> = ({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL: REGISTRAR MATCH SCOUTING (ARENA)
+          MODAL: AVALIAÇÃO RÁPIDA POR PARTIDA (TROCA INSTANTÂNEA DE EQUIPE)
       ════════════════════════════════════════════════════════════════════════ */}
-      {isMatchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <form
-            onSubmit={handleSaveMatchScout}
-            className="bg-[#0e1422] border border-white/15 rounded-2xl p-5 max-w-xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl text-xs"
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div>
-                <h3 className="text-base font-black text-white">Registrar Match Scouting (BIOBUZZ™)</h3>
-                <span className="text-amber-300 font-bold">Contribuição Estimada: {previewMatchScore} pts</span>
-              </div>
-              <button type="button" onClick={() => setIsMatchModalOpen(false)} className="text-text-muted hover:text-white"><X size={18} /></button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[11px] text-text-muted font-bold block mb-1">Nº Equipe *</label>
-                <input type="number" required value={msTeamNumber} onChange={e => setMsTeamNumber(e.target.value)} placeholder="21083" className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-2 text-white font-bold" />
-              </div>
-              <div>
-                <label className="text-[11px] text-text-muted font-bold block mb-1">Partida *</label>
-                <input type="text" required value={msMatchNumber} onChange={e => setMsMatchNumber(e.target.value)} placeholder="Q-12" className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-2 text-white font-bold" />
-              </div>
-              <div>
-                <label className="text-[11px] text-text-muted font-bold block mb-1">Aliança</label>
-                <select value={msAlliance} onChange={e => setMsAlliance(e.target.value as 'red' | 'blue')} className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-2 text-white font-bold">
-                  <option value="red" className="bg-primary">Vermelha</option>
-                  <option value="blue" className="bg-primary">Azul</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Auto */}
-            <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-3 space-y-2">
-              <span className="font-black text-cyan-300 uppercase text-[11px]">Autônomo (30s)</span>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={msAutoLeave} onChange={e => setMsAutoLeave(e.target.checked)} className="accent-cyan-500" />
-                  <span>Leave (3 pts)</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={msAutoPark} onChange={e => setMsAutoPark(e.target.checked)} className="accent-cyan-500" />
-                  <span>Auto Park (5 pts)</span>
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div>
-                  <label className="text-[10px] text-text-muted block">Auto Hive Tips (20 pts)</label>
-                  <input type="number" min={0} max={5} value={msAutoTips} onChange={e => setMsAutoTips(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-text-muted block">Esferas lançadas no Auto</label>
-                  <input type="number" min={0} max={20} value={msAutoScored} onChange={e => setMsAutoScored(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white" />
-                </div>
-              </div>
-            </div>
-
-            {/* TeleOp + Endgame */}
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 space-y-2">
-              <span className="font-black text-amber-300 uppercase text-[11px]">TeleOp (2m) & Endgame Flowers</span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div>
-                  <label className="text-[10px] text-text-muted block">Tele Hive Tips (20)</label>
-                  <input type="number" min={0} max={15} value={msTeleopTips} onChange={e => setMsTeleopTips(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-text-muted block">Cells Fim (2)</label>
-                  <input type="number" min={0} max={20} value={msCellsRem} onChange={e => setMsCellsRem(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-text-muted block">Bottom Nectar (5)</label>
-                  <input type="number" min={0} max={4} value={msBottomNectar} onChange={e => setMsBottomNectar(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-text-muted block">El. Flower Própria (2)</label>
-                  <input type="number" min={0} max={25} value={msOwnedElements} onChange={e => setMsOwnedElements(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white" />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-4 pt-1">
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={msEndgamePark} onChange={e => setMsEndgamePark(e.target.checked)} className="accent-amber-500" />
-                  <span>Endgame Park (5 pts)</span>
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-text-muted">Flowers Dominadas:</span>
-                  <input type="number" min={0} max={4} value={msOwnedFlowers} onChange={e => setMsOwnedFlowers(Number(e.target.value))} className="w-14 bg-black/50 border border-white/10 rounded px-2 py-1 text-white" />
-                </div>
-              </div>
-            </div>
-
-            {/* Faltas & Confiabilidade */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/30 p-3 rounded-xl border border-white/5">
-              <div>
-                <label className="text-[10px] text-text-muted block">Minor Fouls (+5)</label>
-                <input type="number" min={0} max={10} value={msMinorFouls} onChange={e => setMsMinorFouls(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-white" />
-              </div>
-              <div>
-                <label className="text-[10px] text-text-muted block">Major Fouls (+20)</label>
-                <input type="number" min={0} max={5} value={msMajorFouls} onChange={e => setMsMajorFouls(Number(e.target.value))} className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-white" />
-              </div>
-              <div>
-                <label className="text-[10px] text-text-muted block">Driver (1-5)</label>
-                <select value={msDriverSkill} onChange={e => setMsDriverSkill(Number(e.target.value) as 1 | 2 | 3 | 4 | 5)} className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-white">
-                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </div>
-              <label className="flex items-center gap-1.5 cursor-pointer pt-4">
-                <input type="checkbox" checked={msBroken} onChange={e => setMsBroken(e.target.checked)} className="accent-red-500" />
-                <span className="text-red-300 font-bold">Quebrou/Parou</span>
-              </label>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-text-muted uppercase block mb-1">Observações do Scout</label>
-              <input type="text" value={msNotes} onChange={e => setMsNotes(e.target.value)} placeholder="Ciclo rápido, travou no campo, ótima defesa..." className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white" />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
-              <button type="button" onClick={() => setIsMatchModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-text-secondary font-bold">Cancelar</button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase">Salvar Match Scout</button>
-            </div>
-          </form>
-        </div>
-      )}
+      <QuickMatchScoutModal
+        isOpen={isMatchModalOpen}
+        initialContext={matchModalCtx}
+        existingScouts={hub.matchScouts}
+        liveMatches={hub.liveSync?.matches || []}
+        knownTeams={knownTeamsList}
+        onClose={() => setIsMatchModalOpen(false)}
+        onSaveEntry={handleSaveQuickMatchEntry}
+      />
     </div>
   );
 };

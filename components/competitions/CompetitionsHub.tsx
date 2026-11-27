@@ -156,7 +156,12 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
           hub.matchScouts = hub.matchScouts.filter(m => m.teamNumber !== payload.teamNumber);
           hub.pickList = hub.pickList.filter(pl => pl.teamNumber !== payload.teamNumber);
         } else if (action === 'add_match_scout') {
-          hub.matchScouts.unshift(payload);
+          const idx = hub.matchScouts.findIndex(m => m.id === payload.id);
+          if (idx >= 0) {
+            hub.matchScouts[idx] = { ...hub.matchScouts[idx], ...payload };
+          } else {
+            hub.matchScouts.unshift(payload);
+          }
         } else if (action === 'delete_match_scout') {
           hub.matchScouts = hub.matchScouts.filter(m => m.id !== payload.scoutId);
         } else if (action === 'save_pick_list') {
@@ -762,7 +767,7 @@ export const CompetitionsHub: React.FC<CompetitionsHubProps> = ({
                     </span>
                   </div>
                   <p className="text-sm text-text-secondary mt-1">
-                    Pit & Match Scouting, Pick List Oficial, Simulador BIOBUZZ™ e Quadro Tático Interativo.
+                    Avaliação rápida por partida, ficha nos Pits, Lista de Escolha (Pick List), Simulador e Quadro Tático.
                   </p>
                 </div>
               </div>

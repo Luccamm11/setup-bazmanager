@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Radio, RefreshCw, Trophy, Calendar, Bot, CheckCircle2,
-  Clock, ExternalLink, Settings2, Zap, Shield, Users
+  Clock, ExternalLink, Settings2, Zap, Shield, Users, ClipboardList
 } from 'lucide-react';
 import type { CompetitionEvent, FtcLiveMatch } from '../../types';
 
@@ -13,6 +13,7 @@ interface LiveArenaDashboardProps {
   onSyncNow: (customCode?: string) => Promise<void>;
   onUpdateLiveConfig: (cfg: { ftcEventCode?: string; ftcSeason?: number; autoSyncEnabled?: boolean }) => Promise<void>;
   onAskAIAboutMatch?: (match: FtcLiveMatch) => void;
+  onScoutMatch?: (match: FtcLiveMatch) => void;
 }
 
 export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
@@ -23,6 +24,7 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
   onSyncNow,
   onUpdateLiveConfig,
   onAskAIAboutMatch,
+  onScoutMatch,
 }) => {
   const live = event.strategyScouting?.liveSync;
   const autoSyncEnabled = event.autoSyncEnabled !== false;
@@ -75,7 +77,7 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                 </h3>
                 {isLiveNow ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-black uppercase tracking-wider">
-                    ● AO VIVO (Sync 30s)
+                    ● AO VIVO (Atualiza 30s)
                   </span>
                 ) : isFinished ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-black uppercase">
@@ -83,7 +85,7 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                   </span>
                 ) : (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
-                    Aguardando Início • Auto-Sync Ativo
+                    Aguardando Início • Atualização Automática
                   </span>
                 )}
                 {(event.ftcEventCode || live?.eventCode) && (
@@ -116,7 +118,7 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                   : 'bg-white/5 text-text-muted border-white/10'
               }`}
             >
-              Auto-Sync: {autoSyncEnabled ? 'ON' : 'OFF'}
+              Atualização Automática: {autoSyncEnabled ? 'LIGADA' : 'DESLIGADA'}
             </button>
 
             {isTech && (
@@ -234,21 +236,21 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
 
           <div className="grid grid-cols-4 gap-2 text-center text-xs">
             <div className="bg-black/35 rounded-xl p-2 border border-white/5">
-              <span className="text-[10px] text-text-muted block">W-L-T</span>
+              <span className="text-[10px] text-text-muted block">V-E-D</span>
               <strong className="text-white">
                 {bazingaRank?.wins ?? 0}-{bazingaRank?.losses ?? 0}-{bazingaRank?.ties ?? 0}
               </strong>
             </div>
             <div className="bg-black/35 rounded-xl p-2 border border-white/5">
-              <span className="text-[10px] text-text-muted block">RP Médio</span>
+              <span className="text-[10px] text-text-muted block">Média RP</span>
               <strong className="text-emerald-300">{bazingaRank?.rp ?? '—'}</strong>
             </div>
             <div className="bg-black/35 rounded-xl p-2 border border-white/5">
-              <span className="text-[10px] text-text-muted block">OPR Total</span>
+              <span className="text-[10px] text-text-muted block">Força (OPR)</span>
               <strong className="text-amber-300">{bazingaRank?.oprTotal ?? '—'}</strong>
             </div>
             <div className="bg-black/35 rounded-xl p-2 border border-white/5">
-              <span className="text-[10px] text-text-muted block">Tips OPR</span>
+              <span className="text-[10px] text-text-muted block">Tombadas (OPR)</span>
               <strong className="text-cyan-300">{bazingaRank?.oprTips ?? '—'}</strong>
             </div>
           </div>
@@ -275,22 +277,33 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                   {nextBazingaMatch.description}
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-red-500/20 text-red-200 border border-red-500/30 font-bold">
-                  Red: {nextBazingaMatch.redTeams.map(t => `#${t}`).join(' + ')}
+                  Vermelha: {nextBazingaMatch.redTeams.map(t => `#${t}`).join(' + ')}
                 </span>
                 <span className="text-text-muted font-black">VS</span>
                 <span className="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-200 border border-blue-500/30 font-bold">
-                  Blue: {nextBazingaMatch.blueTeams.map(t => `#${t}`).join(' + ')}
+                  Azul: {nextBazingaMatch.blueTeams.map(t => `#${t}`).join(' + ')}
                 </span>
               </div>
-              {onAskAIAboutMatch && (
-                <button
-                  onClick={() => onAskAIAboutMatch(nextBazingaMatch)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs shrink-0"
-                >
-                  <Bot size={14} />
-                  <span>Estratégia IA</span>
-                </button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {onScoutMatch && (
+                  <button
+                    onClick={() => onScoutMatch(nextBazingaMatch)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs"
+                  >
+                    <ClipboardList size={14} />
+                    <span>Avaliar Partida</span>
+                  </button>
+                )}
+                {onAskAIAboutMatch && (
+                  <button
+                    onClick={() => onAskAIAboutMatch(nextBazingaMatch)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs"
+                  >
+                    <Bot size={14} />
+                    <span>Estratégia IA</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-xs text-text-secondary">
@@ -322,9 +335,9 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                   <tr className="border-b border-white/10 text-text-muted uppercase text-[10px]">
                     <th className="py-2 pr-2">#</th>
                     <th className="py-2 px-2">Equipe</th>
-                    <th className="py-2 px-2">W-L-T</th>
+                    <th className="py-2 px-2">V-E-D</th>
                     <th className="py-2 px-2">RP</th>
-                    <th className="py-2 pl-2 text-right">OPR</th>
+                    <th className="py-2 pl-2 text-right">Força (OPR)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -388,13 +401,23 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
             <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
               {displayedMatches.map(m => (
                 <div key={m.id} className="bg-black/35 border border-white/10 rounded-xl p-3 text-xs space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="font-black text-white">{m.description}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      m.hasBeenPlayed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-text-muted'
-                    }`}>
-                      {m.hasBeenPlayed ? 'Finalizada' : m.scheduledStartTime ? new Date(m.scheduledStartTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Agendada'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {onScoutMatch && (
+                        <button
+                          onClick={() => onScoutMatch(m)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/35 font-black text-[10px] uppercase transition-all"
+                        >
+                          Avaliar Partida
+                        </button>
+                      )}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        m.hasBeenPlayed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-text-muted'
+                      }`}>
+                        {m.hasBeenPlayed ? 'Finalizada' : m.scheduledStartTime ? new Date(m.scheduledStartTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Agendada'}
+                      </span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-2 flex items-center justify-between">
@@ -408,8 +431,8 @@ export const LiveArenaDashboard: React.FC<LiveArenaDashboardProps> = ({
                   </div>
                   {m.hasBeenPlayed && (
                     <div className="flex items-center justify-between text-[10px] text-text-muted pt-0.5">
-                      <span>Red Tips: <strong className="text-red-300">{m.redTips ?? 0}</strong> {m.redSwarmRp ? '• Swarm✓' : ''} {m.redPollinator1Rp ? '• P1✓' : ''} {m.redPollinator2Rp ? '• P2✓' : ''}</span>
-                      <span>Blue Tips: <strong className="text-blue-300">{m.blueTips ?? 0}</strong> {m.blueSwarmRp ? '• Swarm✓' : ''} {m.bluePollinator1Rp ? '• P1✓' : ''} {m.bluePollinator2Rp ? '• P2✓' : ''}</span>
+                      <span>Tombadas Verm.: <strong className="text-red-300">{m.redTips ?? 0}</strong> {m.redSwarmRp ? '• Enxame✓' : ''} {m.redPollinator1Rp ? '• P1✓' : ''} {m.redPollinator2Rp ? '• P2✓' : ''}</span>
+                      <span>Tombadas Azul: <strong className="text-blue-300">{m.blueTips ?? 0}</strong> {m.blueSwarmRp ? '• Enxame✓' : ''} {m.bluePollinator1Rp ? '• P1✓' : ''} {m.bluePollinator2Rp ? '• P2✓' : ''}</span>
                     </div>
                   )}
                 </div>

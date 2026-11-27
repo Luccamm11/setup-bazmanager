@@ -1123,7 +1123,7 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
           <div className={tabletFullscreen ? 'max-w-[780px] mx-auto' : 'max-w-[660px] mx-auto'}>
             <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-text-muted px-2 pb-1">
               <span className="text-red-400">◀ Vermelha (A–C)</span>
-              <span className="text-white/70">▲ Scoring Side (Linha 6) ▲</span>
+              <span className="text-white/70">▲ Lado da Mesa (Scoring • Linha 6) ▲</span>
               <span className="text-blue-400">Azul (D–F) ▶</span>
             </div>
 
@@ -1194,25 +1194,25 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
                 {/* Red Loading Zone / Park (A5: 23" × 11") */}
                 <g>
                   <rect x="0" y={122.5} width={loadDepth} height={loadAlongWall} fill="rgba(239, 68, 68, 0.18)" stroke="#ef4444" strokeWidth="2.2" />
-                  <text x="27" y="175" textAnchor="middle" fill="#fecaca" fontSize="9" fontWeight="900">RED</text>
-                  <text x="27" y="187" textAnchor="middle" fill="#fca5a5" fontSize="8" fontWeight="bold">PARK</text>
+                  <text x="27" y="175" textAnchor="middle" fill="#fecaca" fontSize="8.5" fontWeight="900">VERM.</text>
+                  <text x="27" y="187" textAnchor="middle" fill="#fca5a5" fontSize="7.5" fontWeight="bold">ESTAC.</text>
                 </g>
 
                 {/* Blue Loading Zone / Park (F2: 23" × 11") */}
                 <g>
                   <rect x={SVG_SIZE - loadDepth} y={482.5} width={loadDepth} height={loadAlongWall} fill="rgba(59, 130, 246, 0.18)" stroke="#3b82f6" strokeWidth="2.2" />
-                  <text x={SVG_SIZE - 27} y="535" textAnchor="middle" fill="#bfdbfe" fontSize="9" fontWeight="900">BLUE</text>
-                  <text x={SVG_SIZE - 27} y="547" textAnchor="middle" fill="#93c5fd" fontSize="8" fontWeight="bold">PARK</text>
+                  <text x={SVG_SIZE - 27} y="535" textAnchor="middle" fill="#bfdbfe" fontSize="8.5" fontWeight="900">AZUL</text>
+                  <text x={SVG_SIZE - 27} y="547" textAnchor="middle" fill="#93c5fd" fontSize="7.5" fontWeight="bold">ESTAC.</text>
                 </g>
 
                 {/* Red Garden (A1: 23" × 2") & Blue Garden (F6: 23" × 2") */}
                 <g>
                   <rect x="2.5" y={SVG_SIZE - gardenWidth - 4} width={gardenLen} height={gardenWidth + 4} rx="3" fill="rgba(239, 68, 68, 0.30)" stroke="#ef4444" strokeWidth="1.8" />
-                  <text x="60" y={SVG_SIZE - 22} textAnchor="middle" fill="#fca5a5" fontSize="8.5" fontWeight="bold">RED GARDEN</text>
+                  <text x="60" y={SVG_SIZE - 22} textAnchor="middle" fill="#fca5a5" fontSize="8" fontWeight="bold">JARDIM VERM.</text>
                 </g>
                 <g>
                   <rect x={SVG_SIZE - gardenLen - 2.5} y="0" width={gardenLen} height={gardenWidth + 4} rx="3" fill="rgba(59, 130, 246, 0.30)" stroke="#3b82f6" strokeWidth="1.8" />
-                  <text x={SVG_SIZE - 60} y="28" textAnchor="middle" fill="#93c5fd" fontSize="8.5" fontWeight="bold">BLUE GARDEN</text>
+                  <text x={SVG_SIZE - 60} y="28" textAnchor="middle" fill="#93c5fd" fontSize="8" fontWeight="bold">JARDIM AZUL</text>
                 </g>
 
                 {/* 4 Flowers no Perímetro (Clicáveis — mostram pilha real de bolas + cor do Ownership!) */}
@@ -1444,7 +1444,7 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center justify-between text-[10px] font-bold px-2 pt-1.5 gap-2">
-              <span className="text-white/70 uppercase tracking-widest">▼ Audience Side (Linha 1) ▼</span>
+              <span className="text-white/70 uppercase tracking-widest">▼ Lado da Plateia (Audience • Linha 1) ▼</span>
               {hoverPos ? (
                 <span className="text-emerald-300 font-mono bg-black/50 px-2 py-0.5 rounded border border-emerald-500/25">
                   Placa {getTileName(hoverPos.x, hoverPos.y)} • X: {fmtLen((hoverPos.x / 100) * FIELD_INCHES)} | Y: {fmtLen(((100 - hoverPos.y) / 100) * FIELD_INCHES)}
@@ -1463,7 +1463,7 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Flower2 size={15} />
-                Controle de Flowers (Endgame)
+                Controle de Flores (Endgame)
               </h4>
               <span className="text-[10px] font-bold text-text-muted">{activeFlowerStack.length} bolas</span>
             </div>
@@ -1501,11 +1501,11 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
                 <span className="text-text-muted font-bold">Pilha Base → Topo:</span>
                 <span className="font-black">
                   {activeFlowerOwner === 'red' ? (
-                    <span className="text-red-400">Dono: RED ({activeFlowerStack.length * 2} pts)</span>
+                    <span className="text-red-400">Dono: Vermelha ({activeFlowerStack.length * 2} pts)</span>
                   ) : activeFlowerOwner === 'blue' ? (
-                    <span className="text-blue-400">Dono: BLUE ({activeFlowerStack.length * 2} pts)</span>
+                    <span className="text-blue-400">Dono: Azul ({activeFlowerStack.length * 2} pts)</span>
                   ) : (
-                    <span className="text-text-muted">Sem Ownership</span>
+                    <span className="text-text-muted">Sem Domínio (Ownership)</span>
                   )}
                 </span>
               </div>
@@ -1529,7 +1529,7 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
 
               {activeFlowerBottom !== 'none' && (
                 <p className="text-[10px] text-amber-300 font-semibold">
-                  Bottom Nectar (+5 pts): Aliança {activeFlowerBottom === 'red' ? 'Vermelha' : 'Azul'}
+                  Nectar na Base (Bottom Nectar • +5 pts): Aliança {activeFlowerBottom === 'red' ? 'Vermelha' : 'Azul'}
                 </p>
               )}
             </div>
@@ -1598,7 +1598,7 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
                   <option value="">-- Selecionar partida oficial --</option>
                   {liveMatches.map(m => (
                     <option key={m.id} value={m.id} className="bg-primary text-white">
-                      {m.description}: Red [{m.redTeams.join(',')}] vs Blue [{m.blueTeams.join(',')}]
+                      {m.description}: Vermelha [{m.redTeams.join(',')}] vs Azul [{m.blueTeams.join(',')}]
                     </option>
                   ))}
                 </select>
@@ -1609,9 +1609,9 @@ export const TacticalFieldBoard: React.FC<TacticalFieldBoardProps> = ({
               {robotTokens.map(rt => {
                 const isRed = rt.kind.includes('red');
                 const slotName =
-                  rt.kind === 'robot_red_1' ? 'Red 1' :
-                  rt.kind === 'robot_red_2' ? 'Red 2' :
-                  rt.kind === 'robot_blue_1' ? 'Blue 1' : 'Blue 2';
+                  rt.kind === 'robot_red_1' ? 'Verm. 1' :
+                  rt.kind === 'robot_red_2' ? 'Verm. 2' :
+                  rt.kind === 'robot_blue_1' ? 'Azul 1' : 'Azul 2';
                 return (
                   <div
                     key={rt.id}
